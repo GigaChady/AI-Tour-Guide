@@ -57,44 +57,6 @@ To właśnie **silnik kontekstowy**, a nie sam model językowy, stanowi główny
 **Unlike** traditional audio guides or route-based apps,  
 **Our system** dynamically generates flowing and contextual stories while walking filtered by preferences.
 
----
-
-## User Stories
-
-*(Do rozwinięcia)*
-
----
-
-## Persona: Podróżnik na budżecie
-
-**Name:** Remigiusz Zgon (Student podróżnik)
-
-### Demographics:
-- 22 lata
-- student
-- ograniczony budżet na podróże
-- najczęściej zwiedza pieszo lub korzysta z transportu publicznego
-- intensywnie korzysta ze smartfona podczas zwiedzania miast
-
-### Goals:
-- odkrywać ciekawe miejsca w mieście bez wydawania dużych pieniędzy
-- poznawać miejsca dopasowane do swoich zainteresowań (historia, architektura, lokalna kultura)
-- dowiadywać się ciekawych historii i faktów o miejscach podczas spaceru po mieście
-- mieć swobodę zwiedzania bez konieczności trzymania się sztywnego planu
-
-### Frustrations:
-- większość przewodników turystycznych skupia się tylko na najpopularniejszych atrakcjach
-- zorganizowane wycieczki z przewodnikiem są często zbyt drogie
-- trudno znaleźć autentyczne, mniej turystyczne miejsca
-- wiele gotowych tras zwiedzania jest zbyt sztywnych i ogranicza spontaniczne odkrywanie miasta
-
-### Needs:
-- spersonalizowane informacje o miejscach dopasowanych do zainteresowań
-- sugestie ciekawych miejsc znajdujących się w pobliżu
-- informacje o darmowych lub tanich atrakcjach
-- krótkie i angażujące opowieści o odwiedzanych miejscach
-
----
 
 ## MVP - Minimalna wersja produktu
 *(Tymczasowe - do rewizji po User Stories)*
