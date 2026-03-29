@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun OnboardingRegisterStepScreen(
+fun RegisterStepScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onUserRegistered: () -> Unit = {}

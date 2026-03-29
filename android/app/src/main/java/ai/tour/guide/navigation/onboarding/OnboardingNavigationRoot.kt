@@ -1,9 +1,10 @@
-package ai.tour.guide.navigation
+package ai.tour.guide.navigation.onboarding
 
-import ai.tour.guide.ui.screens.onboarding.OnboardingLoginStepActivity
-import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingRegisterStepScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepActivity
+import ai.tour.guide.ui.screens.onboarding.FinishStepScreen
+import ai.tour.guide.ui.screens.onboarding.LoginStepScreen
+import ai.tour.guide.ui.screens.onboarding.PreferencesStepScreen
+import ai.tour.guide.ui.screens.onboarding.RegisterStepScreen
+import ai.tour.guide.ui.screens.onboarding.WelcomeStepScreen
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -18,12 +19,13 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 
 @Composable
-fun NavigationRoot(
+fun OnboardingNavigationRoot(
+    onOnboardingFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backStack = rememberNavBackStack(OnboardingRoute.Welcome)
     NavDisplay(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         backStack = backStack,
@@ -31,14 +33,14 @@ fun NavigationRoot(
         entryProvider = { key ->
             when (key) {
                 is OnboardingRoute.Welcome -> NavEntry(key) {
-                    OnboardingWelcomeStepActivity(onNextClicked = {
+                    WelcomeStepScreen(onNextClicked = {
                         backStack.clear()
                         backStack.add(OnboardingRoute.Login)
                     })
                 }
 
                 is OnboardingRoute.Login -> NavEntry(key) {
-                    OnboardingLoginStepActivity(
+                    LoginStepScreen(
                         onRegisterSpanClicked = {
                             backStack.add(OnboardingRoute.Register)
                         },
@@ -50,7 +52,7 @@ fun NavigationRoot(
                 }
 
                 is OnboardingRoute.Register -> NavEntry(key) {
-                    OnboardingRegisterStepScreen(
+                    RegisterStepScreen(
                         onBack = { backStack.removeLastOrNull() },
                         onUserRegistered = {
                             backStack.clear()
@@ -59,8 +61,18 @@ fun NavigationRoot(
                 }
 
                 is OnboardingRoute.Preferences -> NavEntry(key) {
-                    OnboardingPreferencesStepScreen()
+                    PreferencesStepScreen(onNextClicked = {
+                        backStack.clear()
+                        backStack.add(OnboardingRoute.Finish)
+                    })
                 }
+
+                is OnboardingRoute.Finish -> NavEntry(key) {
+                    FinishStepScreen(onNextClicked = {
+                        onOnboardingFinished()
+                    })
+                }
+
 
                 else -> error("Invalid NavKey: $key")
             }

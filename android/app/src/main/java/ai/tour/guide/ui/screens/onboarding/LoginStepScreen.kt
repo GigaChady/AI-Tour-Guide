@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 
 @Preview(showBackground = true)
 @Composable
-fun OnboardingLoginStepActivity(
+fun LoginStepScreen(
     onRegisterSpanClicked: () -> Unit = {},
     onLoginFinished: () -> Unit = {}
 ) {

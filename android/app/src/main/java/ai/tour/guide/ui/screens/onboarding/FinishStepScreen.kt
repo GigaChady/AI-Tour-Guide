@@ -8,11 +8,11 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Preview(showBackground = true)
 @Composable
-fun WelcomeStepScreen(modifier: Modifier = Modifier, onNextClicked: () -> Unit = {}) {
+fun FinishStepScreen(modifier: Modifier = Modifier, onNextClicked: () -> Unit = {}) {
     AnimatedSharedStepScreen(
         onNextClicked,
-        headerTitle = stringResource(R.string.onboarding_header_text_header),
-        headerBody = stringResource(R.string.onboarding_step1_header_text_body),
-        buttonLabel = stringResource(R.string.onboarding_step1_get_started_btn_content)
+        headerTitle = stringResource(R.string.onboarding_step5_header_text_header),
+        headerBody = stringResource(R.string.onboarding_step5_header_text_body),
+        buttonLabel = stringResource(R.string.onboarding_step5_get_started_btn_content)
     )
 }

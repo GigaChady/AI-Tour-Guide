@@ -12,19 +12,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun OnboardingWelcomeText(bodyText: String, modifier: Modifier = Modifier) {
+fun OnboardingWelcomeText(
+    bodyText: String,
+    modifier: Modifier = Modifier,
+    headerTitle: String? = null
+) {
+    val header = headerTitle ?: stringResource(R.string.onboarding_header_text_header)
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
+        modifier = modifier
             .padding(
                 vertical = 16.dp,
                 horizontal = 32.dp,
             )
-            .then(modifier)
 
     ) {
         Text(
-            text = stringResource(R.string.onboarding_header_text_header),
+            text = header,
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.onSurface
         )

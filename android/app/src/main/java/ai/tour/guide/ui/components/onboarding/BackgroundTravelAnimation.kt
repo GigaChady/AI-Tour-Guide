@@ -35,6 +35,7 @@ fun OnboardingAnimation(modifier: Modifier = Modifier) {
     )
 
     AnimatedVisibility(
+        modifier = modifier,
         visible = composition != null,
         enter = slideInVertically(
             animationSpec = tween(
@@ -54,7 +55,7 @@ fun OnboardingAnimation(modifier: Modifier = Modifier) {
             LottieAnimation(
                 composition = composition,
                 progress = { progress },
-                modifier = modifier
+                modifier =Modifier
                     .scale(scale = 3.5F)
             )
         }

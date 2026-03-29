@@ -22,4 +22,24 @@
     <string name="onboarding_step3_register_button">Zarejestruj się</string>
 
     <string name="onboarding_step4_header_text_body">Poznajmy się</string>
+    <string name="onboarding_step4_grammatic_form_section_header">Jakich form używać podczas zwracania się do Ciebie?</string>
+
+    <string name="onboarding_step4_grammatic_form_option1_main">żeńskich</string>
+    <string name="onboarding_step4_grammatic_form_option1_hint">Chciałabyś, mogłabyś</string>
+    <string name="onboarding_step4_grammatic_form_option2_main">męskich</string>
+    <string name="onboarding_step4_grammatic_form_option2_hint">Chciałbyś, mógłbyś</string>
+    <string name="onboarding_step4_grammatic_form_option3_main">bezosobowych</string>
+    <string name="onboarding_step4_grammatic_form_option3_hint">Chcesz, możesz</string>
+
+    <string name="onboarding_step4_interests_form_section_header">Jakie są twoje zainteresowania?</string>
+    <string name="onboarding_step4_interests_form_option1_main">Historia</string>
+    <string name="onboarding_step4_interests_form_option2_main">Architektura</string>
+    <string name="onboarding_step4_interests_form_option3_main">Kultura</string>
+    <string name="onboarding_step4_page_hint">Swoje dane możesz zawsze zmienić\npóźniej w sekcji Profil</string>
+
+    <string name="onboarding_step4_next_button">Dalej</string>
+
+    <string name="onboarding_step5_header_text_header">Gotowe!</string>
+    <string name="onboarding_step5_header_text_body">Konfiguracja zakończona pomyślnie!</string>
+    <string name="onboarding_step5_get_started_btn_content">Przejdź do aplikacji</string>
 </resources>
