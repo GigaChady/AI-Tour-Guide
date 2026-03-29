@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">AiTourGuide</string>
+
+    <!-- Onboarding steps  -->
+    <string name="onboarding_header_text_header">Hej!</string>
+    <string name="onboarding_step1_header_text_body">Na początek spersonalizujemy twoje doświadczenie</string>
+    <string name="onboarding_step1_get_started_btn_content">Zaczynajmy!</string>
+
+    <string name="onboarding_step2_header_text_body">Zaloguj się</string>
+    <string name="onboarding_step2_email_input_title">Email</string>
+    <string name="onboarding_step2_password_input_title">Hasło</string>
+    <string name="onboarding_step2_no_account_question">Nie masz konta?</string>
+    <string name="onboarding_step2_register_span">Zarejestruj się</string>
+    <string name="onboarding_step2_login_button">Zaloguj się</string>
+    <string name="onboarding_step2_login_with_google_button">Zaloguj się z Google</string>
+
+    <string name="onboarding_step3_header_text_body">Zarejestruj się</string>
+    <string name="onboarding_step3_name_input_title">Imię i nazwisko</string>
+    <string name="onboarding_step3_email_input_title">Email</string>
+    <string name="onboarding_step3_password_input_title">Hasło</string>
+    <string name="onboarding_step3_confirm_password_input_title">Powtórz hasło</string>
+    <string name="onboarding_step3_register_button">Zarejestruj się</string>
+
+    <string name="onboarding_step4_header_text_body">Poznajmy się</string>
+</resources>
