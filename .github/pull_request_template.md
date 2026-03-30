@@ -1,22 +1,22 @@
-\## What was done
+## What was done
 
-\- 
-
-
-
-\## How to test manually
-
-\- 
+- 
 
 
 
-\## Tests
+## How to test manually
 
-\- \[ ] Neccessery tests added?
+- 
 
 
 
-\## README\_DEV updated?
+## Tests
 
-\- \[ ] yes
+- \[ ] Neccessery tests added?
+
+
+
+## README\_DEV updated?
+
+- \[ ] yes
 
