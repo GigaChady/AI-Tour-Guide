@@ -1,0 +1,35 @@
+name: Feature
+description: Create a new feature or task
+title: "[Feature] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should work after this task?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included?
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of Done
+      description: How do we verify this?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Area
+      options:
+        - Mobile
+        - Backend
+        - AI
