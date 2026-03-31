@@ -18,7 +18,10 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    # nie wiem co jeszcze chcecie tutaj dodac typu imie/nazwisko czy cos, ale na razie niech bedzie tak prosto, bo i tak wiekszosc rzeczy bedzie sie dzialo w kontekscie trasy i narracji a nie profilu usera
+    imie = Column(String, nullable=True)
+    nazwisko = Column(String, nullable=True)
+    plec = Column(String, nullable=True)  
+    wiek = Column(Float, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     # routes = relationship("Route", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
