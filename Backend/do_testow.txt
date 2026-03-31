@@ -1,0 +1,15 @@
+docker exec -it 8ddc1cf7239fc4d0879687bd5d33a7e6ba46d53e5f48c4cebc3f2963a4248de0 psql -U dev -d tourcompanion 
+
+docker compose up -d
+
+pytest tests  
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process   
+& c:\Users\kobla\OneDrive\Desktop\ZPI\AI-Tour-Guide\.venv\Scripts\Activate.ps1
+
+do danych z mapy w folderze Ai-Tour_Guide tylko osm musi byc w folderze docelowym
+docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/foot.lua /data/dolnoslaskie-260323.osm.pbf 
+docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/dolnoslaskie-260323.osrm 
+docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/dolnoslaskie-260323.osrm
+docker run -t -i -p 5000:5000 -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/dolnoslaskie-260323.osrm
+
