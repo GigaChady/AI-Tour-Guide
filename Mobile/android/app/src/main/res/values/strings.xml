@@ -51,9 +51,9 @@
     <string name="navigation_dashboard_route_title">Dashboard</string>
     <string name="navigation_profile_preferences_route_title">Profil</string>
     <string name="navigation_app_settings_route_title">Ustawienia</string>
+    <string name="navigation_account_settings_route_title">Ustawienia konta</string>
 
     <string name="navigation_route_dashboard_name">Dashboard</string>
-
     <!-- Content descriptions  -->
     <string name="app_bar_hamburger_menu_content_description">Menu aplikacji</string>
 
@@ -63,4 +63,10 @@
     <string name="dashboard_main_section_header">Twoja lokalizacja</string>
     <string name="dashboard_main_section_header_subtext_example">Warszawa Stare Miasto</string>
     <string name="dashboard_main_cta_button_text">Rozpocznij zwiedzanie</string>
+
+    <string name="profile_preferences_account_settings_section_header">Ustawienia konta</string>
+    <string name="profile_preferences_account_settings_cta">Przejdź do ustawień konta</string>
+
+    <string name="account_settings_header">Twoje dane</string>
+    <string name="account_settings_cta">Zapisz</string>
 </resources>
