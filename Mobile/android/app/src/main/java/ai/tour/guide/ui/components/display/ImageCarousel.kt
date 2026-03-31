@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 fun ImageCarousel(modifier: Modifier = Modifier) {
     data class CarouselItem(
         val id: Int,
-        @DrawableRes val imageResId: Int,
+        @param:DrawableRes val imageResId: Int,
         val contentDescription: String
     )
 
