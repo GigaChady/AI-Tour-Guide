@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlal import select
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
@@ -74,7 +74,11 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
     user = User(
         email=body.email,
-        hashed_password=token_service.hash_password(body.password)
+        hashed_password=token_service.hash_password(body.password),
+        imie=getattr(body, "imie", None),
+        nazwisko=getattr(body, "nazwisko", None),
+        plec=getattr(body, "plec", None),
+        wiek=getattr(body, "wiek", None),
     )
     db.add(user)
     await db.commit()
@@ -113,7 +117,14 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     user = result.scalar()
 
     if not user:
-        user = User(email=user_info["email"], google_id=user_info["sub"])
+        user = User(
+            email=user_info["email"],
+            google_id=user_info["sub"],
+            imie=user_info.get("given_name"),
+            nazwisko=user_info.get("family_name"),
+            plec=None,  # Google API nie zawsze zwraca płeć
+            wiek=None   # Google API nie zwraca wieku
+        )
         db.add(user)
         await db.commit()
         await db.refresh(user)
