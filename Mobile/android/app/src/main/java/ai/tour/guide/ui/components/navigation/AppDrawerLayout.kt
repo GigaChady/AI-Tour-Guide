@@ -1,11 +1,14 @@
 package ai.tour.guide.ui.components.navigation
 
 import ai.tour.guide.R
-import ai.tour.guide.navigation.NavigationRoot
 import ai.tour.guide.navigation.Route
+import ai.tour.guide.ui.screens.main.DashboardScreen
+import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -37,6 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +51,8 @@ import kotlinx.coroutines.launch
 fun AppDrawerLayout(modifier: Modifier = Modifier) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedRoute by remember { mutableStateOf<Route>(Route.Dashboard) }
+    val backStack = rememberNavBackStack(Route.Dashboard)
+    val selectedRoute = backStack.lastOrNull() as? Route ?: Route.Dashboard
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -58,7 +65,10 @@ fun AppDrawerLayout(modifier: Modifier = Modifier) {
                 DrawerContent(
                     selectedRoute = selectedRoute,
                     onRouteSelected = { route ->
-                        selectedRoute = route
+                        if (route != selectedRoute) {
+                            backStack.clear()
+                            backStack.add(route)
+                        }
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -72,9 +82,9 @@ fun AppDrawerLayout(modifier: Modifier = Modifier) {
                     title = {
                         Text(
                             when (selectedRoute) {
-                                Route.Dashboard -> stringResource(R.string.navigation_route_dashboard_name)
-                                Route.Profile -> stringResource(R.string.navigation_drawer_item_profile)
-                                Route.Settings -> stringResource(R.string.navigation_drawer_item_app_settings)
+                                Route.Dashboard -> stringResource(R.string.navigation_dashboard_route_title)
+                                Route.Profile -> stringResource(R.string.navigation_profile_preferences_route_title)
+                                Route.Settings -> stringResource(R.string.navigation_app_settings_route_title)
                             }
                         )
                     },
@@ -97,7 +107,27 @@ fun AppDrawerLayout(modifier: Modifier = Modifier) {
                 )
             },
         ) { innerPadding ->
-            NavigationRoot(modifier = Modifier.padding(innerPadding))
+            NavDisplay(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                backStack = backStack,
+                onBack = { backStack.removeLastOrNull() },
+                entryProvider = { key ->
+                    when (key) {
+                        is Route.Dashboard -> NavEntry(key) {
+                            DashboardScreen()
+                        }
+                        is Route.Profile -> NavEntry(key) {
+                            ProfilePreferencesScreen()
+                        }
+                        else -> NavEntry(key) {
+                            DashboardScreen()
+                        }
+                    }
+                }
+            )
         }
     }
 }
@@ -108,7 +138,7 @@ fun DrawerContent(
     onRouteSelected: (Route) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             modifier = Modifier.padding(16.dp),
             text = stringResource(R.string.navigation_drawer_header),
@@ -122,7 +152,7 @@ fun DrawerContent(
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Place,
-                    contentDescription = "null"
+                    contentDescription = null
                 )
             }
         )
@@ -133,7 +163,7 @@ fun DrawerContent(
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Person,
-                    contentDescription = "null"
+                    contentDescription = null
                 )
             }
         )
@@ -144,7 +174,7 @@ fun DrawerContent(
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
-                    contentDescription = "null"
+                    contentDescription = null
                 )
             }
         )

@@ -1,6 +1,8 @@
 package ai.tour.guide.navigation
 
-import ai.tour.guide.ui.screens.DashboardScreen
+import ai.tour.guide.ui.screens.main.AppSettingsScreen
+import ai.tour.guide.ui.screens.main.DashboardScreen
+import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +26,12 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                 is Route.Dashboard -> NavEntry(key) {
                     DashboardScreen()
                 }
-
+                is Route.Profile -> NavEntry(key) {
+                    ProfilePreferencesScreen()
+                }
+                is Route.Settings -> NavEntry(key) {
+                    AppSettingsScreen()
+                }
                 else -> error("Invalid NavKey: $key")
             }
         }

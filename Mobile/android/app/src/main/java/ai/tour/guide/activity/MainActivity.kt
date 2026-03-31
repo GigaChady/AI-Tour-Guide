@@ -2,6 +2,7 @@ package ai.tour.guide.activity
 
 import ai.tour.guide.ui.components.navigation.AppDrawerLayout
 import ai.tour.guide.ui.theme.AiTourGuideTheme
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
