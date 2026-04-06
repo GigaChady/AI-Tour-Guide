@@ -7,9 +7,6 @@ from app.main import app
 from asgi_lifespan import LifespanManager
 import asyncio
 
-# asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-if sys.platform.startswith("win"):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 @pytest.mark.asyncio
 async def test_register_and_login():
     async with LifespanManager(app):

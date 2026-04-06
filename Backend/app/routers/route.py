@@ -1,40 +1,39 @@
-from email.mime import text
+from datetime import datetime, timezone
 from sqlalchemy import text
-from datetime import datetime
-from pytz import timezone
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_current_user, get_session_service
 from app.schemas.schemas import RouteStartResponse, TrackPointRequest, RouteEditNameRequest, RouteEndRequest
 from app.services.session_service import SessionService
 from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.models import User, Route 
-route = APIRouter(prefix="/route", tags=["route"])
+from app.models.models import User, Route
 
-@route.post("/start", response_model=RouteStartResponse)
+router = APIRouter(prefix="/route", tags=["route"])
+
+
+@router.post("/start", response_model=RouteStartResponse)
 async def start_route(
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: SessionService = Depends(get_session_service),
     db: AsyncSession = Depends(get_db),
 ):
-    route = Route(
+    new_route = Route(
         user_id=current_user.id,
-        started_at=datetime.now(timezone("UTC")),
+        started_at=datetime.now(timezone.utc),
     )
-    db.add(route)
+    db.add(new_route)
     await db.commit()
-    await db.refresh(route)
+    await db.refresh(new_route)
 
-    session_id = await session.create(user_id = str(current_user.id),route_id= str(route.id))
+    session_id = await session.create(user_id=str(current_user.id), route_id=str(new_route.id))
 
-    return RouteStartResponse(session_id=session_id, route_id=route.id)
+    return RouteStartResponse(session_id=session_id, route_id=str(new_route.id))
 
 
-@route.post("/track") # zapisywanie punktow do bazy odbywa sie co punkt a nie na koniec trasy/ w razie co mozna zmienic bo szczerze nie wiem co bedzie bardziej optymalne 
-
+@router.post("/track")
 async def track_point(
     body: TrackPointRequest,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     sessions: SessionService = Depends(get_session_service),
 ):
@@ -61,10 +60,10 @@ async def track_point(
     return {"ok": True}
 
 
-@route.post("/end") # mozna pomyslec o dodaniu jakies logiki dla nazywania trasy w tym miejscu
+@router.post("/end")
 async def end_route(
     body: RouteEndRequest,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: SessionService = Depends(get_session_service),
     db: AsyncSession = Depends(get_db),
 ):
@@ -89,13 +88,14 @@ async def end_route(
         )
         route.distance_m = result.scalar()
     await db.commit()
-    await session.end(body.session_id)
+    await session.end_session(body.session_id)
     return {"ok": True}
 
-@route.put("/edit-name")
+
+@router.put("/edit-name")
 async def edit_route_name(
     body: RouteEditNameRequest,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     route = await db.get(Route, body.route_id)
@@ -105,12 +105,3 @@ async def edit_route_name(
     await db.commit()
     await db.refresh(route)
     return {"ok": True, "route_id": str(route.id), "name": route.name}
-
-# do dodania na przyszlosc
-# 1.pobieranie tras userow
-# 2. pobieranie konkretnych tras usera
-# 3. usuwanie tras usera
-
-
-
-# 5. generowanie jakis statystyk z tras typu przebyty dystans, czas trwania trasy, srednia predkosc czy cos takiego, moze sie przydac do wyswietlania tych statystyk w profilu usera czy cos takiego

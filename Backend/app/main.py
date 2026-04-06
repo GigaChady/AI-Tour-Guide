@@ -4,8 +4,10 @@ from app.core.database import init_db
 from app.core.redis import init_redis, close_redis
 
 
-from app.routers import auth, route, narration
+from app.routers.user import auth
+from app.routers import route, narration
 from app.routers.user import preferences as user_preferences
+from app.routers.user import demographics as user_demographics
 from app.routers import map as map_router
 
 @asynccontextmanager
@@ -29,9 +31,10 @@ app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
 
 
 app.include_router(auth.router)
-app.include_router(route.route)
+app.include_router(route.router)
 app.include_router(narration.router)
 app.include_router(user_preferences.router)
+app.include_router(user_demographics.router)
 app.include_router(map_router.router)
 
 
