@@ -1,5 +1,7 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.core.database import init_db
 from app.core.redis import init_redis, close_redis
 
@@ -28,6 +30,9 @@ async def lifespan(app: FastAPI):
 #     await app.state.engine.dispose()
 
 app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
+
+os.makedirs("audio_files", exist_ok=True)
+app.mount("/audio", StaticFiles(directory="audio_files"), name="audio")
 
 
 app.include_router(auth.router)

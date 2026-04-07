@@ -20,6 +20,15 @@ celery_app.conf.update(
     },
 )
 
+from celery.schedules import crontab
+
+celery_app.conf.beat_schedule = {
+    "cleanup-audio-files-hourly": {
+        "task": "workers.cleanup_worker.cleanup_audio",
+        "schedule": crontab(minute=0),  # top of every hour
+    },
+}
+
 # @celery_app.task
 # def example_task(x, y):
 #     return x + y
