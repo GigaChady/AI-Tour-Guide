@@ -2,7 +2,7 @@ import edge_tts
 
 from app.services.tts.base import TTSProvider
 
-_VOICE_MAP: dict[str, str] = {
+VOICE_MAP: dict[str, str] = {
     "pl": "pl-PL-ZofiaNeural",
     "en": "en-US-JennyNeural",
     "es": "es-ES-ElviraNeural",
@@ -15,30 +15,27 @@ _VOICE_MAP: dict[str, str] = {
     "ja": "ja-JP-NanamiNeural",
 }
 
-_DEFAULT_VOICE = "en-US-JennyNeural"
+DEFAULT_VOICE = "en-US-JennyNeural"
 
 
 def _voice_for_language(language: str) -> str:
-    return _VOICE_MAP.get(language, _DEFAULT_VOICE)
+    return VOICE_MAP.get(language, DEFAULT_VOICE)
 
 
 def _map_rate(value: int) -> str:
-    """Map 0-100 to -50% to +50% rate (50 = +0% normal)."""
-    pct = value - 50
+    pct = value - 50 # Map 0-100 to -50% to +50% speed (50 = +0% normal)
     sign = "+" if pct >= 0 else ""
     return f"{sign}{pct}%"
 
 
 def _map_pitch(value: int) -> str:
-    """Map 0-100 to -50Hz to +50Hz (50 = +0Hz neutral)."""
-    hz = value - 50
+    hz = value - 50 # Map 0-100 to -50Hz to +50Hz (50 = +0Hz normal)
     sign = "+" if hz >= 0 else ""
     return f"{sign}{hz}Hz"
 
 
 def _map_volume(value: int) -> str:
-    """Map 0-100 to -50% to +50% volume (50 = +0% neutral)."""
-    pct = value - 50
+    pct = value - 50 # Map 0-100 to -50% to +50% volume (50 = +0% normal)
     sign = "+" if pct >= 0 else ""
     return f"{sign}{pct}%"
 

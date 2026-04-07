@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     # JWT
-    JWT_SECRET_KEY: str 
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
@@ -30,32 +30,34 @@ class Settings(BaseSettings):
 #     # Redis
     # REDIS_HOST: str = "localhost"
     # REDIS_PORT: int = 6379
-#     # REDIS_DB: int 
-    # REDIS_PASSWORD: str 
+#     # REDIS_DB: int
+    # REDIS_PASSWORD: str
     REDIS_URL: str
 
     # TTS
     TTS_PROVIDER: str = "edge"                    # "edge" or "google"
     TTS_SPEAKER_WAV: str = ""                      # reserved for future use
+    AUDIO_DIR: str = "audio_files"
     AUDIO_FILE_TTL_SECONDS: int = 3600
     GOOGLE_APPLICATION_CREDENTIALS: str = ""       # only needed when TTS_PROVIDER=google
 
     # LLM
 
     # Route session
-    SCRAPE_INTERVAL_SECONDS: int = 120   # co ile sekund scraper uderza w Google 
-    # mozna tez pomyslec ze zamiast czasu bedziemy miec odleglosc od ostaniego poi 
-    # i np jak user nie odejdzie za daleko to nie scrapujemy nowych danych tylko 
+    SCRAPE_INTERVAL_SECONDS: int = 120
+    # mozna tez pomyslec ze zamiast czasu bedziemy miec odleglosc od ostaniego poi
+    # i np jak user nie odejdzie za daleko to nie scrapujemy nowych danych tylko
     # uzywamy tych co mamy ale to juz bedzie bardziej skomplikowane do zrobienia wiec na razie niech zostanie czas
 
-    #Streaming 
-    STREAM_TIMEOUT_SECONDS: int = 15 # jakis timeout dla streamingu zeby w razie cos sie nie zawiesil na amen, mozna tez pomyslec o jakims keep-alive zeby utrzymywac polaczenie ale to juz bedzie bardziej skomplikowane do zrobienia wiec na razie niech zostanie timeout
+    #Streaming
+    STREAM_TIMEOUT_SECONDS: int = 15
 
     # Demographics
     DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary,prefer_not_to_say"
     DEMOGRAPHICS_MIN_AGE: int = 10
     DEMOGRAPHICS_MAX_AGE: int = 120
     DEMOGRAPHICS_CUSTOM_GENDER_ANSWER_ID: str = "custom"
+
 
 settings = Settings()
 
@@ -123,5 +125,3 @@ DEFAULT_PREFERENCE_CATALOG = [
         ],
     },
 ]
-    
-
