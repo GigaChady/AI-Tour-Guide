@@ -134,6 +134,19 @@ class NarrationRequest(BaseModel): # to zakladam ze bedzie potrzebne do endpoint
     preferences: UserPreferencesSchema
 
 
+class NarrationGenerateRequest(BaseModel):
+    text: str
+    language: str = "en"
+    speed: int = 50    # 0-100, 50 = normal
+    pitch: int = 50    # 0-100, 50 = neutral
+    loudness: int = 50 # 0-100, 50 = 0 dB
+
+
+class NarrationStatusResponse(BaseModel):
+    status: Literal["pending", "processing", "done", "failed"]
+    audio_url: str | None = None
+
+
 
 
 
