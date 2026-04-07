@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     # REDIS_PASSWORD: str 
     REDIS_URL: str
 
+    # TTS
+    TTS_PROVIDER: str = "edge"                    # "edge" or "google"
+    TTS_SPEAKER_WAV: str = ""                      # reserved for future use
+    AUDIO_FILE_TTL_SECONDS: int = 3600
+    GOOGLE_APPLICATION_CREDENTIALS: str = ""       # only needed when TTS_PROVIDER=google
+
     # LLM
 
     # Route session
