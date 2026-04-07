@@ -2,11 +2,11 @@ import os
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
-import app.core.celery_app as celery_app_module
+from workers.narrative_worker import narrate
 
 
 def test_narrate_saves_mp3_and_returns_url(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.core.config.settings.AUDIO_DIR", str(tmp_path))
+    monkeypatch.setattr("workers.narrative_worker.settings.AUDIO_DIR", str(tmp_path))
 
     mock_provider = MagicMock()
     mock_provider.synthesize = AsyncMock(return_value=b"fake_mp3_bytes")
@@ -15,7 +15,7 @@ def test_narrate_saves_mp3_and_returns_url(tmp_path, monkeypatch):
         lambda: mock_provider,
     )
 
-    task = celery_app_module.narrate
+    task = narrate
     task.push_request(id="abc-123")
     try:
         result = task.run(text="Hello", language="en", speed=50, pitch=50, loudness=50)
@@ -27,7 +27,7 @@ def test_narrate_saves_mp3_and_returns_url(tmp_path, monkeypatch):
 
 
 def test_narrate_passes_params_to_provider(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.core.config.settings.AUDIO_DIR", str(tmp_path))
+    monkeypatch.setattr("workers.narrative_worker.settings.AUDIO_DIR", str(tmp_path))
 
     mock_provider = MagicMock()
     mock_provider.synthesize = AsyncMock(return_value=b"data")
@@ -36,7 +36,7 @@ def test_narrate_passes_params_to_provider(tmp_path, monkeypatch):
         lambda: mock_provider,
     )
 
-    task = celery_app_module.narrate
+    task = narrate
     task.push_request(id="xyz")
     try:
         task.run(text="Cześć", language="pl", speed=80, pitch=30, loudness=60)

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, tzinfo
 from sqlalchemy import text
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_current_user, get_session_service
@@ -19,7 +19,7 @@ async def start_route(
 ):
     new_route = Route(
         user_id=current_user.id,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(new_route)
     await db.commit()
