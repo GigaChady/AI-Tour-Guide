@@ -1,8 +1,8 @@
 package ai.tour.guide.ui.screens.main
 
 import ai.tour.guide.R
-import ai.tour.guide.navigation.Route
 import ai.tour.guide.ui.components.fragments.UserPreferenceFragment
+import ai.tour.guide.ui.navigation.Route
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,7 +50,9 @@ fun ProfilePreferencesScreen(
                     )
                 }
                 Button(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     onClick = { backStack.add(Route.AccountSettings) },
                     shape = MaterialTheme.shapes.small,
                     colors = ButtonDefaults.buttonColors(

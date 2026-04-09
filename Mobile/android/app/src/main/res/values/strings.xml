@@ -52,10 +52,13 @@
     <string name="navigation_profile_preferences_route_title">Profil</string>
     <string name="navigation_app_settings_route_title">Ustawienia</string>
     <string name="navigation_account_settings_route_title">Ustawienia konta</string>
+    <string name="navigation_tour_audio_player_route_title">Zwiedzanie</string>
+    <string name="navigation_map_user_position_route_title">Mapa</string>
 
     <string name="navigation_route_dashboard_name">Dashboard</string>
     <!-- Content descriptions  -->
     <string name="app_bar_hamburger_menu_content_description">Menu aplikacji</string>
+    <string name="app_bar_map_icon_tour_content_description">Przejdź do mapy</string>
 
     <!-- Screen content -->
     <string name="dashboard_header_text_content_part1">Jakie miejsca</string>
@@ -69,4 +72,23 @@
 
     <string name="account_settings_header">Twoje dane</string>
     <string name="account_settings_cta">Zapisz</string>
+
+    <string name="tour_audio_player_location_header">Twoja lokalizacja</string>
+    <string name="tour_audio_player_example_location">Zamek Królewski</string>
+
+    <string name="tour_audio_player_narration_header_title">Opis</string>
+    <string name="tour_audio_player_narration_header_example_content_before">Przed Tobą stoi majestatyczny Zamek Królewski. To tutaj, w tym wspaniałym budynku, królowie Polski podejmowali najważniejsze decyzje dla kraju.</string>
+    <string name="tour_audio_player_narration_header_example_content_current">W swojej długiej historii Zamek Królewski był wielokrotnie grabiony i dewastowany przez wojska szwedzkie, brandenburskie, niemieckie i rosyjskie.</string>
+    <string name="tour_audio_player_narration_header_example_content_after">W XIX wieku, po upadku powstania listopadowego, został przeznaczony na potrzeby administracji rosyjskiej. W okresie I wojny światowej rezydencja niemieckiego generalnego gubernatora. W latach 1920–1922 siedziba Naczelnika Państwa, w latach 1926–1939 rezydencja Prezydenta Rzeczypospolitej Polskiej. Spalony i ograbiony przez Niemców w 1939, doszczętnie zniszczony w 1944.</string>
+
+    <string name="trip_end_summary_header">Podsumowanie</string>
+    <string name="trip_end_summary_header_subtext">Twojej podróży</string>
+    <string name="trip_end_summary_quick_summary_section_header">W skrócie</string>
+    <string name="trip_end_summary_visited_places_section_header">Odwiedzone atrakcje</string>
+    <string name="trip_end_summary_go_back_cta_button_text">Powrót do menu głównego</string>
+
+    <!-- Component-specific -->
+    <string name="audio_player_widget_header_text">Odtwarzacz</string>
+    <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
+    <string name="tour_summary_bottom_sheet_places_section">Atrakcje</string>
 </resources>

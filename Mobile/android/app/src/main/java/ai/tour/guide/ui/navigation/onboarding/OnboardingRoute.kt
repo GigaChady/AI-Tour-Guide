@@ -1,4 +1,4 @@
-package ai.tour.guide.navigation.onboarding
+package ai.tour.guide.ui.navigation.onboarding
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

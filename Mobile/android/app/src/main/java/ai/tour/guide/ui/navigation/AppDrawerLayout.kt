@@ -1,13 +1,6 @@
-package ai.tour.guide.navigation
+package ai.tour.guide.ui.navigation
 
 import ai.tour.guide.R
-import ai.tour.guide.ui.screens.main.AccountSettingsScreen
-import ai.tour.guide.ui.screens.main.AppSettingsScreen
-import ai.tour.guide.ui.screens.main.DashboardScreen
-import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Place
@@ -45,10 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
@@ -99,35 +91,7 @@ fun AppDrawerLayout(modifier: Modifier = Modifier) {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                NavDisplay(
-                    modifier = Modifier.fillMaxSize(),
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-                    entryProvider = { key ->
-                        when (key) {
-                            is Route.Dashboard -> NavEntry(key) {
-                                DashboardScreen()
-                            }
-
-                            is Route.Profile -> NavEntry(key) {
-                                ProfilePreferencesScreen(backStack = backStack)
-                            }
-
-                            is Route.Settings -> NavEntry(key) {
-                                AppSettingsScreen()
-                            }
-
-                            is Route.AccountSettings -> NavEntry(key) {
-                                AccountSettingsScreen()
-                            }
-
-                            else -> NavEntry(key) {
-                                DashboardScreen()
-                            }
-                        }
-                    }
-                )
+                AppNavigationDisplay(backStack = backStack)
             }
         }
     }
@@ -188,7 +152,9 @@ fun DrawerContent(
 fun TopBar(selectedRoute: Route, drawerState: DrawerState, backStack: NavBackStack<NavKey>) {
     val scope = rememberCoroutineScope()
     val routesWithBackButton = listOf(
-        Route.AccountSettings
+        Route.AccountSettings,
+        Route.TourAudioPlayer,
+        Route.MapUserPosition
     )
 
     CenterAlignedTopAppBar(
@@ -199,6 +165,9 @@ fun TopBar(selectedRoute: Route, drawerState: DrawerState, backStack: NavBackSta
                     Route.Profile -> stringResource(R.string.navigation_profile_preferences_route_title)
                     Route.Settings -> stringResource(R.string.navigation_app_settings_route_title)
                     Route.AccountSettings -> stringResource(R.string.navigation_account_settings_route_title)
+                    Route.TourAudioPlayer -> stringResource(R.string.navigation_tour_audio_player_route_title)
+                    Route.MapUserPosition -> stringResource(R.string.navigation_map_user_position_route_title)
+                    else -> ""
                 }
             )
         },
@@ -210,7 +179,7 @@ fun TopBar(selectedRoute: Route, drawerState: DrawerState, backStack: NavBackSta
                     }
                 }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft,
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = stringResource(R.string.app_bar_hamburger_menu_content_description)
                     )
                 }
@@ -230,6 +199,22 @@ fun TopBar(selectedRoute: Route, drawerState: DrawerState, backStack: NavBackSta
                     )
                 }
             }
+        },
+        actions = {
+            if (selectedRoute == Route.TourAudioPlayer) {
+                IconButton(onClick = {
+                    scope.launch {
+                        backStack.add(Route.MapUserPosition)
+                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = stringResource(R.string.app_bar_map_icon_tour_content_description)
+                    )
+                }
+            }
         }
     )
 }
+
+
