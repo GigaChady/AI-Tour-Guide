@@ -1,4 +1,4 @@
-package ai.tour.guide.navigation.onboarding
+package ai.tour.guide.ui.navigation.onboarding
 
 import ai.tour.guide.ui.screens.onboarding.FinishStepScreen
 import ai.tour.guide.ui.screens.onboarding.LoginStepScreen

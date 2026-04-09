@@ -60,7 +60,12 @@ fun AnimatedSharedStepScreen(
                     onClick = { onNextClicked() },
                     shape = MaterialTheme.shapes.large,
                     icon = { Icon(Icons.AutoMirrored.Default.ArrowForward, null) },
-                    text = { Text(buttonLabel) }
+                    text = {
+                        Text(
+                            text = buttonLabel,
+                            style = MaterialTheme.typography.titleMediumEmphasized
+                        )
+                    }
                 )
             }
 

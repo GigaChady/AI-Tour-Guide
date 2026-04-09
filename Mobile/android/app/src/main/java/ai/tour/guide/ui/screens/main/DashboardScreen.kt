@@ -2,6 +2,7 @@ package ai.tour.guide.ui.screens.main
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.display.ImageCarousel
+import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.theme.AiTourGuideTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,9 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier) {
+fun DashboardScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
     val part1 = stringResource(R.string.dashboard_header_text_content_part1)
     val part2 = stringResource(R.string.dashboard_header_text_content_part2)
 
@@ -83,7 +86,9 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             )
 
             ExtendedFloatingActionButton(
-                onClick = {},
+                onClick = {
+                    backStack?.add(Route.TourAudioPlayer)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 icon = {
                     Icon(
@@ -93,7 +98,8 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 },
                 text = {
                     Text(
-                        text = stringResource(R.string.dashboard_main_cta_button_text)
+                        text = stringResource(R.string.dashboard_main_cta_button_text),
+                        style = MaterialTheme.typography.titleMediumEmphasized
                     )
                 }
             )
