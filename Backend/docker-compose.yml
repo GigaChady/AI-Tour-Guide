@@ -69,6 +69,35 @@ services:
         - "8081:8081"
       environment:
         - REDIS_HOSTS=local:redis:6379
+  celery-worker:
+    build: .
+    command: celery -A app.core.celery_app worker -Q narrative -l info --concurrency 1
+    env_file: .env
+    volumes:
+      - .:/app
+      - tts_edge_cache:/root/.cache/edge-tts
+      - ./audio_files:/app/audio_files
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    runtime: nvidia
+
+  celery-beat:
+    build: .
+    command: celery -A app.core.celery_app beat -l info
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+
   # kokoro-fastapi:
   #     image: ghcr.io/remsky/kokoro-fastapi-cpu:latest 
   #     ports:
@@ -89,3 +118,4 @@ services:
 volumes:
   pgdata:
   pgdata_test:
+  tts_edge_cache:

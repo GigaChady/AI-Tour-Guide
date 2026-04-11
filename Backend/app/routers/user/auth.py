@@ -39,7 +39,9 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
     return
 
 
-@router.post("/register", response_model=TokenResponse)
+@router.post("/register", response_model=TokenResponse) 
+#TODO: trzeba dodac walidacje hasel pod katem bezpieczenstwa, np. minimum 8 znakow, duza litera, cyfra itp. 
+# Ale mozna to tez zrobic na froncie, wiec zostawiam na pozniej
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar():

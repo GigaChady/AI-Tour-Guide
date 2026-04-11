@@ -109,6 +109,10 @@ def _normalize_preference_answers(
                 raise HTTPException(status_code=422, detail=f"value is required for question_id: {item.question_id}")
             if item.value < 0 or item.value > 100:
                 raise HTTPException(status_code=422, detail=f"value must be between 0 and 100 for question_id: {item.question_id}")
+            min_value = question.input.min if question.input and question.input.min is not None else 0
+            max_value = question.input.max if question.input and question.input.max is not None else 100
+            if item.value < min_value or item.value > max_value:
+                raise HTTPException(status_code=422, detail=f"value must be between {min_value} and {max_value} for question_id: {item.question_id}")
             if item.answer_id is not None or item.answer_ids is not None:
                 raise HTTPException(status_code=422, detail=f"Only value is allowed for question_id: {item.question_id}")
 
