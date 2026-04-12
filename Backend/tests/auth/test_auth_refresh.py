@@ -13,7 +13,7 @@ async def test_refresh_token():
             # Register
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             assert response.status_code == 200
             data = response.json()

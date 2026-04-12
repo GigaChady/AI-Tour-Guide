@@ -13,7 +13,7 @@ async def test_login_wrong_password():
             # Register
             await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             # Login with wrong password
             response = await ac.post("/auth/login", json={

@@ -13,12 +13,13 @@ async def test_logout_revokes_refresh_token():
             # Register
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             tokens = response.json()
             refresh_token = tokens["refresh_token"]
             # Logout (revoke refresh token)
-            await ac.post("/auth/logout", json={"refresh_token": refresh_token})
+            logout_response = await ac.post("/auth/logout", json={"refresh_token": refresh_token})
+            assert logout_response.status_code == 204
             # Try to use revoked refresh token
             response = await ac.post("/auth/refresh", json={"refresh_token": refresh_token})
             assert response.status_code in (401, 400)

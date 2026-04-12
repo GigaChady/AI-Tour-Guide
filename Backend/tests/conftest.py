@@ -38,19 +38,38 @@ AsyncSessionTest = async_sessionmaker(engine_test, class_=AsyncSession, expire_o
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
     async with engine_test.begin() as conn:
+        # Kill stale connections from previously interrupted test runs so DROP TABLE succeeds.
+        await conn.execute(sqlalchemy.text(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+            "WHERE datname = current_database() AND pid <> pg_backend_pid()"
+        ))
         await conn.execute(sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS postgis"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine_test.begin() as conn:
+        # Kill connections leaked from tests whose session.close() was suppressed.
+        await conn.execute(sqlalchemy.text(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+            "WHERE datname = current_database() AND pid <> pg_backend_pid()"
+        ))
         await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")
 async def db_session():
-    async with AsyncSessionTest() as session:
+    # Don't use `async with` — we need to suppress teardown exceptions.
+    # On Windows, asyncpg tries to send ROLLBACK/TERMINATE through the ProactorEventLoop,
+    # but that loop is already closed when function-scoped fixture teardown runs.
+    # Suppressing here is safe: tests use unique UUIDs and prepare_database resets tables.
+    session = AsyncSessionTest()
+    try:
         yield session
-        await session.rollback()
+    finally:
+        try:
+            await session.close()
+        except Exception:
+            pass
 
 
 @pytest.fixture(autouse=True)
