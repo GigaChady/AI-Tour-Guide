@@ -10,6 +10,6 @@ async def test_register_invalid_email():
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             response = await ac.post("/auth/register", json={
                 "email": "not-an-email",
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             assert response.status_code in (400, 422)

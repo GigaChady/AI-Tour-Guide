@@ -16,7 +16,7 @@ async def test_register_and_login():
                 # Register
                 response = await ac.post("/auth/register", json={
                     "email": email,
-                    "password": "testpassword"
+                    "password": "Testpass1"
                 })
                 assert response.status_code == 200
                 data = response.json()
@@ -26,7 +26,7 @@ async def test_register_and_login():
                 # Login
                 response = await ac.post("/auth/login", json={
                     "email": email,
-                    "password": "testpassword"
+                    "password": "Testpass1"
                 })
                 assert response.status_code == 200
                 data = response.json()

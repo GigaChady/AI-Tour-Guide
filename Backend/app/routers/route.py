@@ -39,11 +39,11 @@ async def track_point(
 ):
     meta = await sessions.get_meta(body.session_id)
     if not meta or meta["user_id"] != str(current_user.id):
-        raise HTTPException(403, "Session not found, expired, or does not belong to user.")
+        raise HTTPException(403, detail="Session not found, expired, or does not belong to user.")
 
     route = await db.get(Route, meta["route_id"])
     if not route:
-        raise HTTPException(404, "Route not found")
+        raise HTTPException(404, detail="Route not found")
 
     if route.path is None:
         linestring = f"SRID=4326;LINESTRING({body.location.lng} {body.location.lat})"
@@ -69,11 +69,11 @@ async def end_route(
 ):
     meta = await session.get_meta(body.session_id)
     if not meta:
-        raise HTTPException(403, "Session not found or expired.")
+        raise HTTPException(403, detail="Session not found or expired.")
 
     route = await db.get(Route, meta["route_id"])
     if not route or route.user_id != current_user.id:
-        raise HTTPException(404, "Route not found or not owned by user")
+        raise HTTPException(404, detail="Route not found or not owned by user")
 
     result = await db.execute(
         text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id")
@@ -100,7 +100,7 @@ async def edit_route_name(
 ):
     route = await db.get(Route, body.route_id)
     if not route or route.user_id != current_user.id:
-        raise HTTPException(404, "Route not found")
+        raise HTTPException(404, detail="Route not found")
     route.name = body.name
     await db.commit()
     await db.refresh(route)
