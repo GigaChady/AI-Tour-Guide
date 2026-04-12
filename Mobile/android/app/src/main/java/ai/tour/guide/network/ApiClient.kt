@@ -1,5 +1,6 @@
 package ai.tour.guide.network
 
+import ai.tour.guide.config.AppConfig
 import ai.tour.guide.network.schema.response.BaseAPIResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -10,7 +11,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
-import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
@@ -23,8 +23,8 @@ class ApiClient {
         return try {
             val response = httpClient.get {
                 url {
-                    protocol = PROTOCOL
-                    host = HOST
+                    protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
+                    host = AppConfig.HTTPS_CLIENT_HOST
                     path(route.path)
                 }
             }
@@ -41,8 +41,8 @@ class ApiClient {
         return try {
             val response = httpClient.post {
                 url {
-                    protocol = PROTOCOL
-                    host = HOST
+                    protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
+                    host = AppConfig.HTTPS_CLIENT_HOST
                     path(route.path)
                 }
                 contentType(ContentType.Application.Json)
@@ -55,8 +55,6 @@ class ApiClient {
     }
 
     companion object {
-        val PROTOCOL: URLProtocol = URLProtocol.HTTP
-        const val HOST: String = "localhost:8000"
         val httpClient = HttpClient(Android) {
             install(ContentNegotiation) {
                 json(Json {

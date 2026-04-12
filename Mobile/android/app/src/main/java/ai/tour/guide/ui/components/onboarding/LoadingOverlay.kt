@@ -31,7 +31,7 @@ fun LoadingOverlay(modifier: Modifier = Modifier, isVisible: Boolean = true) {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.25f))
+                .background(Color.Black.copy(alpha = 0.1f))
         ) {
             Column(
                 modifier = Modifier
