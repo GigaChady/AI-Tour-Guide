@@ -8,7 +8,7 @@ class RegisterRequest(BaseModel): # do endpointu register, zeby tam wstrzykiwac 
     password: str
     imie: str | None = None
     nazwisko: str | None = None
-  
+
 class LoginRequest(BaseModel): # do endpointu login, zeby tam wstrzykiwac email i password
     email: EmailStr
     password: str

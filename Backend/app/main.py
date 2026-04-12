@@ -1,6 +1,8 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from app.core.database import init_db
 from app.core.redis import init_redis, close_redis
@@ -30,6 +32,14 @@ async def lifespan(app: FastAPI):
 #     await app.state.engine.dispose()
 
 app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    first_error = exc.errors()[0]
+    return JSONResponse(
+        status_code=422,
+        content={"detail": first_error["msg"]},
+    )
 
 os.makedirs("audio_files", exist_ok=True)
 app.mount("/audio", StaticFiles(directory="audio_files"), name="audio")
