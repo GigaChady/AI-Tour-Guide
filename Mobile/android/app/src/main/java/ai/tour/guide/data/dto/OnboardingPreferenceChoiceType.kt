@@ -1,4 +1,4 @@
-package ai.tour.guide.dto
+package ai.tour.guide.data.dto
 
 
 enum class OnboardingPreferenceChoiceType {

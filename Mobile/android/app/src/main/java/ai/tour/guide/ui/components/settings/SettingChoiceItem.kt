@@ -1,7 +1,7 @@
 package ai.tour.guide.ui.components.settings
 
-import ai.tour.guide.dto.OnboardingPreference
-import ai.tour.guide.dto.OnboardingPreferenceChoiceType
+import ai.tour.guide.data.dto.OnboardingPreference
+import ai.tour.guide.data.dto.OnboardingPreferenceChoiceType
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem

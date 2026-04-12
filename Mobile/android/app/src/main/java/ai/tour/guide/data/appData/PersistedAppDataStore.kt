@@ -1,4 +1,4 @@
-package ai.tour.guide.data.models
+package ai.tour.guide.data.appData
 
 import kotlinx.serialization.Serializable
 

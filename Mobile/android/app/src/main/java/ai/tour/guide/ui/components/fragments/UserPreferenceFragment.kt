@@ -1,9 +1,9 @@
 package ai.tour.guide.ui.components.fragments
 
 import ai.tour.guide.R
-import ai.tour.guide.dto.OnboardingPreference
-import ai.tour.guide.dto.OnboardingPreferenceCategory
-import ai.tour.guide.dto.OnboardingPreferenceChoiceType
+import ai.tour.guide.data.dto.OnboardingPreference
+import ai.tour.guide.data.dto.OnboardingPreferenceCategory
+import ai.tour.guide.data.dto.OnboardingPreferenceChoiceType
 import ai.tour.guide.ui.components.settings.SettingChoiceItem
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

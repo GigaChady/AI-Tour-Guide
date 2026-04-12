@@ -1,6 +1,5 @@
-package ai.tour.guide.data.serializers
+package ai.tour.guide.data.appData
 
-import ai.tour.guide.data.models.PersistedAppData
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import kotlinx.coroutines.Dispatchers

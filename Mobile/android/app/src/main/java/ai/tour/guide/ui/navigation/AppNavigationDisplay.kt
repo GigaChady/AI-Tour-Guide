@@ -12,7 +12,7 @@ import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingFinishStepScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingLoginStepScreen
+import ai.tour.guide.ui.screens.onboarding.login.OnboardingLoginStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingRegisterStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepScreen
