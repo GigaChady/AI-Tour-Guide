@@ -87,6 +87,42 @@
     <string name="trip_end_summary_visited_places_section_header">Odwiedzone atrakcje</string>
     <string name="trip_end_summary_go_back_cta_button_text">Powrót do menu głównego</string>
 
+    <string name="app_settings_general_section_header">Ogólne</string>
+    <string name="app_settings_general_section_body">Ustawienia aplikacji</string>
+
+    <string name="app_settings_general_language_header">Język aplikacji</string>
+    <string name="app_settings_general_language_sample_selection">Polski (PL) (Domyślny)</string>
+    <string name="app_settings_general_language_picker_header">Wybierz język</string>
+
+    <string name="app_settings_general_color_scheme_header">Motyw aplikacji</string>
+    <string name="app_settings_general_color_scheme_option_auto">Systemowy (domyślny)</string>
+    <string name="app_settings_general_color_scheme_option_light">Jasny</string>
+    <string name="app_settings_general_color_scheme_option_dark">Ciemny</string>
+
+    <string name="app_settings_narration_section_header">Ogólne</string>
+    <string name="app_settings_narration_section_body">Ustawienia narracji (TTS)</string>
+
+    <string name="app_settings_narration_language_header">Głos</string>
+    <string name="app_settings_narration_language_sample_selection">Polski (PL) (Domyślny)</string>
+    <string name="app_settings_narration_language_picker_header">Wybierz język narracji</string>
+
+    <string name="app_settings_narration_pitch_header">Wysokość tonu</string>
+    <string name="app_settings_narration_speed_header">Prędkość</string>
+    <string name="app_settings_narration_volume_header">Głośność</string>
+    <string name="app_settings_narration_test_settings_button_content">Testuj głos</string>
+
+    <string name="app_settings_playback_section_header">Odtwarzanie</string>
+    <string name="app_settings_playback_section_body">Dostosuj ustawienia odtwarzania opisów</string>
+
+    <string name="app_settings_playback_details_count_header">Liczba szczegółów (np. historycznych), które mają zawierać opisy generowane podczas zwiedzania</string>
+    <string name="app_settings_playback_details_count_option_low">Mało</string>
+    <string name="app_settings_playback_details_count_option_mid">Średnio</string>
+    <string name="app_settings_playback_details_count_option_high">Dużo</string>
+
+    <string name="app_settings_playback_interrupt_header">Automatycznie rozpoczynaj odtwarzanie opisu, kiedy zbliżysz się do punktów wartych uwagi</string>
+    <string name="app_settings_playback_interrupt_option_yes">Tak</string>
+    <string name="app_settings_playback_interrupt_option_no">Nie</string>
+
     <!-- Component-specific -->
     <string name="audio_player_widget_header_text">Odtwarzacz</string>
     <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
