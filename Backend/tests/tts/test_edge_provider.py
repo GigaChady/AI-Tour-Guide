@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, AsyncMock, patch
 from app.services.tts.edge import EdgeTTSProvider, _map_rate, _map_pitch, _map_volume, _voice_for_language
 
 
-# --- Parameter mapping tests ---
 
 def test_map_rate_at_50_returns_zero_percent():
     assert _map_rate(50) == "+0%"
@@ -33,7 +32,6 @@ def test_map_volume_at_100_returns_plus_50_percent():
     assert _map_volume(100) == "+50%"
 
 
-# --- Voice mapping tests ---
 
 def test_voice_for_polish():
     assert _voice_for_language("pl") == "pl-PL-ZofiaNeural"
@@ -45,7 +43,6 @@ def test_voice_for_unknown_falls_back_to_english():
     assert _voice_for_language("xx") == "en-US-JennyNeural"
 
 
-# --- synthesize() with mocked edge_tts.Communicate ---
 
 @pytest.fixture
 def mock_communicate(monkeypatch):

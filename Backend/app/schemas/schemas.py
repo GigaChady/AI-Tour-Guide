@@ -8,7 +8,7 @@ class RegisterRequest(BaseModel): # do endpointu register, zeby tam wstrzykiwac 
     password: str
     imie: str | None = None
     nazwisko: str | None = None
-  
+
 class LoginRequest(BaseModel): # do endpointu login, zeby tam wstrzykiwac email i password
     email: EmailStr
     password: str
@@ -31,29 +31,13 @@ class TokenResponse(BaseModel): # do endpointów auth, zeby tam zwracać access 
 
 
 # ----------------ROUTE SCHEMAS----------------
-class RouteStartResponse(BaseModel): # do endpointu start route, zeby tam zwracać session_id i route_id
-    session_id: str
-    route_id: str
- 
-
-
-
-# Schema for editing route name
 class RouteEditNameRequest(BaseModel):
     route_id: str
     name: str
 
-class RouteEndRequest(BaseModel): # do endpointu end route, zeby tam wstrzykiwac session_id
-    session_id: str
-
-class Location(BaseModel): # do endpointu z generowaniem narracji, zeby tam wstrzykiwac aktualną lokalizację użytkownika
+class Location(BaseModel):
     lat: float
     lng: float
-
-class TrackPointRequest(BaseModel): # do endpointu track point, zeby tam wstrzykiwac session_id i aktualną lokalizację użytkownika, timestamp i na tej podstawie zapisywać te punkty trasy w redisie zeby potem móc je wykorzystać do obliczania trasy, generowania narracji czy innych rzeczy
-    session_id: str
-    location: Location
-    timestamp: str
 
 
 # ----------------USER SCHEMAS----------------
@@ -127,24 +111,7 @@ class DemographicsAnswerRequest(BaseModel):
     value: int | None = None
 
 
-# ----------------LLM SCHEMAS----------------
-class NarrationRequest(BaseModel): # to zakladam ze bedzie potrzebne do endpointu z generowaniem narracji, zeby tam wstrzykiwac session_id i user preferences zeby na tej podstawie generowac narracje
-    session_id: str
-    location: Location
-    preferences: UserPreferencesSchema
 
-
-class NarrationGenerateRequest(BaseModel):
-    text: str
-    language: str = "en"
-    speed: int = 50    # 0-100, 50 = normal
-    pitch: int = 50    # 0-100, 50 = neutral
-    loudness: int = 50 # 0-100, 50 = 0 dB
-
-
-class NarrationStatusResponse(BaseModel):
-    status: Literal["pending", "processing", "done", "failed"]
-    audio_url: str | None = None
 
 
 

@@ -83,6 +83,8 @@ Thumbs.db
 Backend/.claude/
 Backend/CLAUDE.md
 *.sqlite3
+Backend/audio_files/
+Backend/docs/
 *.db
 *.pkl
 .idea/

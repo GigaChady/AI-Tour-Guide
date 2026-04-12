@@ -37,5 +37,5 @@ async def get_valid_session(
 ) -> str:
     valid = await sessions.verify(session_id, str(current_user.id))
     if not valid:
-        raise HTTPException(403, "Session is invalid or expired.")
+        raise HTTPException(403, detail="Session is invalid or expired.")
     return session_id
