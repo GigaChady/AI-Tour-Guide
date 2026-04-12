@@ -39,8 +39,8 @@ import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.launch
 
 @Composable
-fun AppNavigationDisplay(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Route.Dashboard)
+fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Route.Dashboard) {
+    val backStack = rememberNavBackStack(initialRoute)
 
     NavDisplay(
         modifier = modifier.fillMaxSize(),
@@ -121,11 +121,9 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier) {
 
             // Onboarding
             entry<Route.OnboardingFinishStepScreen> {
-                WithOnlySafeDrawingPadding {
-                    OnboardingFinishStepScreen(
-                        backStack = backStack
-                    )
-                }
+                OnboardingFinishStepScreen(
+                    backStack = backStack
+                )
             }
             entry<Route.OnboardingRegisterStepScreen> {
                 WithOnlySafeDrawingPadding {
@@ -149,11 +147,9 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier) {
                 }
             }
             entry<Route.OnboardingWelcomeStepScreen> {
-                WithOnlySafeDrawingPadding {
-                    OnboardingWelcomeStepScreen(
-                        backStack = backStack
-                    )
-                }
+                OnboardingWelcomeStepScreen(
+                    backStack = backStack
+                )
             }
         },
         transitionSpec = {
