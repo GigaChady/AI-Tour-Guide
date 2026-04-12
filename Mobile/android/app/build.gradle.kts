@@ -44,7 +44,6 @@ android {
 dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.lottie.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -57,6 +56,10 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.material3)
+    implementation(libs.googleid)
+    implementation(libs.androidx.credentials.core)
+    implementation(libs.androidx.credentials.play)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,4 +74,12 @@ dependencies {
     implementation(libs.koin.compose.navigation)
     implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.annotations)
+
+    implementation(libs.lottie.compose)
+
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.auth)
+    implementation(libs.ktor.serialization.kotlinx.json)
 }
