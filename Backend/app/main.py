@@ -1,13 +1,13 @@
-import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from app.core.database import init_db
 from app.core.redis import init_redis, close_redis
 
 
 from app.routers.user import auth
-from app.routers import route, narration
+from app.routers import route
 from app.routers.user import preferences as user_preferences
 from app.routers.user import demographics as user_demographics
 from app.routers import map as map_router
@@ -19,25 +19,19 @@ async def lifespan(app: FastAPI):
     yield
     await close_redis()
 
-# from app.core.database import init_db_and_session
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # initialize DB + session tied to this loop
-#     await init_db_and_session(app)
-#     # optionally initialize Redis here
-#     yield
-#     # cleanup DB engine
-#     await app.state.engine.dispose()
-
 app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
 
-os.makedirs("audio_files", exist_ok=True)
-app.mount("/audio", StaticFiles(directory="audio_files"), name="audio")
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    first_error = exc.errors()[0]
+    return JSONResponse(
+        status_code=422,
+        content={"detail": first_error["msg"]},
+    )
 
 
 app.include_router(auth.router)
 app.include_router(route.router)
-app.include_router(narration.router)
 app.include_router(user_preferences.router)
 app.include_router(user_demographics.router)
 app.include_router(map_router.router)

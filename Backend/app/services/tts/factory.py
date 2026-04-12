@@ -4,7 +4,7 @@ from app.services.tts.base import TTSProvider
 class TTSFactory:
     @staticmethod
     def get_provider() -> TTSProvider:
-        from app.core.config import settings  # late import so tests can reload config
+        from app.core.config import settings  
 
         if settings.TTS_PROVIDER == "edge":
             from app.services.tts.edge import EdgeTTSProvider

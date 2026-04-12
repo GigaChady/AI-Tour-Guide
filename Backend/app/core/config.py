@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # uzywamy tych co mamy ale to juz bedzie bardziej skomplikowane do zrobienia wiec na razie niech zostanie czas
 
     #Streaming
-    STREAM_TIMEOUT_SECONDS: int = 15
+    STREAM_TIMEOUT_SECONDS: int = 120  #TODO: do ustalenia na pozniej
 
     # Demographics
     DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary,prefer_not_to_say"
