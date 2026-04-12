@@ -87,6 +87,7 @@ fun DashboardScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKe
 
             ExtendedFloatingActionButton(
                 onClick = {
+                    backStack?.clear()
                     backStack?.add(Route.TourAudioPlayer)
                 },
                 modifier = Modifier.fillMaxWidth(),

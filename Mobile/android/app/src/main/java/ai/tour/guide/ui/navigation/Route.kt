@@ -25,4 +25,18 @@ sealed interface Route : NavKey {
     @Serializable
     data object TripEndSummary : Route, NavKey
 
+    @Serializable
+    data object OnboardingFinishStepScreen : Route, NavKey
+
+    @Serializable
+    data object OnboardingRegisterStepScreen : Route, NavKey
+
+    @Serializable
+    data object OnboardingWelcomeStepScreen : Route, NavKey
+
+    @Serializable
+    data object OnboardingLoginStepScreen : Route, NavKey
+
+    @Serializable
+    data object OnboardingPreferencesStepScreen : Route, NavKey
 }

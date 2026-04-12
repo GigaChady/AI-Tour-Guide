@@ -5,11 +5,12 @@ import ai.tour.guide.dto.OnboardingPreference
 import ai.tour.guide.dto.OnboardingPreferenceCategory
 import ai.tour.guide.dto.OnboardingPreferenceChoiceType
 import ai.tour.guide.ui.components.settings.SettingChoiceItem
-import ai.tour.guide.ui.components.settings.SettingItemGroupHeader
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
@@ -36,8 +37,10 @@ fun UserPreferenceFragment(
         LazyColumn {
             groupedOptions.forEach { (category, categoryItems) ->
                 item {
-                    SettingItemGroupHeader(
+                    Text(
                         text = getPreferenceCategoryName(category),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }

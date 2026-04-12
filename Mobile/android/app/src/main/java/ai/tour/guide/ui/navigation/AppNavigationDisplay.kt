@@ -1,5 +1,9 @@
 package ai.tour.guide.ui.navigation
 
+import ai.tour.guide.R
+import ai.tour.guide.ui.navigation.wrappers.WithDrawerLayout
+import ai.tour.guide.ui.navigation.wrappers.WithOnlySafeDrawingPadding
+import ai.tour.guide.ui.navigation.wrappers.WithScreenTopBar
 import ai.tour.guide.ui.screens.main.AccountSettingsScreen
 import ai.tour.guide.ui.screens.main.AppSettingsScreen
 import ai.tour.guide.ui.screens.main.DashboardScreen
@@ -7,58 +11,190 @@ import ai.tour.guide.ui.screens.main.MapUserPositionScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
+import ai.tour.guide.ui.screens.onboarding.OnboardingFinishStepScreen
+import ai.tour.guide.ui.screens.onboarding.OnboardingLoginStepScreen
+import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
+import ai.tour.guide.ui.screens.onboarding.OnboardingRegisterStepScreen
+import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepScreen
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.launch
 
 @Composable
-fun AppNavigationDisplay(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>) {
+fun AppNavigationDisplay(modifier: Modifier = Modifier) {
+    val backStack = rememberNavBackStack(Route.Dashboard)
+
     NavDisplay(
         modifier = modifier.fillMaxSize(),
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
-        transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-        entryProvider = { key ->
-            when (key) {
-                is Route.Dashboard -> NavEntry(key) {
-                    DashboardScreen(backStack = backStack)
-                }
-
-                is Route.Profile -> NavEntry(key) {
-                    ProfilePreferencesScreen(backStack = backStack)
-                }
-
-                is Route.Settings -> NavEntry(key) {
-                    AppSettingsScreen()
-                }
-
-                is Route.AccountSettings -> NavEntry(key) {
-                    AccountSettingsScreen()
-                }
-
-                is Route.TourAudioPlayer -> NavEntry(key) {
-                    TourAudioPlayerScreen(backStack = backStack)
-                }
-
-                is Route.MapUserPosition -> NavEntry(key) {
-                    MapUserPositionScreen()
-                }
-
-                is Route.TripEndSummary -> NavEntry(key) {
-                    TripEndSummaryScreen(backStack = backStack)
-                }
-
-                else -> NavEntry(key) {
-                    DashboardScreen(backStack = backStack)
+        entryProvider = entryProvider {
+            // Dashboard
+            entry<Route.Dashboard>(
+                metadata = NavDisplay.transitionSpec { EnterTransition.None togetherWith ExitTransition.None }
+            ) {
+                WithDrawerLayout(
+                    backStack = backStack,
+                    routeTitle = stringResource(R.string.navigation_dashboard_route_title)
+                ) {
+                    DashboardScreen(
+                        backStack = backStack
+                    )
                 }
             }
+            entry<Route.Profile>(
+                metadata = NavDisplay.transitionSpec { EnterTransition.None togetherWith ExitTransition.None }
+            ) {
+                WithDrawerLayout(
+                    backStack = backStack,
+                    routeTitle = stringResource(R.string.navigation_profile_preferences_route_title)
+                ) {
+                    ProfilePreferencesScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.Settings>(
+                metadata = NavDisplay.transitionSpec { EnterTransition.None togetherWith ExitTransition.None }
+            ) {
+                WithDrawerLayout(
+                    backStack = backStack,
+                    routeTitle = stringResource(R.string.navigation_app_settings_route_title)
+                ) { AppSettingsScreen() }
+            }
+            entry<Route.AccountSettings> {
+                WithScreenTopBar(
+                    backStack = backStack,
+                    hasBackButton = true,
+                    routeTitle = stringResource(R.string.navigation_account_settings_route_title)
+                ) { AccountSettingsScreen() }
+            }
+
+            // Main navigation flow
+            entry<Route.TourAudioPlayer> {
+                WithScreenTopBar(
+                    backStack = backStack,
+                    topBarActions = { TourAudioPlayerMapIcon(backStack = backStack) },
+                    routeTitle = stringResource(R.string.navigation_tour_audio_player_route_title)
+                ) {
+                    TourAudioPlayerScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.MapUserPosition> {
+                WithScreenTopBar(
+                    backStack = backStack,
+                    hasBackButton = true,
+                    routeTitle = stringResource(R.string.navigation_map_user_position_route_title)
+                ) {
+                    MapUserPositionScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.TripEndSummary> {
+                WithScreenTopBar(backStack = backStack) {
+                    TripEndSummaryScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+
+            // Onboarding
+            entry<Route.OnboardingFinishStepScreen> {
+                WithOnlySafeDrawingPadding {
+                    OnboardingFinishStepScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.OnboardingRegisterStepScreen> {
+                WithOnlySafeDrawingPadding {
+                    OnboardingRegisterStepScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.OnboardingLoginStepScreen> {
+                WithOnlySafeDrawingPadding {
+                    OnboardingLoginStepScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.OnboardingPreferencesStepScreen> {
+                WithOnlySafeDrawingPadding {
+                    OnboardingPreferencesStepScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+            entry<Route.OnboardingWelcomeStepScreen> {
+                WithOnlySafeDrawingPadding {
+                    OnboardingWelcomeStepScreen(
+                        backStack = backStack
+                    )
+                }
+            }
+        },
+        transitionSpec = {
+            slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(300)
+            ) togetherWith slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(300)
+            )
+        },
+        popTransitionSpec = {
+            slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(300)
+            ) togetherWith slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(300)
+            )
+        },
+        predictivePopTransitionSpec = {
+            slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(300)
+            ) togetherWith slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(300)
+            )
         }
     )
+}
+
+@Composable
+fun TourAudioPlayerMapIcon(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>) {
+    val scope = rememberCoroutineScope()
+    IconButton(modifier = modifier, onClick = {
+        scope.launch { backStack.add(Route.MapUserPosition) }
+    }) {
+        Icon(
+            imageVector = Icons.Default.LocationOn,
+            contentDescription = stringResource(R.string.app_bar_map_icon_tour_content_description)
+        )
+    }
 }
