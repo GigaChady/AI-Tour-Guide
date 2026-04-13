@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from geoalchemy2.elements import WKTElement
 from sqlalchemy import delete, select
 
-from app.core.database import init_db
+from app.core.database import init_db, reset_database
 from app.models.models import (
     DemographicsGenderOption,
     PreferenceQuestionDefinition,
@@ -250,6 +250,7 @@ async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[Use
                 hashed_password=f"hashed_{secrets.token_hex(16)}",
                 is_active=True,
                 imie=first_name,
+                name=first_name,
                 nazwisko=last_name,
                 gender_option_id=gender_id_by_code[gender_code],
                 gender_custom=None,
@@ -295,15 +296,21 @@ async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[Use
     return users
 
 
+from app.core.database import init_db, reset_database
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Seed the database with sample data.")
+    parser.add_argument("--reset-all", action="store_true", help="Drop and recreate all tables before seeding.")
     parser.add_argument("--reset", action="store_true", help="Delete existing rows before seeding.")
     parser.add_argument("--users", type=int, default=12, help="Number of users to create.")
     args = parser.parse_args()
 
     await init_db()
 
-    if args.reset:
+    if args.reset_all:
+        await reset_database()
+    elif args.reset:
         await _clear_existing_data()
 
     gender_id_by_code = await _seed_reference_data()
