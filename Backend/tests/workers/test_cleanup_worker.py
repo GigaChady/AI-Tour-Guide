@@ -1,7 +1,6 @@
 import os
 import time
 import pytest
-from app.core.config import settings
 from workers.cleanup_worker import cleanup_audio
 
 def _create_file(directory: str, name: str, age_seconds: float) -> str:

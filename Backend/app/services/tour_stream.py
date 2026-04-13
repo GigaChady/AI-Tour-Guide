@@ -123,10 +123,11 @@ async def _handle_client_messages(
             lng = data.get("lng")
             if lat is not None and lng is not None:
                 await _save_location(db, route_id, lat=float(lat), lng=float(lng)) # zapis do bazki
-                await redis.publish( # pub dla workera 
-                    f"location:{session_id}",
-                    json.dumps({"lat": lat, "lng": lng}),
-                )
+                await redis.xadd("location:events", {  # stream dla workera
+                    "session_id": session_id,
+                    "lat": str(lat),
+                    "lng": str(lng),
+                })
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             pass 
 
@@ -173,7 +174,7 @@ async def _stream_narration(websocket: WebSocket, text: str) -> None: # streamin
                 pitch=50,
                 loudness=50,
             )
-            audio_b64 = base64.b64encode(audio_bytes).decode()
+            audio_b64 = base64.b64encode(audio_bytes).decode() #TODO: implement FFmpeg and revrite websocket.send_text to send binary data instead of base64 and use HLS streaming for better performance
             await websocket.send_text(json.dumps({
                 "type": "audio_chunk",
                 "id": chunk_id,

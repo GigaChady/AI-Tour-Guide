@@ -34,7 +34,7 @@ async def test_save_user_preferences_answers_single_and_multi():
             email = f"prefs_{uuid.uuid4()}@example.com"
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             tokens = response.json()
             headers = {"Authorization": f"Bearer {tokens['access_token']}"}

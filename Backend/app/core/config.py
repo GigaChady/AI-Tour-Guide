@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     DEMOGRAPHICS_MAX_AGE: int = 120
     DEMOGRAPHICS_CUSTOM_GENDER_ANSWER_ID: str = "custom"
 
+    # Testing
+    TEST_DATABASE_URL: str 
 
 settings = Settings()
 
