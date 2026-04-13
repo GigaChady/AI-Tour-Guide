@@ -13,7 +13,7 @@ async def test_update_and_get_user_demographics():
             email = f"demo_{uuid.uuid4()}@example.com"
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             tokens = response.json()
             headers = {"Authorization": f"Bearer {tokens['access_token']}"}

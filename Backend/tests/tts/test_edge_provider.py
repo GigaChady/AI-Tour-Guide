@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 from app.services.tts.edge import EdgeTTSProvider, _map_rate, _map_pitch, _map_volume, _voice_for_language
 
 
@@ -49,7 +49,7 @@ def mock_communicate(monkeypatch):
     async def fake_stream():
         yield {"type": "audio", "data": b"fake_audio_chunk_1"}
         yield {"type": "audio", "data": b"fake_audio_chunk_2"}
-        yield {"type": "WordBoundary", "data": {}}  # non-audio chunk, should be ignored
+        yield {"type": "WordBoundary", "data": {}}  
 
     mock_cls = MagicMock()
     mock_cls.return_value.stream = fake_stream

@@ -10,12 +10,10 @@ async def test_register_duplicate():
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             email = f"dupe_{uuid.uuid4()}@example.com"
-            # Register first time
             await ac.post("/auth/register", json={
                 "email": email,
                 "password": "Testpass1"
             })
-            # Register duplicate
             response = await ac.post("/auth/register", json={
                 "email": email,
                 "password": "Testpass1"
