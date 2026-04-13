@@ -1,8 +1,8 @@
-
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.core.config import DEFAULT_PREFERENCE_CATALOG
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -16,7 +16,6 @@ from app.schemas.schemas import (
     PreferenceAnswerResponse,
     PreferenceQuestion,
     PreferenceQuestionAnswerOption,
-    PreferenceQuestionInput,
     UserPreferencesSchema,
 )
 
@@ -33,22 +32,12 @@ def _question_from_catalog_item(item: dict[str, object], question_id: int) -> Pr
         )
         for answer in item.get("answers", [])
     ]
-
-    input_schema = None
-    if item.get("type") == "percentage":
-        input_schema = PreferenceQuestionInput(
-            min=int(item.get("min_value", 0)),
-            max=int(item.get("max_value", 100)),
-            required=bool(item.get("required", False)),
-        )
-
     return PreferenceQuestion(
         question_id=question_id,
         question_key=str(item["question_key"]),
         title=str(item["title"]),
         type=str(item["type"]),
         answers=answers,
-        input=input_schema,
     )
 
 
@@ -68,11 +57,6 @@ def _question_from_definition(question: PreferenceQuestionDefinition) -> Prefere
             for answer in question.answers
             if answer.is_active
         ],
-        input=PreferenceQuestionInput(
-            min=question.min_value,
-            max=question.max_value,
-            required=question.required,
-        ) if question.type == "percentage" else None,
     )
 
 
@@ -85,7 +69,6 @@ async def _preference_questions(db: AsyncSession) -> list[PreferenceQuestion]:
     questions = result.scalars().all()
     if questions:
         return [_question_from_definition(question) for question in questions]
-
     return [
         _question_from_catalog_item(item, index + 1)
         for index, item in enumerate(DEFAULT_PREFERENCE_CATALOG)
@@ -97,72 +80,30 @@ def _normalize_preference_answers(
     questions: list[PreferenceQuestion],
 ) -> list[PreferenceAnswerResponse]:
     by_id = {question.question_id: question for question in questions}
-    normalized: list[PreferenceAnswerResponse] = []
+    missing = {q.question_id for q in questions} - {item.question_id for item in answers}
+    if missing:
+        raise HTTPException(status_code=422, detail=f"Missing answers for question_ids: {sorted(missing)}")
 
+    normalized: list[PreferenceAnswerResponse] = []
     for item in answers:
         question = by_id.get(item.question_id)
         if not question:
             raise HTTPException(status_code=422, detail=f"Invalid question_id: {item.question_id}")
-
-        if question.type == "percentage":
-            if item.value is None:
-                raise HTTPException(status_code=422, detail=f"value is required for question_id: {item.question_id}")
-            if item.value < 0 or item.value > 100:
-                raise HTTPException(status_code=422, detail=f"value must be between 0 and 100 for question_id: {item.question_id}")
-            min_value = question.input.min if question.input and question.input.min is not None else 0
-            max_value = question.input.max if question.input and question.input.max is not None else 100
-            if item.value < min_value or item.value > max_value:
-                raise HTTPException(status_code=422, detail=f"value must be between {min_value} and {max_value} for question_id: {item.question_id}")
-            if item.answer_id is not None or item.answer_ids is not None:
-                raise HTTPException(status_code=422, detail=f"Only value is allowed for question_id: {item.question_id}")
-
-            normalized.append(
-                PreferenceAnswerResponse(
-                    question_id=item.question_id,
-                    value=item.value,
-                )
-            )
-            continue
-
         valid_answer_ids = {option.answer_id for option in question.answers}
-        if question.type == "multi_choice":
-            selected_ids = item.answer_ids
-            if selected_ids is None:
-                if item.answer_id is not None:
-                    selected_ids = [item.answer_id]
-                else:
-                    raise HTTPException(status_code=422, detail=f"answer_ids is required for question_id: {item.question_id}")
-            deduped_ids = list(dict.fromkeys(selected_ids))
-            if not deduped_ids:
-                raise HTTPException(status_code=422, detail=f"answer_ids cannot be empty for question_id: {item.question_id}")
-            invalid_ids = [answer_id for answer_id in deduped_ids if answer_id not in valid_answer_ids]
-            if invalid_ids:
-                raise HTTPException(status_code=422, detail=f"Invalid answer_ids for question_id {item.question_id}: {invalid_ids}")
-            if item.value is not None:
-                raise HTTPException(status_code=422, detail=f"Only answer_ids is allowed for question_id: {item.question_id}")
-
-            normalized.append(
-                PreferenceAnswerResponse(
-                    question_id=item.question_id,
-                    answer_ids=deduped_ids,
-                )
-            )
-            continue
-
-        if item.answer_id is None:
-            raise HTTPException(status_code=422, detail=f"answer_id is required for question_id: {item.question_id}")
-        if item.answer_id not in valid_answer_ids:
-            raise HTTPException(status_code=422, detail=f"Invalid answer_id for question_id {item.question_id}: {item.answer_id}")
-        if item.answer_ids is not None or item.value is not None:
-            raise HTTPException(status_code=422, detail=f"Only answer_id is allowed for question_id: {item.question_id}")
-
-        normalized.append(
-            PreferenceAnswerResponse(
-                question_id=item.question_id,
-                answer_id=item.answer_id,
-            )
+        selected_ids = item.answer_ids if item.answer_ids is not None else (
+            [item.answer_id] if item.answer_id is not None else None
         )
-
+        if selected_ids is None:
+            raise HTTPException(status_code=422, detail=f"answer_ids is required for question_id: {item.question_id}")
+        deduped_ids = list(dict.fromkeys(selected_ids))
+        if not deduped_ids:
+            raise HTTPException(status_code=422, detail=f"answer_ids cannot be empty for question_id: {item.question_id}")
+        invalid_ids = [answer_id for answer_id in deduped_ids if answer_id not in valid_answer_ids]
+        if invalid_ids:
+            raise HTTPException(status_code=422, detail=f"Invalid answer_ids for question_id {item.question_id}: {invalid_ids}")
+        normalized.append(
+            PreferenceAnswerResponse(question_id=item.question_id, answer_ids=deduped_ids)
+        )
     return normalized
 
 
@@ -170,10 +111,11 @@ def _normalize_preference_answers(
 async def get_preferences_questions(db: AsyncSession = Depends(get_db)):
     return await _preference_questions(db)
 
+
 @router.get("/preferences", response_model=UserPreferencesSchema)
 async def get_preferences(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(select(UserPreferences).where(UserPreferences.user_id == current_user.id))
     user_prefs = result.scalar()
@@ -192,7 +134,7 @@ async def save_preference_answers(
         raise HTTPException(status_code=422, detail="Answers cannot be empty")
 
     questions = await _preference_questions(db)
-    normalized_answers = _normalize_preference_answers(answers, questions)
+    normalized = _normalize_preference_answers(answers, questions)
 
     result = await db.execute(select(UserPreferences).where(UserPreferences.user_id == current_user.id))
     user_prefs = result.scalar()
@@ -200,18 +142,10 @@ async def save_preference_answers(
         user_prefs = UserPreferences(user_id=current_user.id, interests=[])
         db.add(user_prefs)
 
-    serialized_answers = []
-    for item in normalized_answers:
-        payload: dict[str, object] = {"question_id": item.question_id}
-        if item.value is not None:
-            payload["value"] = item.value
-        elif item.answer_ids is not None:
-            payload["answer_ids"] = item.answer_ids
-        elif item.answer_id is not None:
-            payload["answer_id"] = item.answer_id
-        serialized_answers.append(payload)
-
-    user_prefs.interests = serialized_answers
+    user_prefs.interests = [
+        {"question_id": item.question_id, "answer_ids": item.answer_ids}
+        for item in normalized
+    ]
 
     await db.commit()
-    return normalized_answers
+    return normalized
