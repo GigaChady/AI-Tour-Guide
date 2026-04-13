@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     AUDIO_TTL_SECONDS: int = 600  # 10 minutes — HLS temp dirs live this long
 
     # Demographics
-    DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary,prefer_not_to_say"
+    DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary"
     DEMOGRAPHICS_MIN_AGE: int = 10
     DEMOGRAPHICS_MAX_AGE: int = 120
     DEMOGRAPHICS_CUSTOM_GENDER_ANSWER_ID: str = "custom"
@@ -66,54 +66,6 @@ settings = Settings()
 
 
 DEFAULT_PREFERENCE_CATALOG = [
-    {
-        "question_key": "pitch",
-        "title": "Pitch",
-        "type": "percentage",
-        "sort_order": 1,
-        "min_value": 0,
-        "max_value": 100,
-        "required": True,
-        "answers": [],
-    },
-    {
-        "question_key": "speed",
-        "title": "Speed",
-        "type": "percentage",
-        "sort_order": 2,
-        "min_value": 0,
-        "max_value": 100,
-        "required": True,
-        "answers": [],
-    },
-    {
-        "question_key": "loudness",
-        "title": "Loudness",
-        "type": "percentage",
-        "sort_order": 3,
-        "min_value": 0,
-        "max_value": 100,
-        "required": True,
-        "answers": [],
-    },
-    {
-        "question_key": "language",
-        "title": "Language",
-        "type": "single_choice",
-        "sort_order": 4,
-        "answers": [
-            {"answer_key": "en", "title": "English", "body": "Narracja po angielsku", "trailing_content": None, "sort_order": 1},
-            {"answer_key": "pl", "title": "Polish", "body": "Narracja po polsku", "trailing_content": None, "sort_order": 2},
-            {"answer_key": "es", "title": "Spanish", "body": "Narracja po hiszpańsku", "trailing_content": None, "sort_order": 3},
-            {"answer_key": "fr", "title": "French", "body": "Narracja po francusku", "trailing_content": None, "sort_order": 4},
-            {"answer_key": "de", "title": "German", "body": "Narracja po niemiecku", "trailing_content": None, "sort_order": 5},
-            {"answer_key": "it", "title": "Italian", "body": "Narracja po włosku", "trailing_content": None, "sort_order": 6},
-            {"answer_key": "pt", "title": "Portuguese", "body": "Narracja po portugalsku", "trailing_content": None, "sort_order": 7},
-            {"answer_key": "ru", "title": "Russian", "body": "Narracja po rosyjsku", "trailing_content": None, "sort_order": 8},
-            {"answer_key": "uk", "title": "Ukrainian", "body": "Narracja po ukraińsku", "trailing_content": None, "sort_order": 9},
-            {"answer_key": "ja", "title": "Japanese", "body": "Narracja po japońsku", "trailing_content": None, "sort_order": 10},
-        ],
-    },
     {
         "question_key": "interests",
         "title": "Interests",
