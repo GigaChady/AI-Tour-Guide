@@ -9,7 +9,7 @@ async def init_redis():
     try:
         await _redis_client.xgroup_create("location:events", "llm-workers", id="0", mkstream=True)
     except redis.ResponseError:
-        pass  # group already exists
+        pass  
  
  
 async def close_redis():

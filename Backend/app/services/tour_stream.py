@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import json
 import uuid
 from datetime import datetime, timezone
@@ -12,7 +11,7 @@ from app.core.config import settings
 from app.models.models import Route, UserPreferences
 from app.services.session_service import SessionService
 from app.services.token_service import token_service
-from app.services.tts.chunker import split as chunk_text
+from app.services.tts import audio_pipeline
 from app.services.tts.factory import TTSFactory
 
 # TODO: edge casey + maybe adding heartbeat pingpong for keeping connection 
@@ -152,41 +151,32 @@ async def _handle_worker_messages(websocket: WebSocket, pubsub) -> None: # recei
             pass
 
 
-async def _stream_narration(websocket: WebSocket, text: str) -> None: # streaming narracji do klienta w kawałkach (tekst + audio)
+async def _stream_narration(websocket: WebSocket, text: str) -> None:
     try:
-        tts = TTSFactory.get_provider() # TODO: do usawienia potem preferencji usera co do tts, na razie bierzemy z configu globalnie
+        tts = TTSFactory.get_provider()
     except Exception:
         await websocket.send_text(json.dumps({"type": "error", "message": "TTS provider unavailable"}))
         return
 
-    chunks = chunk_text(text)
-    for chunk_id, chunk_text_val in chunks: # first we send text chunk to client 
-        await websocket.send_text(json.dumps({
-            "type": "text_chunk",
-            "id": chunk_id,
-            "text": chunk_text_val,
-        }))
-        try:
-            audio_bytes = await tts.synthesize( # TODO: potem można dodać preferencje usera co do języka, szybkości, tonu itp. i przekazywać je do syntezy
-                chunk_text_val,
-                language="en",
-                speed=50,
-                pitch=50,
-                loudness=50,
-            )
-            audio_b64 = base64.b64encode(audio_bytes).decode() #TODO: implement FFmpeg and revrite websocket.send_text to send binary data instead of base64 and use HLS streaming for better performance
-            await websocket.send_text(json.dumps({
-                "type": "audio_chunk",
-                "id": chunk_id,
-                "audio_b64": audio_b64,
-            }))
-        except Exception:
-            await websocket.send_text(json.dumps({
-                "type": "error",
-                "message": f"TTS synthesis failed for chunk {chunk_id}",
-            }))
+    synthesis = await audio_pipeline.synthesize(text, tts, language="en", speed=50, pitch=50, loudness=50)
+    if synthesis is None:
+        return
 
-    await websocket.send_text(json.dumps({"type": "done"}))
+    await websocket.send_text(json.dumps({
+        "type": "narration_transcript",
+        "transcript": synthesis.transcript,
+    }))
+
+    try:
+        result = await audio_pipeline.encode_hls(synthesis)
+    except Exception:
+        await websocket.send_text(json.dumps({"type": "error", "message": "HLS encoding failed"}))
+        return
+
+    await websocket.send_text(json.dumps({
+        "type": "narration_ready",
+        "hls_url": f"/audio/{result.narration_id}/index.m3u8",
+    }))
 
 
 async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float) -> None:

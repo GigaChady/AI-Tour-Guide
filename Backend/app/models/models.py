@@ -22,6 +22,7 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utc_now_naive)
+    nazwa = Column(String, nullable=True) 
     imie = Column(String, nullable=True)
     nazwisko = Column(String, nullable=True)
     gender_option_id = Column(Integer, ForeignKey("demographics_gender_options.id"), nullable=True)
