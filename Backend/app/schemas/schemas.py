@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 class RegisterRequest(BaseModel): # do endpointu register, zeby tam wstrzykiwac email i password
     email: EmailStr
     password: str
+    name: str
     imie: str | None = None
     nazwisko: str | None = None
 
