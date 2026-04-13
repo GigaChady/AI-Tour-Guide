@@ -1,22 +1,39 @@
+import asyncio
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.core.audio_store import audio_store
+from app.core.config import settings
 from app.core.database import init_db
-from app.core.redis import init_redis, close_redis
-
-
-from app.routers.user import auth
-from app.routers import route
-from app.routers.user import preferences as user_preferences
-from app.routers.user import demographics as user_demographics
+from app.core.redis import close_redis, init_redis
 from app.routers import map as map_router
+from app.routers import route
+from app.routers.audio import router as audio_router
+from app.routers.user import auth
+from app.routers.user import demographics as user_demographics
+from app.routers.user import preferences as user_preferences
+
+
+async def _audio_cleanup_loop() -> None:
+    while True:
+        await asyncio.sleep(60)
+        audio_store.cleanup_expired(settings.AUDIO_TTL_SECONDS)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     await init_redis()
+    cleanup_task = asyncio.create_task(_audio_cleanup_loop())
     yield
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
     await close_redis()
 
 app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
@@ -35,6 +52,7 @@ app.include_router(route.router)
 app.include_router(user_preferences.router)
 app.include_router(user_demographics.router)
 app.include_router(map_router.router)
+app.include_router(audio_router)
 
 
 @app.get("/health")

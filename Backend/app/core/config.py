@@ -51,6 +51,7 @@ class Settings(BaseSettings):
 
     #Streaming
     STREAM_TIMEOUT_SECONDS: int = 120  #TODO: do ustalenia na pozniej
+    AUDIO_TTL_SECONDS: int = 600  # 10 minutes — HLS temp dirs live this long
 
     # Demographics
     DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary,prefer_not_to_say"

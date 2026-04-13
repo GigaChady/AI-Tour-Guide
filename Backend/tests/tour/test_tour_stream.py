@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import json
 import uuid
 import pytest
@@ -175,21 +174,28 @@ async def test_finalize_route_saves_distance_and_ended_at():
 
 
 @pytest.mark.asyncio
-async def test_stream_narration_sends_text_then_audio_then_done():
+async def test_stream_narration_sends_transcript_then_hls_url():
     ws = AsyncMock()
-    fake_audio = b"mp3data"
-    mock_tts = AsyncMock()
-    mock_tts.synthesize.return_value = fake_audio
-    expected_b64 = base64.b64encode(fake_audio).decode()
 
-    with patch("app.services.tour_stream.TTSFactory.get_provider", return_value=mock_tts):
+    mock_synthesis = MagicMock()
+    mock_synthesis.transcript = [
+        {"text": "Hello", "start": 0.0, "end": 2.0},
+        {"text": "World", "start": 2.0, "end": 4.0},
+    ]
+    mock_result = MagicMock()
+    mock_result.narration_id = "test-narration-id"
+    mock_tts = AsyncMock()
+
+    with patch("app.services.tour_stream.TTSFactory.get_provider", return_value=mock_tts), \
+         patch("app.services.tour_stream.audio_pipeline.synthesize", return_value=mock_synthesis), \
+         patch("app.services.tour_stream.audio_pipeline.encode_hls", return_value=mock_result):
         await _stream_narration(ws, "Hello. World.")
 
     sent = [json.loads(c.args[0]) for c in ws.send_text.call_args_list]
     types = [m["type"] for m in sent]
-    assert types == ["text_chunk", "audio_chunk", "text_chunk", "audio_chunk", "done"]
-    assert sent[0] == {"type": "text_chunk", "id": 0, "text": "Hello"}
-    assert sent[1] == {"type": "audio_chunk", "id": 0, "audio_b64": expected_b64}
+    assert types == ["narration_transcript", "narration_ready"]
+    assert sent[0]["transcript"] == mock_synthesis.transcript
+    assert sent[1]["hls_url"] == "/audio/test-narration-id/index.m3u8"
 
 
 
@@ -207,20 +213,27 @@ async def test_worker_pois_message_forwarded_to_client():
 
 
 @pytest.mark.asyncio
-async def test_worker_narration_message_triggers_tts_stream():
+async def test_worker_narration_message_triggers_hls_stream():
     ws = AsyncMock()
     pubsub = make_pubsub([{"type": "narration", "text": "Hello."}])
-    mock_tts = AsyncMock()
-    mock_tts.synthesize.return_value = b"audio"
 
-    with patch("app.services.tour_stream.TTSFactory.get_provider", return_value=mock_tts):
+    mock_synthesis = MagicMock()
+    mock_synthesis.transcript = [{"text": "Hello", "start": 0.0, "end": 2.0}]
+    mock_result = MagicMock()
+    mock_result.narration_id = "test-id"
+    mock_tts = AsyncMock()
+
+    with patch("app.services.tour_stream.TTSFactory.get_provider", return_value=mock_tts), \
+         patch("app.services.tour_stream.audio_pipeline.synthesize", return_value=mock_synthesis), \
+         patch("app.services.tour_stream.audio_pipeline.encode_hls", return_value=mock_result):
         await _handle_worker_messages(ws, pubsub)
 
     sent = [json.loads(c.args[0]) for c in ws.send_text.call_args_list]
     types = [m["type"] for m in sent]
-    assert "text_chunk" in types
-    assert "audio_chunk" in types
-    assert "done" in types
+    assert "narration_transcript" in types
+    assert "narration_ready" in types
+    assert "text_chunk" not in types
+    assert "audio_chunk" not in types
 
 
 @pytest.mark.asyncio

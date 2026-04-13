@@ -72,6 +72,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
     _validate_password_strength(body.password) # password validation 
 
+    if not getattr(body, "name", None):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Name is required")
+
     existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar():
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already in use") # If u know u know
@@ -79,8 +82,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     user = User(
         email=normalized_email,
         hashed_password=token_service.hash_password(body.password),
-        imie=getattr(body, "imie", None),
-        nazwisko=getattr(body, "nazwisko", None),
+        # imie=getattr(body, "imie", None),
+        # nazwisko=getattr(body, "nazwisko", None),
+        name=getattr(body, "name", None),
     )
     db.add(user)
 
