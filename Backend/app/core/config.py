@@ -53,30 +53,36 @@ class Settings(BaseSettings):
     STREAM_TIMEOUT_SECONDS: int = 120  #TODO: do ustalenia na pozniej
     AUDIO_TTL_SECONDS: int = 600  # 10 minutes — HLS temp dirs live this long
 
-    # Demographics
-    DEMOGRAPHICS_GENDER_OPTIONS: str = "male,female,non_binary"
-    DEMOGRAPHICS_MIN_AGE: int = 10
-    DEMOGRAPHICS_MAX_AGE: int = 120
-    DEMOGRAPHICS_CUSTOM_GENDER_ANSWER_ID: str = "custom"
+    # Seed
+    SEED_USER_PASSWORD: str = "Testpass1"
 
     # Testing
-    TEST_DATABASE_URL: str 
+    TEST_DATABASE_URL: str
 
 settings = Settings()
 
 
-DEFAULT_PREFERENCE_CATALOG = [
+DEFAULT_ONBOARDING_CATALOG = [
+    {
+        "question_key": "gender",
+        "title": "Jaka jest Twoja płeć?",
+        "type": "single_choice",
+        "answers": [
+            {"answer_key": "male", "title": "Mężczyzna"},
+            {"answer_key": "female", "title": "Kobieta"},
+            {"answer_key": "non_binary", "title": "Niebinarny/a"},
+        ],
+    },
     {
         "question_key": "interests",
-        "title": "Interests",
+        "title": "Jakie masz zainteresowania?",
         "type": "multi_choice",
-        "sort_order": 5,
         "answers": [
-            {"answer_key": "architecture", "title": "Architecture", "body": "Historia i styl zabudowy", "trailing_content": "🏛️", "sort_order": 1},
-            {"answer_key": "history", "title": "History", "body": "Opowieści o wydarzeniach i miejscach", "trailing_content": "📜", "sort_order": 2},
-            {"answer_key": "culture", "title": "Culture", "body": "Tradycje, sztuka i lokalny klimat", "trailing_content": "🎭", "sort_order": 3},
-            {"answer_key": "food_and_dining", "title": "Food and dining", "body": "Smaki, kuchnia i lokalne rekomendacje", "trailing_content": "🍽️", "sort_order": 4},
-            {"answer_key": "nature", "title": "Nature", "body": "Parki, krajobrazy i miejsca na świeżym powietrzu", "trailing_content": "🌿", "sort_order": 5},
+            {"answer_key": "architecture", "title": "Architektura", "body": "Historia i styl zabudowy", "trailing_content": "🏛️"},
+            {"answer_key": "history", "title": "Historia", "body": "Opowieści o wydarzeniach i miejscach", "trailing_content": "📜"},
+            {"answer_key": "culture", "title": "Kultura", "body": "Tradycje, sztuka i lokalny klimat", "trailing_content": "🎭"},
+            {"answer_key": "food_and_dining", "title": "Jedzenie", "body": "Smaki, kuchnia i lokalne rekomendacje", "trailing_content": "🍽️"},
+            {"answer_key": "nature", "title": "Natura", "body": "Parki, krajobrazy i miejsca na świeżym powietrzu", "trailing_content": "🌿"},
         ],
     },
 ]
