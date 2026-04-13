@@ -127,4 +127,7 @@
     <string name="audio_player_widget_header_text">Odtwarzacz</string>
     <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
     <string name="tour_summary_bottom_sheet_places_section">Atrakcje</string>
+
+    <!-- Validation errors -->
+    <string name="validation_error_password_mismatch">Hasła są różne</string>
 </resources>
