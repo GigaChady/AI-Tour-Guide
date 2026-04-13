@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, Float, String, Boolean, DateTime, ForeignKey, Index, Integer, ARRAY
+from sqlalchemy import Column, Float, String, Boolean, DateTime, ForeignKey, Index, Integer
 from geoalchemy2 import Geometry # do zrobienia jakos potem, moze sie przyda do przechowywania trasy czy lokalizacji
 from sqlalchemy.orm import relationship
 from sqlalchemy import JSON
@@ -30,6 +30,7 @@ class User(Base):
     wiek = Column(Float, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     gender_option = relationship("DemographicsGenderOption")
+    narration_settings = Column(JSON, default=dict, nullable=True)
     routes = relationship("Route", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
 
@@ -38,7 +39,7 @@ class UserPreferences(Base):
     __tablename__ = "user_preferences"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True)
-    interests = Column(JSON, default=list) # moze jakis enum albo cos zeby ograniczyc do konkretnych kategorii, ale na razie niech bedzie string
+    interests = Column(JSON, default=list)
 
     user = relationship("User", back_populates="preferences")
 
