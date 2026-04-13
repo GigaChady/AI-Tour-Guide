@@ -30,7 +30,7 @@ services:
       timeout: 5s
       retries: 5
   test_db:
-    image: postgis/postgis:16-3.4-alpine
+    image: postgis/postgis:16-3.4-alpinex
     environment:
       POSTGRES_DB: test_db
       POSTGRES_USER: postgres
