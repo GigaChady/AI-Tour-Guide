@@ -1,6 +1,5 @@
-from typing import Literal
-
-from pydantic import BaseModel, EmailStr
+from typing import Any, Literal
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ----------------AUTH SCHEMAS----------------
@@ -67,17 +66,29 @@ class OnboardingAnswerResponse(BaseModel):
 
 
 # ----------------NARRATION SETTINGS SCHEMAS----------------
-class NarrationSettingOption(BaseModel):
-    key: str
-    title: str
-    body: str | None = None
+class NarrationSettingsRequest(BaseModel):
+    language: str = Field(...)
+    pitch: int = Field(..., ge=0, le=100)
+    speed: int = Field(..., ge=0, le=10)
+    volume: int = Field(..., ge=0, le=100)
+    detail_level: str = Field(...)
+    auto_play: bool = Field(...)
 
 
-class NarrationSetting(BaseModel):
-    key: str
-    title: str
-    type: Literal["percentage", "single_choice"]
-    min: int | None = None
-    max: int | None = None
-    required: bool = False
-    options: list[NarrationSettingOption] = []
+
+# ----------------USER SETTINGS SCHEMAS----------------
+class ChangeNameRequest(BaseModel):
+    name: str
+
+class ChangePasswordRequest(BaseModel):
+    new_password: str
+
+class ChangeEmailRequest(BaseModel):
+    new_email: EmailStr
+
+
+# ----------------DASHBOARD SCHEMAS----------------
+class DashboardPOIResponse(BaseModel):
+    poi: Any
+
+

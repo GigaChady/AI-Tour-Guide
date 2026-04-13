@@ -11,9 +11,10 @@ from app.core.database import init_db
 from app.core.redis import close_redis, init_redis
 from app.routers import map as map_router
 from app.routers import route
+from app.routers.dashboard import router as dashboard_router
 from app.routers.audio import router as audio_router
 from app.routers.user import auth
-# from app.routers.user import narration_settings as user_narration_settings
+from app.routers.user import narration_settings as user_narration_settings
 from app.routers.user import onboarding as user_onboarding
 
 
@@ -49,8 +50,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.include_router(auth.router)
 app.include_router(route.router)
+app.include_router(dashboard_router)
 app.include_router(user_onboarding.router)
-# app.include_router(user_narration_settings.router)
+app.include_router(user_narration_settings.router)
 app.include_router(map_router.router)
 app.include_router(audio_router)
 
