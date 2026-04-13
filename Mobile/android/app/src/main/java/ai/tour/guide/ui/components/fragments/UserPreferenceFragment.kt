@@ -1,54 +1,75 @@
 package ai.tour.guide.ui.components.fragments
 
-import ai.tour.guide.R
-import ai.tour.guide.data.dto.OnboardingPreference
-import ai.tour.guide.data.dto.OnboardingPreferenceCategory
-import ai.tour.guide.data.dto.OnboardingPreferenceChoiceType
-import ai.tour.guide.ui.components.settings.SettingChoiceItem
+import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionDto
+import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionType
+import ai.tour.guide.ui.screens.onboarding.preferences.OnboardingPreferencesStepViewModel
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.koin.compose.viewmodel.koinViewModel
 
-@Preview(showBackground = true)
 @Composable
 fun UserPreferenceFragment(
     modifier: Modifier = Modifier,
+    viewModel: OnboardingPreferencesStepViewModel = koinViewModel(),
     trailingSettings: @Composable () -> Unit = {}
 ) {
-    val options = getOptions()
-    val groupedOptions = options.groupBy { it.category }
-    val selectedOptions = remember {
-        mutableStateMapOf<OnboardingPreferenceCategory, OnboardingPreference>()
-    }
+    val preferences by viewModel.preferencesFlow.collectAsState()
+    val viewState by viewModel.viewStateFlow.collectAsState()
+
     Column(
         modifier = modifier
             .padding(16.dp)
     ) {
-        LazyColumn {
-            groupedOptions.forEach { (category, categoryItems) ->
-                item {
+        LazyColumn(Modifier.weight(1f)) {
+            preferences.forEach { preference ->
+                item(key = preference.key?.let { "header_$it" } ?: preference.hashCode()) {
                     Text(
-                        text = getPreferenceCategoryName(category),
+                        text = preference.title ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
-                items(categoryItems) { item ->
-                    SettingChoiceItem(
+
+                val options = preference.options ?: emptyList()
+                items(
+                    items = options,
+                    key = { item -> "${preference.key}_${item.key ?: item.hashCode()}" }
+                ) { item ->
+                    val isSingleChoice =
+                        preference.type == OnboardingPreferenceQuestionType.SINGLE_CHOICE
+                    val isSelected = if (isSingleChoice) {
+                        viewState.data.selectedSingleOptions[preference.key] == item.key
+                    } else {
+                        viewState.data.selectedMultipleOptions[preference.key]?.contains(item.key) == true
+                    }
+
+                    PreferenceChoiceItem(
                         item = item,
-                        selected = selectedOptions[category] == item,
-                        onSelected = { selectedOptions[category] = item }
+                        isSingleChoice = isSingleChoice,
+                        isSelected = isSelected,
+                        onSelect = {
+                            if (preference.key != null && item.key != null) {
+                                if (isSingleChoice) {
+                                    viewModel.onOptionSelected(preference.key, item.key)
+                                } else {
+                                    viewModel.onMultipleOptionToggled(preference.key, item.key)
+                                }
+                            }
+                        }
                     )
                 }
             }
@@ -57,56 +78,24 @@ fun UserPreferenceFragment(
     }
 }
 
-
 @Composable
-fun getOptions(): List<OnboardingPreference> {
-    return listOf(
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_grammatic_form_option1_main),
-            OnboardingPreferenceCategory.GRAMMAR,
-            stringResource(R.string.onboarding_step4_grammatic_form_option1_hint),
-            null,
-            OnboardingPreferenceChoiceType.SINGLE
-        ),
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_grammatic_form_option2_main),
-            OnboardingPreferenceCategory.GRAMMAR,
-            stringResource(R.string.onboarding_step4_grammatic_form_option2_hint),
-            null,
-            OnboardingPreferenceChoiceType.SINGLE
-        ),
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_grammatic_form_option3_main),
-            OnboardingPreferenceCategory.GRAMMAR,
-            stringResource(R.string.onboarding_step4_grammatic_form_option3_hint),
-            null,
-            OnboardingPreferenceChoiceType.SINGLE
-        ),
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_interests_form_option1_main),
-            OnboardingPreferenceCategory.INTERESTS,
-            trailingContent = "\uD83C\uDFDB\uFE0F",
-            type = OnboardingPreferenceChoiceType.MULTIPLE
-        ),
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_interests_form_option2_main),
-            OnboardingPreferenceCategory.INTERESTS,
-            trailingContent = "\uD83C\uDFD7\uFE0F",
-            type = OnboardingPreferenceChoiceType.MULTIPLE
-        ),
-        OnboardingPreference(
-            stringResource(R.string.onboarding_step4_interests_form_option3_main),
-            OnboardingPreferenceCategory.INTERESTS,
-            trailingContent = "\uD83C\uDFAD",
-            type = OnboardingPreferenceChoiceType.MULTIPLE
-        ),
+fun PreferenceChoiceItem(
+    item: OnboardingPreferenceQuestionDto,
+    isSingleChoice: Boolean,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    ListItem(
+        modifier = Modifier.clickable { onSelect() },
+        leadingContent = {
+            if (isSingleChoice) {
+                RadioButton(selected = isSelected, onClick = null)
+            } else {
+                Checkbox(checked = isSelected, onCheckedChange = null)
+            }
+        },
+        headlineContent = { Text(item.title ?: "") },
+        supportingContent = { item.body?.let { Text(it) } },
+        trailingContent = { item.trailingContent?.let { Text(it) } }
     )
-}
-
-@Composable
-fun getPreferenceCategoryName(category: OnboardingPreferenceCategory): String {
-    return when (category) {
-        OnboardingPreferenceCategory.GRAMMAR -> stringResource(R.string.onboarding_step4_grammatic_form_section_header)
-        OnboardingPreferenceCategory.INTERESTS -> stringResource(R.string.onboarding_step4_interests_form_section_header)
-    }
 }

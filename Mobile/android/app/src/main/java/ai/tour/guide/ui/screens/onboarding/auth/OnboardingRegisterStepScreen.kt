@@ -1,4 +1,4 @@
-package ai.tour.guide.ui.screens.onboarding
+package ai.tour.guide.ui.screens.onboarding.auth
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.fragments.UserRegistrationFragment
@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+
 @Preview(showBackground = true)
 @Composable
 fun OnboardingRegisterStepScreen(

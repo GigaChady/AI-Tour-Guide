@@ -1,8 +1,9 @@
-package ai.tour.guide.ui.screens.onboarding
+package ai.tour.guide.ui.screens.onboarding.preferences
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.fragments.UserPreferenceFragment
 import ai.tour.guide.ui.components.onboarding.OnboardingWelcomeText
+import ai.tour.guide.ui.components.shared.ToastOnRequestError
 import ai.tour.guide.ui.navigation.Route
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -25,13 +29,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.viewmodel.koinViewModel
 
 @Preview(showBackground = true)
 @Composable
 fun OnboardingPreferencesStepScreen(
     modifier: Modifier = Modifier,
+    viewModel: OnboardingPreferencesStepViewModel = koinViewModel(),
     backStack: NavBackStack<NavKey>? = null,
 ) {
+    val viewModelState by viewModel.viewStateFlow.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchData()
+    }
+
+    LaunchedEffect(viewModelState.isSuccess) {
+        if (viewModelState.isSuccess) {
+            backStack?.clear()
+            backStack?.add(Route.OnboardingFinishStepScreen)
+        }
+    }
+    ToastOnRequestError(viewModel = viewModel)
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -41,7 +60,8 @@ fun OnboardingPreferencesStepScreen(
             UserPreferenceFragment(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp),
+                viewModel = viewModel
             )
             Column(
                 modifier = Modifier
@@ -59,8 +79,7 @@ fun OnboardingPreferencesStepScreen(
                 )
                 ExtendedFloatingActionButton(
                     onClick = {
-                        backStack?.clear()
-                        backStack?.add(Route.OnboardingFinishStepScreen)
+                        viewModel.savePreferences()
                     },
                     shape = MaterialTheme.shapes.small,
                     icon = { Icon(Icons.AutoMirrored.Default.ArrowForward, null) },

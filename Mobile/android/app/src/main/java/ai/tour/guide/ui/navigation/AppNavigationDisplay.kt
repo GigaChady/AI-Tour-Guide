@@ -11,10 +11,10 @@ import ai.tour.guide.ui.screens.main.MapUserPositionScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingFinishStepScreen
-import ai.tour.guide.ui.screens.onboarding.login.OnboardingLoginStepScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
-import ai.tour.guide.ui.screens.onboarding.OnboardingRegisterStepScreen
+import ai.tour.guide.ui.screens.onboarding.finish.OnboardingFinishStepScreen
+import ai.tour.guide.ui.screens.onboarding.auth.OnboardingLoginStepScreen
+import ai.tour.guide.ui.screens.onboarding.preferences.OnboardingPreferencesStepScreen
+import ai.tour.guide.ui.screens.onboarding.auth.OnboardingRegisterStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepScreen
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
