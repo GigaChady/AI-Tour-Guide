@@ -13,8 +13,8 @@ from app.routers import map as map_router
 from app.routers import route
 from app.routers.audio import router as audio_router
 from app.routers.user import auth
-from app.routers.user import demographics as user_demographics
-from app.routers.user import preferences as user_preferences
+# from app.routers.user import narration_settings as user_narration_settings
+from app.routers.user import onboarding as user_onboarding
 
 
 async def _audio_cleanup_loop() -> None:
@@ -49,8 +49,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.include_router(auth.router)
 app.include_router(route.router)
-app.include_router(user_preferences.router)
-app.include_router(user_demographics.router)
+app.include_router(user_onboarding.router)
+# app.include_router(user_narration_settings.router)
 app.include_router(map_router.router)
 app.include_router(audio_router)
 
