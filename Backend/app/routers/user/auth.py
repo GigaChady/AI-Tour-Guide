@@ -82,6 +82,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     user = User(
         email=normalized_email,
         hashed_password=token_service.hash_password(body.password),
+
         imie=getattr(body, "imie", None) or getattr(body, "name", None),
         nazwisko=getattr(body, "nazwisko", None),
     )
