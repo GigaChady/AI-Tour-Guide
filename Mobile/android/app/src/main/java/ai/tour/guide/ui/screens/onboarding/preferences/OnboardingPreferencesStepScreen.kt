@@ -79,7 +79,7 @@ fun OnboardingPreferencesStepScreen(
                 )
                 ExtendedFloatingActionButton(
                     onClick = {
-                        viewModel.savePreferences()
+                        viewModel.onSavePreferencesClicked()
                     },
                     shape = MaterialTheme.shapes.small,
                     icon = { Icon(Icons.AutoMirrored.Default.ArrowForward, null) },

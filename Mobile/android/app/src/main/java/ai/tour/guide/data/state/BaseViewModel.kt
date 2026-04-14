@@ -30,12 +30,13 @@ interface IBaseViewModel {
 
 abstract class BaseViewModel<T>(initialData: T) : ViewModel(), IBaseViewModel {
     protected val _state = MutableStateFlow(BaseViewState(initialData))
-    
+
     @Suppress("UNCHECKED_CAST")
-    override val stateFlow: StateFlow<IBaseViewModelState> = _state as StateFlow<IBaseViewModelState>
-    
+    override val stateFlow: StateFlow<IBaseViewModelState> =
+        _state as StateFlow<IBaseViewModelState>
+
     val viewStateFlow: StateFlow<BaseViewState<T>> = _state.asStateFlow()
-    
+
     private val stateLock = Mutex()
 
     protected fun updateState(updater: BaseViewState<T>.() -> BaseViewState<T>) {

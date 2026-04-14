@@ -14,6 +14,10 @@ lottieCompose = "6.7.1"
 navigation3 = "1.1.0"
 kotlinxSerialization = "1.11.0"
 material3Version = "1.5.0-alpha17"
+mockk = "1.13.17"
+coroutinesTest = "1.10.2"
+robolectric = "4.14.1"
+androidxTestCore = "1.6.1"
 
 koin = "4.2.1"
 koinPlugin = "1.0.0-RC1"
@@ -47,6 +51,11 @@ lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3Version" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
 
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android" }

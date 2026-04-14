@@ -22,7 +22,10 @@ import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Single
 
 @Single
-class ApiClient(val appDataRepository: AppDataRepository) {
+class ApiClient(
+    val appDataRepository: AppDataRepository,
+    @PublishedApi internal val httpClient: HttpClient = defaultHttpClient
+) {
     suspend inline fun <reified T : IAPIResponseDto> get(route: ApiClientRoute): ApiResponse<T> {
         return try {
             val response = httpClient.get {
@@ -74,13 +77,12 @@ class ApiClient(val appDataRepository: AppDataRepository) {
             ApiResponse(e)
         }
     }
+}
 
-    companion object {
-        val httpClient = HttpClient(Android) {
-            install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
-            }
-        }
+@PublishedApi
+internal val defaultHttpClient = HttpClient(Android) {
+    install(ContentNegotiation) {
+        json(Json { ignoreUnknownKeys = true })
     }
 }
 

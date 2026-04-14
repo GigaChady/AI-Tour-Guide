@@ -22,6 +22,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 
     buildTypes {
         release {
@@ -73,6 +77,11 @@ dependencies {
     implementation(libs.androidx.credentials.play)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.androidx.test.core.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
