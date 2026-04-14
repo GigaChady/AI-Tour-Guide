@@ -59,20 +59,24 @@ class OnboardingPreferencesStepViewModel(
         return SaveOnboardingPreferenceRequestDto(singleRequests + multipleRequests)
     }
 
-    fun savePreferences() {
-        val data = parseStateToDto()
+    fun onSavePreferencesClicked() {
         viewModelScope.launch {
-            withLoading {
-                val response =
-                    apiClient.post<SaveOnboardingPreferenceRequestDto, EmptyAPIResponse>(
-                        ApiClientRoute.ONBOARDING_ANSWERS,
-                        data
-                    )
-                if (response.isSuccessful) {
-                    updateState { copy(isSuccess = true) }
-                } else {
-                    updateState { copy(errorMessage = response.errorMessage) }
-                }
+            savePreferences()
+        }
+    }
+
+    suspend fun savePreferences() {
+        val data = parseStateToDto()
+        withLoading {
+            val response =
+                apiClient.post<SaveOnboardingPreferenceRequestDto, EmptyAPIResponse>(
+                    ApiClientRoute.ONBOARDING_ANSWERS,
+                    data
+                )
+            if (response.isSuccessful) {
+                updateState { copy(isSuccess = true) }
+            } else {
+                updateState { copy(errorMessage = response.errorMessage) }
             }
         }
     }

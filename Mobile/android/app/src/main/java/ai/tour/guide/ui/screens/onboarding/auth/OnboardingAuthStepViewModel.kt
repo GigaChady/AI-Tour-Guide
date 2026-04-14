@@ -28,32 +28,41 @@ class OnboardingAuthStepViewModel(
     private val appStateRepository: AppDataRepository
 ) : BaseViewModel<OnboardingAuthStepState>(OnboardingAuthStepState.default()) {
     private val tag = "OnboardingAuthScreenViewModel"
-
     fun onLoginClicked() {
         viewModelScope.launch {
-            withLoading {
-                val data = LoginRequestDto(
-                    email = viewStateFlow.value.data.email,
-                    password = viewStateFlow.value.data.password,
+            performLoginRequest()
+        }
+    }
+
+    suspend fun performLoginRequest() {
+        withLoading {
+            val data = LoginRequestDto(
+                email = viewStateFlow.value.data.email,
+                password = viewStateFlow.value.data.password,
+            )
+            val response =
+                apiClient.post<LoginRequestDto, TokenResponseDto>(
+                    ApiClientRoute.AUTH_LOGIN,
+                    data
                 )
-                val response =
-                    apiClient.post<LoginRequestDto, TokenResponseDto>(
-                        ApiClientRoute.AUTH_LOGIN,
-                        data
-                    )
-                if (!response.isSuccessful) {
-                    updateState {
-                        copy(errorMessage = response.errorMessage)
-                    }
-                    return@withLoading
+            if (!response.isSuccessful) {
+                updateState {
+                    copy(errorMessage = response.errorMessage)
                 }
-                updateAppConfig(response.body)
-                updateState { copy(errorMessage = null, isSuccess = true) }
+                return@withLoading
             }
+            updateAppConfig(response.body)
+            updateState { copy(errorMessage = null, isSuccess = true) }
         }
     }
 
     fun onRegisterClicked() {
+        viewModelScope.launch {
+            performRegisterRequest()
+        }
+    }
+
+    suspend fun performRegisterRequest() {
         val password = viewStateFlow.value.data.password
         val confirmPassword = viewStateFlow.value.data.confirmPassword
         if (password != confirmPassword) {
