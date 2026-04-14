@@ -3,6 +3,7 @@ package ai.tour.guide.data.onboardingPreferences
 
 import ai.tour.guide.network.ApiClient
 import ai.tour.guide.network.ApiClientRoute
+import ai.tour.guide.network.schema.response.BaseListResponse
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,9 +18,9 @@ class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
 
     private suspend fun fetchPreferences() {
         val request =
-            apiClient.getList<OnboardingPreferencesDto>(ApiClientRoute.ONBOARDING_QUESTIONS)
+            apiClient.get<BaseListResponse<OnboardingPreferencesDto>>(ApiClientRoute.ONBOARDING_QUESTIONS)
         if (request.isSuccessful) {
-            _preferences.value = request.body ?: emptyList()
+            _preferences.value = request.body?.items ?: emptyList()
         } else {
             Log.e(
                 "OnboardingPreferenceRepo",

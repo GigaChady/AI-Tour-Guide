@@ -4,6 +4,7 @@ import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceRepository
 import ai.tour.guide.data.state.BaseViewModel
 import ai.tour.guide.network.ApiClient
 import ai.tour.guide.network.ApiClientRoute
+import ai.tour.guide.network.schema.request.OnboardingPreferenceToSave
 import ai.tour.guide.network.schema.request.SaveOnboardingPreferenceRequestDto
 import ai.tour.guide.network.schema.response.EmptyAPIResponse
 import androidx.lifecycle.viewModelScope
@@ -44,29 +45,29 @@ class OnboardingPreferencesStepViewModel(
         }
     }
 
-    private fun parseStateToDto(): List<SaveOnboardingPreferenceRequestDto> {
+    private fun parseStateToDto(): SaveOnboardingPreferenceRequestDto {
         val stateData = viewStateFlow.value.data
         val singleRequests = stateData.selectedSingleOptions.map { (qId, aId) ->
-            SaveOnboardingPreferenceRequestDto(questionKey = qId, answerKey = aId)
+            OnboardingPreferenceToSave(questionKey = qId, answerKey = aId)
         }
         val multipleRequests = stateData.selectedMultipleOptions.map { (qId, aIds) ->
-            SaveOnboardingPreferenceRequestDto(
+            OnboardingPreferenceToSave(
                 questionKey = qId,
                 answerKeys = aIds.toList()
             )
         }
-        return singleRequests + multipleRequests
+        return SaveOnboardingPreferenceRequestDto(singleRequests + multipleRequests)
     }
 
     fun savePreferences() {
+        val data = parseStateToDto()
         viewModelScope.launch {
             withLoading {
                 val response =
-                    apiClient.post<List<SaveOnboardingPreferenceRequestDto>, EmptyAPIResponse>(
+                    apiClient.post<SaveOnboardingPreferenceRequestDto, EmptyAPIResponse>(
                         ApiClientRoute.ONBOARDING_ANSWERS,
-                        parseStateToDto()
+                        data
                     )
-
                 if (response.isSuccessful) {
                     updateState { copy(isSuccess = true) }
                 } else {
