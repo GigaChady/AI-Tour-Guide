@@ -8,6 +8,11 @@ import kotlinx.serialization.Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SaveOnboardingPreferenceRequestDto(
+    val items: List<OnboardingPreferenceToSave> = emptyList()
+)
+
+@Serializable
+data class OnboardingPreferenceToSave(
     @SerialName("question_key")
     val questionKey: String? = null,
 
