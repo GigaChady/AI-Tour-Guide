@@ -2,14 +2,14 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, Float, String, Boolean, DateTime, ForeignKey, Index, Integer
-from geoalchemy2 import Geometry # do zrobienia jakos potem, moze sie przyda do przechowywania trasy czy lokalizacji
+from geoalchemy2 import Geometry 
 from sqlalchemy.orm import relationship
 from sqlalchemy import JSON
 from sqlalchemy.orm import DeclarativeBase
 
 class Base(DeclarativeBase):
     pass
-
+#TODO: fix models after some changes
 
 def utc_now_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -18,7 +18,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
-    hashed_password = Column(String, nullable=True) # nullable for Google-auth users
+    hashed_password = Column(String, nullable=True) 
     google_id = Column(String, unique=True, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utc_now_naive)
@@ -30,11 +30,18 @@ class User(Base):
     wiek = Column(Float, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     gender_option = relationship("DemographicsGenderOption")
-    narration_settings = Column(JSON, default=dict, nullable=True)
+    narration_settings = relationship("UserNarrationSettings", back_populates="user", uselist=False)
     routes = relationship("Route", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
 
+class UserNarrationSettings(Base):
+    __tablename__ = "user_narration_settings"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
+    settings = Column(JSON, default=dict, nullable=True)
 
+    user = relationship("User", back_populates="narration_settings")
+    
 class UserPreferences(Base):
     __tablename__ = "user_preferences"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -42,42 +49,6 @@ class UserPreferences(Base):
     interests = Column(JSON, default=list)
 
     user = relationship("User", back_populates="preferences")
-
-
-class PreferenceQuestionDefinition(Base):
-    __tablename__ = "preference_questions"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    question_key = Column(String, unique=True, nullable=False)
-    title = Column(String, nullable=False)
-    type = Column(String, nullable=False)
-    sort_order = Column(Integer, default=0, nullable=False)
-    min_value = Column(Integer, nullable=True)
-    max_value = Column(Integer, nullable=True)
-    required = Column(Boolean, default=False, nullable=False)
-
-    answers = relationship(
-        "PreferenceQuestionOptionDefinition",
-        back_populates="question",
-        cascade="all, delete-orphan",
-        order_by="PreferenceQuestionOptionDefinition.sort_order.asc()",
-    )
-
-
-class PreferenceQuestionOptionDefinition(Base):
-    __tablename__ = "preference_question_options"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    question_id = Column(Integer, ForeignKey("preference_questions.id", ondelete="CASCADE"), nullable=False)
-    answer_key = Column(String, nullable=False)
-    title = Column(String, nullable=False)
-    body = Column(String, nullable=True)
-    trailing_content = Column(String, nullable=True)
-    sort_order = Column(Integer, default=0, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-
-    question = relationship("PreferenceQuestionDefinition", back_populates="answers")
-
 
 class Route(Base):
     __tablename__ = "routes"
@@ -89,7 +60,7 @@ class Route(Base):
     city = Column(String, nullable=True)
     name = Column(String, nullable=True) # moze jakis tytul trasy czy cos, zeby latwiej bylo potem rozpoznac trasy usera, ale na razie niech bedzie nullable, bo moze niektorym userom bedzie sie chcialo to wypelniac a innym nie
     # moze jeszcze jakies pola typu aktualna lokalizacja czy cos
-    path = Column(Geometry("LINESTRING"), nullable=True) # do zrobienia jakos potem, moze sie przyda do przechowywania trasy
+    path = Column(Geometry("LINESTRING"), nullable=True) 
     distance_m = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="routes")

@@ -16,6 +16,7 @@ from app.routers.audio import router as audio_router
 from app.routers.user import auth
 from app.routers.user import narration_settings as user_narration_settings
 from app.routers.user import onboarding as user_onboarding
+from app.routers.user import login_settings as user_login_settings
 
 
 async def _audio_cleanup_loop() -> None:
@@ -53,6 +54,7 @@ app.include_router(route.router)
 app.include_router(dashboard_router)
 app.include_router(user_onboarding.router)
 app.include_router(user_narration_settings.router)
+app.include_router(user_login_settings.router)
 app.include_router(map_router.router)
 app.include_router(audio_router)
 

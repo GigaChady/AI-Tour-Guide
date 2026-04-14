@@ -9,7 +9,8 @@ from app.models.models import User
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-
+#TODO: Change this to question/answer format maybe later
+# to be determined where we initialize default settings from 
 @router.post("/narration-settings", status_code=status.HTTP_204_NO_CONTENT)
 async def save_narration_settings(
     settings: NarrationSettingsRequest,

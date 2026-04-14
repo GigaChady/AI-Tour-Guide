@@ -3,36 +3,32 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 # ----------------AUTH SCHEMAS----------------
-class RegisterRequest(BaseModel): # do endpointu register, zeby tam wstrzykiwac email i password
+class RegisterRequest(BaseModel): 
     email: EmailStr
     password: str
     name: str
     imie: str | None = None
     nazwisko: str | None = None
 
-class LoginRequest(BaseModel): # do endpointu login, zeby tam wstrzykiwac email i password
+class LoginRequest(BaseModel): 
     email: EmailStr
     password: str
 
-class LogoutRequest(BaseModel): # do endpointu logout, zeby tam wstrzykiwac refresh token do unieważnienia
+class LogoutRequest(BaseModel): 
     refresh_token: str
 
-class GoogleAuthRequest(BaseModel): # do endpointu Google Auth, zeby tam wstrzykiwac token Google
+class GoogleAuthRequest(BaseModel): 
     google_token: str
 
-class RefreshRequest(BaseModel): # do endpointu refresh, zeby tam wstrzykiwac refresh token do odświeżenia access tokena
+class RefreshRequest(BaseModel): 
     refresh_token: str
 
-class TokenResponse(BaseModel): # do endpointów auth, zeby tam zwracać access token i refresh token
+class TokenResponse(BaseModel): 
     access_token: str
     refresh_token: str
 
 
 # ----------------ROUTE SCHEMAS----------------
-class RouteEditNameRequest(BaseModel):
-    route_id: str
-    name: str
-
 class Location(BaseModel):
     lat: float
     lng: float
@@ -92,3 +88,12 @@ class DashboardPOIResponse(BaseModel):
     poi: Any
 
 
+# ----------------BASE REQUEST WRAPPER----------------
+class ItemsRequest(BaseModel):
+    items: list[Any]
+    detail: str | None = None
+
+# ----------------ONBOARDING WRAPPED REQUEST----------------
+class OnboardingAnswersRequest(BaseModel):
+    items: list[OnboardingAnswerRequest]
+    detail: str | None = None
