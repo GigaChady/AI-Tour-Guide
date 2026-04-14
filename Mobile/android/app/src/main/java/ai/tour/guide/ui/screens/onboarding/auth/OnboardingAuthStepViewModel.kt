@@ -3,7 +3,7 @@ package ai.tour.guide.ui.screens.onboarding.auth
 import ai.tour.guide.R
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.data.appData.AppDataRepository
-import ai.tour.guide.data.state.BaseViewModel
+import ai.tour.guide.data.shared.BaseViewModel
 import ai.tour.guide.network.ApiClient
 import ai.tour.guide.network.ApiClientRoute
 import ai.tour.guide.network.schema.request.GoogleTokenRequestDto

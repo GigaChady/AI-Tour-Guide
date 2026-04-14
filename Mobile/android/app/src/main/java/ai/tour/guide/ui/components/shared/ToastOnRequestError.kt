@@ -1,6 +1,6 @@
 package ai.tour.guide.ui.components.shared
 
-import ai.tour.guide.data.state.IBaseViewModel
+import ai.tour.guide.data.shared.IBaseViewModel
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
