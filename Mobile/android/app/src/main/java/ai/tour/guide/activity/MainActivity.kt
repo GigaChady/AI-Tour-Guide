@@ -1,20 +1,36 @@
 package ai.tour.guide.activity
 
-import ai.tour.guide.ui.components.navigation.AppDrawerLayout
+import ai.tour.guide.data.appData.AppDataRepository
+import ai.tour.guide.ui.navigation.AppNavigationDisplay
+import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.theme.AiTourGuideTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
+    val appDataRepository: AppDataRepository by inject()
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //startActivity(Intent(this, OnboardingActivity::class.java))
         enableEdgeToEdge()
         setContent {
+            val onboardingCompleted by appDataRepository.onboardingCompletedFlow.collectAsState(
+                initial = null
+            )
             AiTourGuideTheme {
-                AppDrawerLayout()
+                onboardingCompleted?.let { completed ->
+                    val startRoute = if (!completed) {
+                        Route.OnboardingWelcomeStepScreen
+                    } else {
+                        Route.Dashboard
+                    }
+                    AppNavigationDisplay(initialRoute = startRoute)
+                }
             }
         }
     }

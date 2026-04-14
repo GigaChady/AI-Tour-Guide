@@ -48,14 +48,86 @@
     <string name="navigation_drawer_header">Menu</string>
     <string name="navigation_drawer_item_profile">Profil</string>
     <string name="navigation_drawer_item_app_settings">Ustawienia aplikacji</string>
+    <string name="navigation_dashboard_route_title">Dashboard</string>
+    <string name="navigation_profile_preferences_route_title">Profil</string>
+    <string name="navigation_app_settings_route_title">Ustawienia</string>
+    <string name="navigation_account_settings_route_title">Ustawienia konta</string>
+    <string name="navigation_tour_audio_player_route_title">Zwiedzanie</string>
+    <string name="navigation_map_user_position_route_title">Mapa</string>
 
     <string name="navigation_route_dashboard_name">Dashboard</string>
-
     <!-- Content descriptions  -->
     <string name="app_bar_hamburger_menu_content_description">Menu aplikacji</string>
+    <string name="app_bar_map_icon_tour_content_description">Przejdź do mapy</string>
 
     <!-- Screen content -->
     <string name="dashboard_header_text_content_part1">Jakie miejsca</string>
     <string name="dashboard_header_text_content_part2">odwiedzimy dzisiaj?</string>
-    
+    <string name="dashboard_main_section_header">Twoja lokalizacja</string>
+    <string name="dashboard_main_section_header_subtext_example">Warszawa Stare Miasto</string>
+    <string name="dashboard_main_cta_button_text">Rozpocznij zwiedzanie</string>
+
+    <string name="profile_preferences_account_settings_section_header">Ustawienia konta</string>
+    <string name="profile_preferences_account_settings_cta">Przejdź do ustawień konta</string>
+
+    <string name="account_settings_header">Twoje dane</string>
+    <string name="account_settings_cta">Zapisz</string>
+
+    <string name="tour_audio_player_location_header">Twoja lokalizacja</string>
+    <string name="tour_audio_player_example_location">Zamek Królewski</string>
+
+    <string name="tour_audio_player_narration_header_title">Opis</string>
+    <string name="tour_audio_player_narration_header_example_content_before">Przed Tobą stoi majestatyczny Zamek Królewski. To tutaj, w tym wspaniałym budynku, królowie Polski podejmowali najważniejsze decyzje dla kraju.</string>
+    <string name="tour_audio_player_narration_header_example_content_current">W swojej długiej historii Zamek Królewski był wielokrotnie grabiony i dewastowany przez wojska szwedzkie, brandenburskie, niemieckie i rosyjskie.</string>
+    <string name="tour_audio_player_narration_header_example_content_after">W XIX wieku, po upadku powstania listopadowego, został przeznaczony na potrzeby administracji rosyjskiej. W okresie I wojny światowej rezydencja niemieckiego generalnego gubernatora. W latach 1920–1922 siedziba Naczelnika Państwa, w latach 1926–1939 rezydencja Prezydenta Rzeczypospolitej Polskiej. Spalony i ograbiony przez Niemców w 1939, doszczętnie zniszczony w 1944.</string>
+
+    <string name="trip_end_summary_header">Podsumowanie</string>
+    <string name="trip_end_summary_header_subtext">Twojej podróży</string>
+    <string name="trip_end_summary_quick_summary_section_header">W skrócie</string>
+    <string name="trip_end_summary_visited_places_section_header">Odwiedzone atrakcje</string>
+    <string name="trip_end_summary_go_back_cta_button_text">Powrót do menu głównego</string>
+
+    <string name="app_settings_general_section_header">Ogólne</string>
+    <string name="app_settings_general_section_body">Ustawienia aplikacji</string>
+
+    <string name="app_settings_general_language_header">Język aplikacji</string>
+    <string name="app_settings_general_language_sample_selection">Polski (PL) (Domyślny)</string>
+    <string name="app_settings_general_language_picker_header">Wybierz język</string>
+
+    <string name="app_settings_general_color_scheme_header">Motyw aplikacji</string>
+    <string name="app_settings_general_color_scheme_option_auto">Systemowy (domyślny)</string>
+    <string name="app_settings_general_color_scheme_option_light">Jasny</string>
+    <string name="app_settings_general_color_scheme_option_dark">Ciemny</string>
+
+    <string name="app_settings_narration_section_header">Ogólne</string>
+    <string name="app_settings_narration_section_body">Ustawienia narracji (TTS)</string>
+
+    <string name="app_settings_narration_language_header">Głos</string>
+    <string name="app_settings_narration_language_sample_selection">Polski (PL) (Domyślny)</string>
+    <string name="app_settings_narration_language_picker_header">Wybierz język narracji</string>
+
+    <string name="app_settings_narration_pitch_header">Wysokość tonu</string>
+    <string name="app_settings_narration_speed_header">Prędkość</string>
+    <string name="app_settings_narration_volume_header">Głośność</string>
+    <string name="app_settings_narration_test_settings_button_content">Testuj głos</string>
+
+    <string name="app_settings_playback_section_header">Odtwarzanie</string>
+    <string name="app_settings_playback_section_body">Dostosuj ustawienia odtwarzania opisów</string>
+
+    <string name="app_settings_playback_details_count_header">Liczba szczegółów (np. historycznych), które mają zawierać opisy generowane podczas zwiedzania</string>
+    <string name="app_settings_playback_details_count_option_low">Mało</string>
+    <string name="app_settings_playback_details_count_option_mid">Średnio</string>
+    <string name="app_settings_playback_details_count_option_high">Dużo</string>
+
+    <string name="app_settings_playback_interrupt_header">Automatycznie rozpoczynaj odtwarzanie opisu, kiedy zbliżysz się do punktów wartych uwagi</string>
+    <string name="app_settings_playback_interrupt_option_yes">Tak</string>
+    <string name="app_settings_playback_interrupt_option_no">Nie</string>
+
+    <!-- Component-specific -->
+    <string name="audio_player_widget_header_text">Odtwarzacz</string>
+    <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
+    <string name="tour_summary_bottom_sheet_places_section">Atrakcje</string>
+
+    <!-- Validation errors -->
+    <string name="validation_error_password_mismatch">Hasła są różne</string>
 </resources>
