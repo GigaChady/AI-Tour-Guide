@@ -1,4 +1,4 @@
-package ai.tour.guide.data.state
+package ai.tour.guide.data.shared
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
