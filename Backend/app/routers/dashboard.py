@@ -16,7 +16,7 @@ from app.services.session_service import SessionService
 router = APIRouter(prefix="/route/dashboard", tags=["dashboard"])
 
 _POI_TIMEOUT_SECONDS = 30
-
+#TODO: still think about this logic cause its not perfect
 
 @router.post("/poi", response_model=DashboardPOIResponse)
 async def get_dashboard_poi(

@@ -11,8 +11,6 @@ from app.core.config import DEFAULT_ONBOARDING_CATALOG, settings
 from app.core.database import AsyncSessionLocal, init_db, reset_database
 from app.models.models import (
     DemographicsGenderOption,
-    PreferenceQuestionDefinition,
-    PreferenceQuestionOptionDefinition,
     RefreshToken,
     Route,
     User,
@@ -51,8 +49,6 @@ async def _clear_existing_data() -> None:
             Route,
             UserPreferences,
             User,
-            PreferenceQuestionOptionDefinition,
-            PreferenceQuestionDefinition,
             DemographicsGenderOption,
         ]:
             await session.execute(delete(model))
@@ -74,42 +70,6 @@ async def _seed_reference_data() -> dict[str, int]:
                 session.add(option)
                 await session.flush()
             gender_id_by_code[code] = option.id
-
-        existing_questions = {
-            row.question_key: row
-            for row in (await session.execute(select(PreferenceQuestionDefinition))).scalars().all()
-        }
-        existing_options = {
-            (row.question_id, row.answer_key): row
-            for row in (await session.execute(select(PreferenceQuestionOptionDefinition))).scalars().all()
-        }
-
-        question = existing_questions.get("interests")
-        if question is None:
-            question = PreferenceQuestionDefinition(
-                question_key="interests",
-                title=_INTERESTS_CATALOG["title"],
-                type="multi_choice",
-                sort_order=1,
-                required=False,
-            )
-            session.add(question)
-            await session.flush()
-
-        for sort_order, answer in enumerate(_INTERESTS_CATALOG["answers"], start=1):
-            if (question.id, answer["answer_key"]) in existing_options:
-                continue
-            session.add(
-                PreferenceQuestionOptionDefinition(
-                    question_id=question.id,
-                    answer_key=answer["answer_key"],
-                    title=answer["title"],
-                    body=answer.get("body"),
-                    trailing_content=answer.get("trailing_content"),
-                    sort_order=sort_order,
-                    is_active=True,
-                )
-            )
 
         await session.commit()
 

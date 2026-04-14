@@ -34,7 +34,6 @@ def _validate_password_strength(password: str) -> None:
 
 
 def _mask_email_for_logs(email: str) -> str:
-    #We want to mask email to reduce PII exposure in logs.
     local, sep, domain = email.partition("@")
     if not sep:
         return "***"
@@ -51,8 +50,8 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute( 
         select(RefreshToken).where(
             RefreshToken.token_hash == token_hash,
-            RefreshToken.revoked.is_(False), # Nie używamy == False, bo może być NULL, a wtedy porównanie zwróci NULL zamiast False
-            RefreshToken.expires_at > datetime.now(timezone.utc) # Nie używamy > datetime.now(), bo może być NULL, a wtedy porównanie zwróci NULL zamiast False
+            RefreshToken.revoked.is_(False),
+            RefreshToken.expires_at > datetime.now(timezone.utc) 
         )
     )
     stored = result.scalar()
@@ -60,24 +59,22 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
         stored.revoked = True
         await db.commit()
 
-        # Logowanie wycofania tokena dla audytu
         logger.info(f"Refresh token revoked for user_id: {stored.user_id} at {datetime.now(timezone.utc).isoformat()}")
-        # indempotent logout: even if token is already revoked or expired, we return 204 to avoid revealing token validity
     return
 
 
 @router.post("/register", response_model=TokenResponse) 
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    normalized_email = body.email.strip().lower() # normalizing email to prevent duplicates due to case/whitespace differences
+    normalized_email = body.email.strip().lower() 
 
-    _validate_password_strength(body.password) # password validation 
+    _validate_password_strength(body.password) 
 
     if not getattr(body, "name", None):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Name is required")
 
     existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar():
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already in use") # If u know u know
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already in use") 
 
     user = User(
         email=normalized_email,
@@ -88,7 +85,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     )
     db.add(user)
 
-    try: # race condition handling: if two requests try to register the same email at the same time, one will succeed and the other will raise an IntegrityError due to unique constraint violation. We catch that and return a 409 conflict instead of a 500 server error.
+    try: 
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -96,7 +93,6 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
     await db.refresh(user)
 
-    # Logowanie rejestracji użytkownika dla audytu
     logger.info(f"User registered successfully for email: {normalized_email}")
 
     return await token_service.issue_tokens(user, db)
@@ -104,17 +100,16 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
-    normalized_email = body.email.strip().lower() # same as in register 
-    masked_email = _mask_email_for_logs(normalized_email) # def upper 
+    normalized_email = body.email.strip().lower() 
+    masked_email = _mask_email_for_logs(normalized_email) 
 
     result = await db.execute(select(User).where(User.email == normalized_email))
     user = result.scalar()
 
-    if not user or not token_service.verify_password(body.password, user.hashed_password): # to reduce account enumeration risk
+    if not user or not token_service.verify_password(body.password, user.hashed_password): 
         logger.warning(f"Failed login attempt for email: {masked_email}")
         raise HTTPException(401, detail="Invalid email or password")
 
-    # Logging
     logger.info(f"User logged in successfully for email: {masked_email}")
 
     return await token_service.issue_tokens(user, db)

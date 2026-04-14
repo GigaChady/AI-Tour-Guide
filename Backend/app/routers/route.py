@@ -4,8 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
-from app.models.models import Route, User
-from app.schemas.schemas import RouteEditNameRequest
 from app.services.tour_stream import handle_tour_ws
 
 router = APIRouter(prefix="/route", tags=["route"])
