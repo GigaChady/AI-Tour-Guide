@@ -1,6 +1,6 @@
-package ai.tour.guide.ui.screens.onboarding.preferences
+package ai.tour.guide.ui.sharedFragments.preferences
 
-data class OnboardingPreferencesStepState(
+data class UserPreferenceFragmentState(
     val selectedSingleOptions: Map<String, String> = emptyMap(),
     val selectedMultipleOptions: Map<String, Set<String>> = emptyMap()
 )

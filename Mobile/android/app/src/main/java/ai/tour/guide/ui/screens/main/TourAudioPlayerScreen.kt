@@ -2,8 +2,8 @@ package ai.tour.guide.ui.screens.main
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.audio.AudioPlayerWidget
-import ai.tour.guide.ui.components.fragments.TourSummaryBottomSheet
 import ai.tour.guide.ui.navigation.Route
+import ai.tour.guide.ui.sharedFragments.TourSummaryBottomSheet
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

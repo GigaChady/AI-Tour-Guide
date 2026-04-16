@@ -58,19 +58,6 @@ fun GeneralAppSettingsSection(modifier: Modifier = Modifier) {
             subtitle = stringResource(R.string.app_settings_general_section_body)
         )
         SettingItemWithTitle(
-            title = stringResource(R.string.app_settings_general_language_header)
-        ) {
-            PickerSetting(
-                title = stringResource(R.string.app_settings_general_language_sample_selection),
-                promptTitle = stringResource(R.string.app_settings_general_language_picker_header),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Language,
-                        contentDescription = null
-                    )
-                })
-        }
-        SettingItemWithTitle(
             title = stringResource(R.string.app_settings_general_color_scheme_header)
         ) {
             RadioOptionsList(
@@ -90,8 +77,7 @@ fun GeneralAppSettingsSection(modifier: Modifier = Modifier) {
 fun TTSSettingsSection(modifier: Modifier = Modifier) {
     val pitchSliderState = rememberSliderState(value = 0.5f)
     val speedSliderState = rememberSliderState(value = 0.5f)
-    val volumeSliderState = rememberSliderState(value = 0.5f)
-
+    
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SettingGroupHeader(
             title = stringResource(R.string.app_settings_narration_section_header),
@@ -119,11 +105,6 @@ fun TTSSettingsSection(modifier: Modifier = Modifier) {
             title = stringResource(R.string.app_settings_narration_speed_header)
         ) {
             Slider(state = speedSliderState)
-        }
-        SettingItemWithTitle(
-            title = stringResource(R.string.app_settings_narration_volume_header)
-        ) {
-            Slider(state = volumeSliderState)
         }
         Button(onClick = {}, modifier = Modifier.fillMaxWidth()) {
             Text(

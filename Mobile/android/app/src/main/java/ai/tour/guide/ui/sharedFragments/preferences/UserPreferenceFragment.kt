@@ -1,8 +1,9 @@
-package ai.tour.guide.ui.components.fragments
+package ai.tour.guide.ui.sharedFragments.preferences
 
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionDto
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionType
-import ai.tour.guide.ui.screens.onboarding.preferences.OnboardingPreferencesStepViewModel
+import ai.tour.guide.ui.components.onboarding.LoadingOverlay
+import ai.tour.guide.ui.components.shared.ToastOnRequestError
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -18,17 +19,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun UserPreferenceFragment(
     modifier: Modifier = Modifier,
-    viewModel: OnboardingPreferencesStepViewModel = koinViewModel(),
-    trailingSettings: @Composable () -> Unit = {}
+    viewModel: UserPreferenceFragmentViewModel = koinViewModel()
 ) {
     val preferences by viewModel.preferencesFlow.collectAsState()
     val viewState by viewModel.viewStateFlow.collectAsState()
 
+    LifecycleStartEffect(Unit) {
+        viewModel.onStart()
+        onStopOrDispose { }
+    }
+
+    ToastOnRequestError(viewModel = viewModel)
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -74,7 +81,7 @@ fun UserPreferenceFragment(
                 }
             }
         }
-        trailingSettings()
+        LoadingOverlay(isVisible = viewState.isLoading)
     }
 }
 
