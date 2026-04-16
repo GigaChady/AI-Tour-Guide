@@ -1,9 +1,9 @@
 package ai.tour.guide.ui.screens.onboarding.auth
 
 import ai.tour.guide.R
-import ai.tour.guide.ui.components.fragments.UserRegistrationFragment
 import ai.tour.guide.ui.components.onboarding.OnboardingWelcomeText
 import ai.tour.guide.ui.navigation.Route
+import ai.tour.guide.ui.sharedFragments.UserRegistrationFragment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
