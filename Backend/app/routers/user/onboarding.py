@@ -111,13 +111,37 @@ def _normalize_onboarding_answers(
 
 
 @router.get("/onboarding/questions")
-async def get_onboarding_questions(db: AsyncSession = Depends(get_db)):
+async def get_onboarding_questions(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     gender_opts = await _gender_options(db)
     interests_opts = _interests_options()
-    return _build_questions(
+    questions = _build_questions(
         gender_opts=gender_opts,
         interests_opts=interests_opts,
     )
+
+    selected_answers = {}
+    if current_user.gender_option_id:
+        result = await db.execute(
+            select(DemographicsGenderOption).where(DemographicsGenderOption.id == current_user.gender_option_id)
+        )
+        gender_option = result.scalar_one_or_none()
+        selected_answers["gender"] = gender_option.code
+
+    result = await db.execute(select(UserPreferences).where(UserPreferences.user_id == current_user.id))
+    user_prefs = result.scalar_one_or_none()
+    if user_prefs and user_prefs.interests:
+        interests = user_prefs.interests[0].get("answer_keys") if user_prefs.interests else []
+        selected_answers["interests"] = interests
+    else:
+        selected_answers["interests"] = []
+
+    return {
+        **questions,
+        "selected_answers": selected_answers
+    }
 
 
 
