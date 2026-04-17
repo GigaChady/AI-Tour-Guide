@@ -4,12 +4,12 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import WebSocket, WebSocketDisconnect
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.models import Route, UserPreferences
-from app.services.session_service import SessionService
+from app.models.models import Route
+from app.services.session_helpers import setup_tour_session, teardown_tour_session
 from app.services.token_service import token_service
 from app.services.tts import audio_pipeline
 from app.services.tts.factory import TTSFactory
@@ -47,20 +47,13 @@ async def handle_tour_ws(
         await websocket.close(code=4500, reason="internal error")
         return
 
-    pubsub = None 
-    session_svc = SessionService(redis) 
-    session_id = await session_svc.create(user_id=user_id, route_id=route_id)
-
-    result = await db.execute(
-        select(UserPreferences).where(UserPreferences.user_id == uuid.UUID(user_id))
+    pubsub = None
+    session_svc = None
+    session_id, session_svc, pubsub = await setup_tour_session(
+        redis, db, user_id, route_id=route_id
     )
-    prefs = result.scalar_one_or_none()
-    if prefs and prefs.interests:
-        await redis.set(f"preferences:{session_id}", json.dumps(prefs.interests))
 
     try:
-        pubsub = redis.pubsub() # create pubsub connection for this websocket
-        await pubsub.subscribe(f"tour:{session_id}") # subscribe to tour channel for this session to receive messages from worker
 
         await websocket.send_text(json.dumps({ # signal client is ready to receive messages and start tour 
             "type": "ready",
@@ -88,17 +81,10 @@ async def handle_tour_ws(
 
     except WebSocketDisconnect:
         pass
-    finally: 
-        '''# cleanup po rozłączeniu klienta lub błędzie
-        odsubskrybowanie, oznaczenie trasy jako zakończonej, usunięcie preferencji z Redis i zakończenie sesji 
-        potem mozna cos jeszcze dodać jak np. zapisanie trasy do historii użytkownika czy coś takiego
-        i jak np usera wyrzuci na jakis czas to jest opcja powrotu do tej samej trasy jak się ponownie zaloguje, ale to już na później'''
-        if pubsub is not None:
-            await pubsub.unsubscribe(f"tour:{session_id}")
-            await pubsub.aclose()
+    finally:
         await _finalize_route(db, route_id)
-        await redis.delete(f"preferences:{session_id}")
-        await session_svc.end_session(session_id)
+        if session_svc is not None:
+            await teardown_tour_session(redis, session_svc, session_id, pubsub)
 
 
 async def _handle_client_messages(
