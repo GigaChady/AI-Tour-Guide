@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 99999  
 
     MAX_REFRESH_TOKENS_PER_USER: int = 1
 
