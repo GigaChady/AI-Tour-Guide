@@ -84,8 +84,12 @@ class ChangeEmailRequest(BaseModel):
 
 
 # ----------------DASHBOARD SCHEMAS----------------
+class DashboardJobResponse(BaseModel):
+    session_id: str
+
 class DashboardPOIResponse(BaseModel):
     poi: Any
+    # photos_base64: list[str] = []  # for base64
 
 
 # ----------------BASE REQUEST WRAPPER----------------
