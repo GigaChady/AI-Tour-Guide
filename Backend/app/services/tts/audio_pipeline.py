@@ -30,6 +30,20 @@ def _get_mp3_duration(mp3_bytes: bytes) -> float:
     return MP3(bio).info.length
 
 
+async def _synthesize_chunk(
+    tts: TTSProvider,
+    sentence: str,
+    language: str,
+    speed: int,
+    pitch: int,
+    loudness: int,
+) -> bytes | None:
+    try:
+        return await tts.synthesize(sentence, language=language, speed=speed, pitch=pitch, loudness=loudness)
+    except Exception:
+        return None
+
+
 async def synthesize(
     text: str,
     tts: TTSProvider,
@@ -42,19 +56,22 @@ async def synthesize(
     if not chunks:
         return None
 
+    results = await asyncio.gather(*[
+        _synthesize_chunk(tts, sentence, language, speed, pitch, loudness)
+        for _, sentence in chunks
+    ])
+
     transcript: list[dict] = []
     mp3_parts: list[bytes] = []
     cursor = 0.0
 
-    for _chunk_id, sentence in chunks:
-        try:
-            mp3 = await tts.synthesize(sentence, language=language, speed=speed, pitch=pitch, loudness=loudness)
-            duration = _get_mp3_duration(mp3)
-            transcript.append({"text": sentence, "start": round(cursor, 3), "end": round(cursor + duration, 3)})
-            mp3_parts.append(mp3)
-            cursor += duration
-        except Exception:
+    for (_chunk_id, sentence), mp3 in zip(chunks, results):
+        if mp3 is None:
             continue
+        duration = _get_mp3_duration(mp3)
+        transcript.append({"text": sentence, "start": round(cursor, 3), "end": round(cursor + duration, 3)})
+        mp3_parts.append(mp3)
+        cursor += duration
 
     if not mp3_parts:
         return None
