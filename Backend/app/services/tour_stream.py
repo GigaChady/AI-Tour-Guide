@@ -8,7 +8,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings, DEFAULT_NARRATION
+from app.core.config import settings, DEFAULT_NARRATION, GRACE_SECONDS
 from app.core.database import AsyncSessionLocal
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, UserNarrationSettings
@@ -152,7 +152,7 @@ async def _try_reconnect(redis, user_id: str, session_id: str):
 
 
 async def _grace_period_cleanup(session_id: str, route_id: str) -> None:
-    await asyncio.sleep(settings.GRACE_SECONDS)
+    await asyncio.sleep(GRACE_SECONDS)
     redis = get_redis()
     deleted = await redis.delete(f"session:{session_id}:grace")
     if deleted: 
@@ -253,27 +253,28 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
 
     async def _synth(chunk_id: int, sentence: str):
         try:
-            mp3 = await tts.synthesize(
+            result = await tts.synthesize(
                 sentence,
                 language=cfg["language"],
                 speed=cfg["speed"] * 10,
                 pitch=cfg["pitch"],
                 loudness=cfg["volume"],
             )
-            return chunk_id, mp3
+            return chunk_id, result.audio, result.words
         except Exception:
-            return chunk_id, None
+            return chunk_id, None, []
 
     tasks = [asyncio.create_task(_synth(cid, s)) for cid, s in chunks]
     try:
         for coro in asyncio.as_completed(tasks):
-            chunk_id, mp3 = await coro
-            if mp3 is None:
+            chunk_id, audio, words = await coro
+            if audio is None:
                 continue
             await websocket.send_text(json.dumps({
                 "type": "narration_chunk",
                 "chunk_id": chunk_id,
-                "audio": base64.b64encode(mp3).decode(),
+                "audio": base64.b64encode(audio).decode(),
+                "words": words,
             }))
         await websocket.send_text(json.dumps({"type": "narration_done"}))
     finally:
