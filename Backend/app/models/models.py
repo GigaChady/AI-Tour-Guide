@@ -86,6 +86,23 @@ class RefreshToken(Base):
     )
 
 
+class RoutePoi(Base): #TODO do ustalenia jak bede wiedzial co dostaje do workera
+    __tablename__ = "route_pois"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    route_id = Column(UUID(as_uuid=True), ForeignKey("routes.id"), nullable=False)
+    poi_id = Column(String, nullable=True)
+    name = Column(String, nullable=False)
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
+    description = Column(String, nullable=True)
+    received_at = Column(DateTime, default=utc_now_naive)
+
+    __table_args__ = (
+        Index("ix_route_pois_route_id", "route_id"),
+    )
+
+
 class DemographicsGenderOption(Base):
     __tablename__ = "demographics_gender_options"
 
