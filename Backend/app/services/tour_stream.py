@@ -8,13 +8,17 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.models import Route
+from app.core.database import AsyncSessionLocal
+from app.core.redis import get_redis
+from app.models.models import Route, RoutePoi
 from app.services.session_helpers import setup_tour_session, teardown_tour_session
+from app.services.session_service import SessionService
 from app.services.token_service import token_service
 from app.services.tts import audio_pipeline
 from app.services.tts.factory import TTSFactory
 
-# TODO: edge casey + maybe adding heartbeat pingpong for keeping connection 
+_GRACE_SECONDS = 60
+
 
 async def handle_tour_ws(
     websocket: WebSocket,
@@ -24,54 +28,77 @@ async def handle_tour_ws(
     await websocket.accept()
 
     try:
-        raw = await websocket.receive_text()# expecting {"token": "access-token"}
+        raw = await websocket.receive_text()  # {"token": "...", "session_id": "..."} or {"token": "..."}
         data = json.loads(raw)
         token = data.get("token", "")
         user_id = token_service.verify_access_token(token)
+        incoming_session_id = data.get("session_id")
     except WebSocketDisconnect:
         return
     except (json.JSONDecodeError, KeyError, ValueError):
-        await websocket.close(code=4401, reason="unauthorized")
-        return
-
-    try:
-        route = Route( # initialize route with dummy point, will be updated with real points as they come in
-            user_id=uuid.UUID(user_id),
-            started_at=datetime.now(timezone.utc).replace(tzinfo=None),
-        )
-        db.add(route)
-        await db.commit()
-        await db.refresh(route)
-        route_id = str(route.id)
-    except Exception:
-        await websocket.close(code=4500, reason="internal error")
+        await websocket.send_text(json.dumps({"detail": "unauthorized"}))
+        await websocket.close(code=4401)
         return
 
     pubsub = None
     session_svc = None
-    session_id, session_svc, pubsub = await setup_tour_session(
-        redis, db, user_id, route_id=route_id
-    )
+    session_id = None
+    route_id = None
+    '''when we lost connection, we set a grace key in redis and wait for the client to reconnect period 
+    if client recoonects we remove grace key and restore session if client doesn't reconnect in time, we finalize route and cleanup session'''
+    if incoming_session_id:
+        result = await _try_reconnect(redis, user_id, incoming_session_id)
+        if result is None:
+            await websocket.send_text(json.dumps({"detail": "session not found or expired"}))
+            await websocket.close(code=4404)
+            return
+        session_id, session_svc, pubsub, route_id = result
+    else:
+        try:
+            route = Route(
+                user_id=uuid.UUID(user_id),
+                started_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            )
+            db.add(route)
+            await db.commit()
+            await db.refresh(route)
+            route_id = str(route.id)
+        except Exception:
+            await websocket.send_text(json.dumps({"detail": "internal error"}))
+            await websocket.close(code=4500)
+            return
+
+    disconnected = False
+    disconnect_event = asyncio.Event()
 
     try:
+        if incoming_session_id:
+            await websocket.send_text(json.dumps({
+                "type": "reconnected",
+                "route_id": route_id,
+                "session_id": session_id,
+            }))
+        else:
+            session_id, session_svc, pubsub = await setup_tour_session(
+                redis, db, user_id, route_id=route_id
+            )
+            await websocket.send_text(json.dumps({
+                "type": "ready",
+                "route_id": route_id,
+                "session_id": session_id,
+            }))
 
-        await websocket.send_text(json.dumps({ # signal client is ready to receive messages and start tour 
-            "type": "ready",
-            "route_id": route_id,
-        }))
-
-        #rownolegle odpalam dwa taski - jeden do odbierania wiadomości od klienta (lokalizacja), drugi do odbierania wiadomości od workerów (POI, narracja)
         client_task = asyncio.create_task(
-            _handle_client_messages(websocket, db, redis, session_id, route_id)
+            _handle_client_messages(websocket, db, redis, session_id, route_id, disconnect_event)
         )
         worker_task = asyncio.create_task(
-            _handle_worker_messages(websocket, pubsub)
+            _handle_worker_messages(websocket, pubsub, route_id)
         )
 
-        done, pending = await asyncio.wait( # czeka aż któryś z tasków się zakończy (np. klient rozłączy się, lub wystąpi błąd)
+        done, pending = await asyncio.wait(
             [client_task, worker_task],
             return_when=asyncio.FIRST_COMPLETED,
-        ) # po zakończeniu jednego tasku, drugi jest anulowany
+        )
         for task in pending:
             task.cancel()
             try:
@@ -79,12 +106,54 @@ async def handle_tour_ws(
             except (asyncio.CancelledError, Exception):
                 pass
 
+        disconnected = disconnect_event.is_set() or any(
+            not t.cancelled() and isinstance(t.exception(), WebSocketDisconnect)
+            for t in done
+        )
+
     except WebSocketDisconnect:
-        pass
+        disconnected = True
     finally:
-        await _finalize_route(db, route_id)
-        if session_svc is not None:
-            await teardown_tour_session(redis, session_svc, session_id, pubsub)
+        if disconnected and session_id is not None:
+            if pubsub is not None:
+                try:
+                    await pubsub.unsubscribe(f"tour:{session_id}")
+                    await pubsub.aclose()
+                except Exception:
+                    pass
+            await redis.set(f"session:{session_id}:grace", "1")
+            asyncio.create_task(_grace_period_cleanup(session_id, route_id))
+        else:
+            await _finalize_route(db, route_id)
+            if session_svc is not None and session_id is not None:
+                await teardown_tour_session(redis, session_svc, session_id, pubsub)
+
+
+async def _try_reconnect(redis, user_id: str, session_id: str):
+    session_svc = SessionService(redis)
+    meta = await session_svc.get_meta(session_id)
+    if not meta or meta.get("user_id") != user_id:
+        return None
+
+    deleted = await redis.delete(f"session:{session_id}:grace")
+    if not deleted:
+        return None 
+
+    pubsub = redis.pubsub()
+    await pubsub.subscribe(f"tour:{session_id}")
+    route_id = meta.get("route_id")
+    return session_id, session_svc, pubsub, route_id
+
+
+async def _grace_period_cleanup(session_id: str, route_id: str) -> None:
+    await asyncio.sleep(_GRACE_SECONDS)
+    redis = get_redis()
+    deleted = await redis.delete(f"session:{session_id}:grace")
+    if deleted: 
+        async with AsyncSessionLocal() as db:
+            await _finalize_route(db, route_id)
+        session_svc = SessionService(redis)
+        await teardown_tour_session(redis, session_svc, session_id, pubsub=None)
 
 
 async def _handle_client_messages(
@@ -93,6 +162,7 @@ async def _handle_client_messages(
     redis,
     session_id: str,
     route_id: str,
+    disconnect_event: asyncio.Event,
 ) -> None:
     while True:
         try:
@@ -101,34 +171,40 @@ async def _handle_client_messages(
                 timeout=settings.STREAM_TIMEOUT_SECONDS,
             )
         except asyncio.TimeoutError:
-            break  # brak wiadomości od klienta przez STREAM_TIMEOUT_SECONDS → cleanup
+            try:
+                await websocket.send_text(json.dumps({"detail": "session timeout"}))
+            except Exception:
+                pass
+            return
+        except WebSocketDisconnect:
+            disconnect_event.set()
+            return
         try:
-            data = json.loads(raw) # oczekujemy wiadomości w formacie {"lat": 50.123, "lng": 19.456}
+            data = json.loads(raw)  # {"lat": 50.123, "lng": 19.456}
             lat = data.get("lat")
             lng = data.get("lng")
             if lat is not None and lng is not None:
-                await _save_location(db, route_id, lat=float(lat), lng=float(lng)) # zapis do bazki
-                await redis.xadd("location:events", {  # stream dla workera
+                await _save_location(db, route_id, lat=float(lat), lng=float(lng))
+                await redis.xadd("location:events", {
                     "session_id": session_id,
                     "lat": str(lat),
                     "lng": str(lng),
                 })
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
-            pass 
+            pass
 
 
-async def _handle_worker_messages(websocket: WebSocket, pubsub) -> None: # receiving message from workers 
+async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str) -> None:
     async for message in pubsub.listen():
         if message["type"] != "message":
             continue
         try:
-            data = json.loads(message["data"]) # oczekujemy wiadomości w formacie {"type": "pois", "data": [...] } lub {"type": "narration", "text": "..."}
+            data = json.loads(message["data"])  # {"type": "pois", "data": [...]} or {"type": "narration", "text": "..."}
             msg_type = data.get("type")
             if msg_type == "pois":
-                await websocket.send_text(json.dumps({
-                    "type": "pois",
-                    "data": data.get("data", []),
-                }))
+                poi_list = data.get("data", [])
+                await websocket.send_text(json.dumps({"type": "pois", "data": poi_list}))
+                await _save_pois(route_id, poi_list)
             elif msg_type == "narration":
                 await _stream_narration(websocket, data.get("text", ""))
         except WebSocketDisconnect:
@@ -137,11 +213,25 @@ async def _handle_worker_messages(websocket: WebSocket, pubsub) -> None: # recei
             pass
 
 
+async def _save_pois(route_id: str, poi_list: list) -> None: #TODO do ustalenia jak bede wiedzial co dostaje do workera
+    async with AsyncSessionLocal() as db:
+        for poi in poi_list:
+            db.add(RoutePoi(
+                route_id=uuid.UUID(route_id),
+                poi_id=poi.get("id"),
+                name=poi.get("name", ""),
+                lat=float(poi.get("lat", 0)),
+                lng=float(poi.get("lng", 0)),
+                description=poi.get("description"),
+            ))
+        await db.commit()
+
+
 async def _stream_narration(websocket: WebSocket, text: str) -> None:
     try:
         tts = TTSFactory.get_provider()
     except Exception:
-        await websocket.send_text(json.dumps({"type": "error", "message": "TTS provider unavailable"}))
+        await websocket.send_text(json.dumps({"detail": "TTS provider unavailable"}))
         return
 
     synthesis = await audio_pipeline.synthesize(text, tts, language="en", speed=50, pitch=50, loudness=50)
@@ -156,7 +246,7 @@ async def _stream_narration(websocket: WebSocket, text: str) -> None:
     try:
         result = await audio_pipeline.encode_hls(synthesis)
     except Exception:
-        await websocket.send_text(json.dumps({"type": "error", "message": "HLS encoding failed"}))
+        await websocket.send_text(json.dumps({"detail": "HLS encoding failed"}))
         return
 
     await websocket.send_text(json.dumps({
@@ -175,8 +265,14 @@ async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float
     if n_points is None:
         await db.execute(
             text(
-                "UPDATE routes SET path = "
-                "ST_SetSRID(ST_GeomFromText('LINESTRING(' || :lng || ' ' || :lat || ')'), 4326) "
+                "UPDATE routes SET path = ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) "
+                "WHERE id = :route_id"
+            ).bindparams(lng=lng, lat=lat, route_id=route_id)
+        )
+    elif n_points == 1:
+        await db.execute(
+            text(
+                "UPDATE routes SET path = ST_MakeLine(path, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) "
                 "WHERE id = :route_id"
             ).bindparams(lng=lng, lat=lat, route_id=route_id)
         )
