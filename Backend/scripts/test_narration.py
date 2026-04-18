@@ -35,18 +35,20 @@ async def run(token: str, text: str) -> None:
             t = msg.get("type")
 
             if t == "narration_transcript":
-                print("\n[Transcript]")
                 for entry in msg["transcript"]:
                     print(f"Chunk {entry['chunk_id']}: {entry['text']}")
 
             elif t == "narration_chunk":
                 cid = msg["chunk_id"]
                 audio = base64.b64decode(msg["audio"])
+                words = msg.get("words", [])
                 chunks[cid] = audio
-                print(f"Chunk {cid}: {len(audio)} bytes")
+                print(f"\n {len(audio)} bytes | {len(words)} words")
+                for w in words:
+                    print(f"  {w['offset_ms']:7.1f}ms  +{w['duration_ms']:.1f}ms  \"{w['text']}\"")
 
             elif t == "narration_done":
-                print(f"Done {len(chunks)} chunks")
+                print(f"\n{len(chunks)} chunks received")
                 break
 
             elif t in ("error", "detail"):
@@ -58,7 +60,7 @@ async def run(token: str, text: str) -> None:
             out = "test_narration_output.mp3"
             with open(out, "wb") as f:
                 f.write(merged)
-            print(f"[Saved] {out} ({len(merged)} bytes)")
+            print(f"{out} ({len(merged)} bytes)")
 
 
 if __name__ == "__main__":

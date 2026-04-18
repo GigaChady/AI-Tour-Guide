@@ -1,6 +1,6 @@
 import edge_tts
 
-from app.services.tts.base import TTSProvider
+from app.services.tts.base import TTSProvider, TTSResult
 
 VOICE_MAP: dict[str, str] = {
     "pl": "pl-PL-ZofiaNeural",
@@ -41,7 +41,7 @@ def _map_volume(value: int) -> str:
 
 
 class EdgeTTSProvider(TTSProvider):
-    async def synthesize(self, text: str, language: str, speed: int, pitch: int, loudness: int) -> bytes:
+    async def synthesize(self, text: str, language: str, speed: int, pitch: int, loudness: int) -> TTSResult:
         voice = _voice_for_language(language)
         communicate = edge_tts.Communicate(
             text,
@@ -49,9 +49,17 @@ class EdgeTTSProvider(TTSProvider):
             rate=_map_rate(speed),
             pitch=_map_pitch(pitch),
             volume=_map_volume(loudness),
+            boundary="WordBoundary",
         )
         audio = b""
+        words = []
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio += chunk["data"]
-        return audio
+            elif chunk["type"] == "WordBoundary":
+                words.append({
+                    "text": chunk["text"],
+                    "offset_ms": round(chunk["offset"] / 10000, 1),
+                    "duration_ms": round(chunk["duration"] / 10000, 1),
+                })
+        return TTSResult(audio=audio, words=words)
