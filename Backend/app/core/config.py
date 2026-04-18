@@ -63,6 +63,9 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+DEFAULT_NARRATION = {"language": "pl", "speed": 5, "pitch": 50, "volume": 50}
+GRACE_SECONDS: int = 60
+
 
 DEFAULT_ONBOARDING_CATALOG = [
     {

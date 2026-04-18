@@ -1,23 +1,23 @@
 import asyncio
+import base64
 import json
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import WebSocket, WebSocketDisconnect
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
+from app.core.config import settings, DEFAULT_NARRATION
 from app.core.database import AsyncSessionLocal
 from app.core.redis import get_redis
-from app.models.models import Route, RoutePoi
+from app.models.models import Route, RoutePoi, UserNarrationSettings
 from app.services.session_helpers import setup_tour_session, teardown_tour_session
 from app.services.session_service import SessionService
 from app.services.token_service import token_service
-from app.services.tts import audio_pipeline
+from app.services.tts.chunker import split as chunk_text
 from app.services.tts.factory import TTSFactory
 
-_GRACE_SECONDS = 60
 
 
 async def handle_tour_ws(
@@ -39,6 +39,12 @@ async def handle_tour_ws(
         await websocket.send_text(json.dumps({"detail": "unauthorized"}))
         await websocket.close(code=4401)
         return
+
+    result = await db.execute(
+        select(UserNarrationSettings).where(UserNarrationSettings.user_id == uuid.UUID(user_id))
+    )
+    ns = result.scalar_one_or_none()
+    narration_cfg = (ns.settings or {}) if ns else {}
 
     pubsub = None
     session_svc = None
@@ -92,7 +98,7 @@ async def handle_tour_ws(
             _handle_client_messages(websocket, db, redis, session_id, route_id, disconnect_event)
         )
         worker_task = asyncio.create_task(
-            _handle_worker_messages(websocket, pubsub, route_id)
+            _handle_worker_messages(websocket, pubsub, route_id, narration_cfg)
         )
 
         done, pending = await asyncio.wait(
@@ -146,7 +152,7 @@ async def _try_reconnect(redis, user_id: str, session_id: str):
 
 
 async def _grace_period_cleanup(session_id: str, route_id: str) -> None:
-    await asyncio.sleep(_GRACE_SECONDS)
+    await asyncio.sleep(settings.GRACE_SECONDS)
     redis = get_redis()
     deleted = await redis.delete(f"session:{session_id}:grace")
     if deleted: 
@@ -172,7 +178,7 @@ async def _handle_client_messages(
             )
         except asyncio.TimeoutError:
             try:
-                await websocket.send_text(json.dumps({"detail": "session timeout"}))
+                await websocket.send_text(json.dumps({"type": "session_ended", "reason": "timeout"}))
             except Exception:
                 pass
             return
@@ -194,7 +200,7 @@ async def _handle_client_messages(
             pass
 
 
-async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str) -> None:
+async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str, narration_cfg: dict) -> None:
     async for message in pubsub.listen():
         if message["type"] != "message":
             continue
@@ -206,7 +212,7 @@ async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str) -
                 await websocket.send_text(json.dumps({"type": "pois", "data": poi_list}))
                 await _save_pois(route_id, poi_list)
             elif msg_type == "narration":
-                await _stream_narration(websocket, data.get("text", ""))
+                await _stream_narration(websocket, data.get("text", ""), narration_cfg)
         except WebSocketDisconnect:
             raise
         except Exception:
@@ -227,32 +233,52 @@ async def _save_pois(route_id: str, poi_list: list) -> None: #TODO do ustalenia 
         await db.commit()
 
 
-async def _stream_narration(websocket: WebSocket, text: str) -> None:
+async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict) -> None:
+    chunks = chunk_text(text)
+    if not chunks:
+        return
+
     try:
         tts = TTSFactory.get_provider()
     except Exception:
         await websocket.send_text(json.dumps({"detail": "TTS provider unavailable"}))
         return
 
-    synthesis = await audio_pipeline.synthesize(text, tts, language="en", speed=50, pitch=50, loudness=50)
-    if synthesis is None:
-        return
+    cfg = DEFAULT_NARRATION | narration_cfg
 
     await websocket.send_text(json.dumps({
         "type": "narration_transcript",
-        "transcript": synthesis.transcript,
+        "transcript": [{"chunk_id": cid, "text": sentence} for cid, sentence in chunks],
     }))
 
+    async def _synth(chunk_id: int, sentence: str):
+        try:
+            mp3 = await tts.synthesize(
+                sentence,
+                language=cfg["language"],
+                speed=cfg["speed"] * 10,
+                pitch=cfg["pitch"],
+                loudness=cfg["volume"],
+            )
+            return chunk_id, mp3
+        except Exception:
+            return chunk_id, None
+
+    tasks = [asyncio.create_task(_synth(cid, s)) for cid, s in chunks]
     try:
-        result = await audio_pipeline.encode_hls(synthesis)
-    except Exception:
-        await websocket.send_text(json.dumps({"detail": "HLS encoding failed"}))
-        return
-
-    await websocket.send_text(json.dumps({
-        "type": "narration_ready",
-        "hls_url": f"/audio/{result.narration_id}/index.m3u8",
-    }))
+        for coro in asyncio.as_completed(tasks):
+            chunk_id, mp3 = await coro
+            if mp3 is None:
+                continue
+            await websocket.send_text(json.dumps({
+                "type": "narration_chunk",
+                "chunk_id": chunk_id,
+                "audio": base64.b64encode(mp3).decode(),
+            }))
+        await websocket.send_text(json.dumps({"type": "narration_done"}))
+    finally:
+        for t in tasks:
+            t.cancel()
 
 
 async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float) -> None:
