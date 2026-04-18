@@ -229,6 +229,8 @@ async def _save_pois(route_id: str, poi_list: list) -> None: #TODO do ustalenia 
                 lat=float(poi.get("lat", 0)),
                 lng=float(poi.get("lng", 0)),
                 description=poi.get("description"),
+                image_url=poi.get("image_url"),
+                image_base64=poi.get("image_base64"),
             ))
         await db.commit()
 

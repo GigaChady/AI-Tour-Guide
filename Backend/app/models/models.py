@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, Float, String, Boolean, DateTime, ForeignKey, Index, Integer
+from sqlalchemy import Column, Float, String, Text, Boolean, DateTime, ForeignKey, Index, Integer
 from geoalchemy2 import Geometry 
 from sqlalchemy.orm import relationship
 from sqlalchemy import JSON
@@ -96,6 +96,8 @@ class RoutePoi(Base): #TODO do ustalenia jak bede wiedzial co dostaje do workera
     lat = Column(Float, nullable=False)
     lng = Column(Float, nullable=False)
     description = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
+    image_base64 = Column(Text, nullable=True)
     received_at = Column(DateTime, default=utc_now_naive)
 
     __table_args__ = (
