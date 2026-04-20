@@ -11,11 +11,11 @@ import ai.tour.guide.ui.screens.main.MapUserPositionScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
-import ai.tour.guide.ui.screens.onboarding.finish.OnboardingFinishStepScreen
-import ai.tour.guide.ui.screens.onboarding.auth.OnboardingLoginStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
-import ai.tour.guide.ui.screens.onboarding.auth.OnboardingRegisterStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepScreen
+import ai.tour.guide.ui.screens.onboarding.auth.OnboardingLoginStepScreen
+import ai.tour.guide.ui.screens.onboarding.auth.OnboardingRegisterStepScreen
+import ai.tour.guide.ui.screens.onboarding.finish.OnboardingFinishStepScreen
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -67,9 +67,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
                     backStack = backStack,
                     routeTitle = stringResource(R.string.navigation_profile_preferences_route_title)
                 ) {
-                    ProfilePreferencesScreen(
-                        backStack = backStack
-                    )
+                    ProfilePreferencesScreen()
                 }
             }
             entry<Route.Settings>(
@@ -78,7 +76,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
                 WithDrawerLayout(
                     backStack = backStack,
                     routeTitle = stringResource(R.string.navigation_app_settings_route_title)
-                ) { AppSettingsScreen() }
+                ) { AppSettingsScreen(backStack = backStack) }
             }
             entry<Route.AccountSettings> {
                 WithScreenTopBar(
