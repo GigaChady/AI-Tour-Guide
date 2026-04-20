@@ -2,7 +2,9 @@ package ai.tour.guide.network
 
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.data.appData.AppDataRepository
+import ai.tour.guide.network.schema.request.AuthRefreshRequestDto
 import ai.tour.guide.network.schema.response.IAPIResponseDto
+import ai.tour.guide.network.schema.response.TokenResponseDto
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -26,7 +28,41 @@ class ApiClient(
     val appDataRepository: AppDataRepository,
     @PublishedApi internal val httpClient: HttpClient = defaultHttpClient
 ) {
+    suspend fun fetchBearerToken() {
+        val refreshToken = appDataRepository.getRefreshToken()
+        val payload = AuthRefreshRequestDto(refreshToken)
+        var authResponse: ApiResponse<TokenResponseDto>?
+
+        try {
+            val response = httpClient.post {
+                url {
+                    protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
+                    host = AppConfig.HTTPS_CLIENT_HOST
+                    path(ApiClientRoute.AUTH_REFRESH.path)
+                }
+                contentType(ContentType.Application.Json)
+                setBody(payload)
+            }
+            authResponse = if (response.status == HttpStatusCode.NoContent) {
+                ApiResponse(response, null)
+            } else {
+                ApiResponse(
+                    response,
+                    response.body()
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("ApiClient", "Error while making request", e)
+            authResponse = ApiResponse(e)
+        }
+
+        appDataRepository.updateBearerToken(authResponse.body)
+    }
+
     suspend inline fun <reified T : IAPIResponseDto> get(route: ApiClientRoute): ApiResponse<T> {
+        if (appDataRepository.shouldRefreshBearerToken()) {
+            fetchBearerToken()
+        }
         return try {
             val response = httpClient.get {
                 url {
@@ -52,6 +88,9 @@ class ApiClient(
         route: ApiClientRoute,
         data: D
     ): ApiResponse<T> {
+        if (appDataRepository.shouldRefreshBearerToken()) {
+            fetchBearerToken()
+        }
         return try {
             val response = httpClient.post {
                 url {
@@ -90,6 +129,7 @@ enum class ApiClientRoute(val path: String) {
     AUTH_LOGIN("/auth/login"),
     AUTH_REGISTER("/auth/register"),
     AUTH_GOOGLE("/auth/google"),
+    AUTH_REFRESH("/auth/refresh"),
     ONBOARDING_QUESTIONS("/user/onboarding/questions"),
     ONBOARDING_ANSWERS("/user/onboarding/answers")
 }
