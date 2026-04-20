@@ -10,10 +10,10 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun ToastOnRequestError(viewModel: IBaseViewModel) {
+fun ToastOnRequestError(viewModel: IBaseViewModel<*>) {
     val context = LocalContext.current
     val viewModelState by viewModel.stateFlow.collectAsStateWithLifecycle()
-    val errorMessage = viewModelState.errorMessage?.let {
+    val toastMessage = viewModelState.toastMessage?.let {
         when (it) {
             is Int -> stringResource(it)
             is String -> it
@@ -21,8 +21,8 @@ fun ToastOnRequestError(viewModel: IBaseViewModel) {
         }
     }
 
-    LifecycleStartEffect(errorMessage) {
-        errorMessage?.let {
+    LifecycleStartEffect(toastMessage) {
+        toastMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.clearError()
         }
