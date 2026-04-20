@@ -82,6 +82,10 @@ class ChangePasswordRequest(BaseModel):
 class ChangeEmailRequest(BaseModel):
     new_email: EmailStr
 
+# ----------------USER PARAMS RESPONSE SCHEMA----------------
+class UserParamsResponse(BaseModel):
+    email: str
+    name: str
 
 # ----------------DASHBOARD SCHEMAS----------------
 class DashboardJobResponse(BaseModel):

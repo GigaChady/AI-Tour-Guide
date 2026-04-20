@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.models.models import User
-from app.schemas.schemas import ChangePasswordRequest, ChangeEmailRequest, ChangeNameRequest
+from app.schemas.schemas import ChangePasswordRequest, ChangeEmailRequest, ChangeNameRequest, UserParamsResponse
+from pydantic import BaseModel
 
 from app.routers.user.auth import _validate_password_strength
 from app.services.token_service import token_service
@@ -55,3 +56,19 @@ async def change_name(
     current_user.name = body.name
     await db.commit()
     return
+
+
+@router.get("/me-params", response_model=UserParamsResponse)
+async def get_current_user_params(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(User).where(User.id == current_user.id))
+    user_from_db = result.scalar_one()
+    return UserParamsResponse(
+        email=user_from_db.email,
+        name=user_from_db.name,
+    )
+
+
+
