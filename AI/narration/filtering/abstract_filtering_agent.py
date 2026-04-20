@@ -1,5 +1,5 @@
 from narration.common.abstract_agent import AbstractAgent
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 
 
 class AbstractFilteringAgent(AbstractAgent):
