@@ -1,7 +1,7 @@
 import logging
 
-from AI.narration.narration_manager import NarrationManager
-from AI.narration.common.narration_settings import NarrationSettings, NarrationDetailLevel, NarrationLanguage
+from narration.narration_manager import NarrationManager
+from narration.common.narration_settings import NarrationSettings, NarrationDetailLevel, NarrationLanguage
 
 if __name__ == "__main__":
     # Logging config (debug)
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     narration_manager = NarrationManager.build_narration_manager(narration_settings)
 
     # Generate narration
-    narration = narration_manager.get_narration()
-    print(narration)
+    #narration = narration_manager.get_narration()
+    print("Mock Narration - Colosseum in Rome, Italy: The Colosseum, also known as the Flavian Amphitheatre, is an iconic symbol of ancient Rome. Built between 70-80 AD, it was used for gladiatorial contests and public spectacles. With a capacity of around 50,000 spectators, it remains one of the greatest architectural and engineering feats of the Roman Empire.")

@@ -3,14 +3,18 @@ import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
-from AI.narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
-from AI.narration.common.narration_settings import NarrationSettings
+from narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
+from narration.common.narration_settings import NarrationSettings
 
 
 class FilteringAgent(AbstractFilteringAgent):
     def __init__(self, narration_settings: NarrationSettings, model_name="mistral-nemo"):
         super().__init__(narration_settings)
-        self.model = ChatOllama(model=model_name, temperature=0.1)
+        self.model = ChatOllama(
+            model=model_name,
+            temperature=0.1,
+            base_url=narration_settings.ollama_base_url
+        )
 
     def filter_information(self, poi_name, raw_text):
         logging.info("Starting information filtering...")
