@@ -27,11 +27,11 @@ class OnboardingAuthStepViewModel(
             )
             if (!response.isSuccessful) {
                 updateState {
-                    copy(errorMessage = response.errorMessage)
+                    copy(toastMessage = response.errorMessage)
                 }
                 return@withLoading
             }
-            updateState { copy(errorMessage = null, isSuccess = true) }
+            updateState { copy(toastMessage = null, isSuccess = true) }
         }
     }
 
@@ -46,7 +46,7 @@ class OnboardingAuthStepViewModel(
         val confirmPassword = viewStateFlow.value.data.confirmPassword
         if (password != confirmPassword) {
             updateState {
-                copy(errorMessage = R.string.validation_error_password_mismatch)
+                copy(toastMessage = R.string.validation_error_password_mismatch)
             }
             return
         }
@@ -58,11 +58,11 @@ class OnboardingAuthStepViewModel(
             )
             if (!response.isSuccessful) {
                 updateState {
-                    copy(errorMessage = response.errorMessage)
+                    copy(toastMessage = response.errorMessage)
                 }
                 return@withLoading
             }
-            updateState { copy(errorMessage = null, isSuccess = true) }
+            updateState { copy(toastMessage = null, isSuccess = true) }
         }
     }
 
@@ -72,11 +72,11 @@ class OnboardingAuthStepViewModel(
                 val response = authService.signInWithGoogle(context)
                 if (!response.isSuccessful) {
                     updateState {
-                        copy(errorMessage = response.errorMessage)
+                        copy(toastMessage = response.errorMessage)
                     }
                     return@withLoading
                 }
-                updateState { copy(errorMessage = null, isSuccess = true) }
+                updateState { copy(toastMessage = null, isSuccess = true) }
             }
         }
     }

@@ -6,6 +6,7 @@ import ai.tour.guide.ui.components.settings.PickerSetting
 import ai.tour.guide.ui.components.settings.RadioOptionsList
 import ai.tour.guide.ui.components.settings.SettingGroupHeader
 import ai.tour.guide.ui.components.settings.SettingItemWithTitle
+import ai.tour.guide.ui.navigation.Route
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -27,10 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 
 @Preview(showBackground = true)
 @Composable
-fun AppSettingsScreen(modifier: Modifier = Modifier) {
+fun AppSettingsScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -43,6 +47,7 @@ fun AppSettingsScreen(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             GeneralAppSettingsSection()
+            AccountSettingsSection(backStack = backStack)
             TTSSettingsSection()
             PlaybackSettingsSection()
         }
@@ -51,7 +56,9 @@ fun AppSettingsScreen(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun GeneralAppSettingsSection(modifier: Modifier = Modifier) {
+fun GeneralAppSettingsSection(
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SettingGroupHeader(
             title = stringResource(R.string.app_settings_general_section_header),
@@ -77,7 +84,7 @@ fun GeneralAppSettingsSection(modifier: Modifier = Modifier) {
 fun TTSSettingsSection(modifier: Modifier = Modifier) {
     val pitchSliderState = rememberSliderState(value = 0.5f)
     val speedSliderState = rememberSliderState(value = 0.5f)
-    
+
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SettingGroupHeader(
             title = stringResource(R.string.app_settings_narration_section_header),
@@ -144,5 +151,27 @@ fun PlaybackSettingsSection(modifier: Modifier = Modifier) {
                 stringResource(R.string.app_settings_playback_interrupt_option_no)
             )
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AccountSettingsSection(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        SettingGroupHeader(
+            title = stringResource(R.string.app_settings_account_section_header),
+            subtitle = stringResource(R.string.app_settings_account_section_body)
+        )
+        Button(
+            onClick = { backStack?.add(Route.AccountSettings) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                modifier = Modifier.padding(end = 8.dp),
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = null
+            )
+            Text(stringResource(R.string.app_settings_account_section_cta))
+        }
     }
 }

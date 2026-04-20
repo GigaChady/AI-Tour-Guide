@@ -65,7 +65,7 @@ class OnboardingAuthStepViewModelTest {
 
         assertEquals(
             R.string.validation_error_password_mismatch,
-            viewModel.viewStateFlow.value.errorMessage
+            viewModel.viewStateFlow.value.toastMessage
         )
         coVerify(exactly = 0) { authService.register(any(), any(), any()) }
     }
