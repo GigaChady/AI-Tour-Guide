@@ -1,18 +1,10 @@
 package ai.tour.guide.ui.screens.onboarding.preferences
 
-import ai.tour.guide.data.appData.AppDataRepository
-import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceRepository
-import ai.tour.guide.network.ApiClient
-import ai.tour.guide.network.schema.response.EmptyAPIResponse
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
+import ai.tour.guide.domain.preferences.OnboardingPreferencesService
+import ai.tour.guide.network.ApiBaseResponseResult
+import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentViewModel
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +15,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -34,39 +25,15 @@ import org.junit.Test
 class OnboardingPreferencesStepViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: OnboardingPreferenceRepository
-    private lateinit var viewModel: OnboardingPreferencesStepViewModel
-
-    private fun createApiClient(
-        jsonResponse: String = "{}",
-        status: HttpStatusCode = HttpStatusCode.OK
-    ): ApiClient {
-        val mockEngine = MockEngine { _ ->
-            respond(
-                content = jsonResponse,
-                status = status,
-                headers = headersOf(
-                    HttpHeaders.ContentType,
-                    ContentType.Application.Json.toString()
-                )
-            )
-        }
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
-            }
-        }
-        val appDataRepository = mockk<AppDataRepository>(relaxed = true)
-        every { appDataRepository.bearerTokenFlow } returns MutableStateFlow(null)
-
-        return ApiClient(appDataRepository, httpClient)
-    }
+    private lateinit var service: OnboardingPreferencesService
+    private lateinit var viewModel: UserPreferenceFragmentViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        repository = mockk(relaxed = true)
-        every { repository.preferences } returns MutableStateFlow(emptyList())
+        service = mockk()
+        every { service.preferences } returns MutableStateFlow(emptyList())
+        viewModel = UserPreferenceFragmentViewModel(service)
     }
 
     @After
@@ -76,7 +43,6 @@ class OnboardingPreferencesStepViewModelTest {
 
     @Test
     fun `onOptionSelected updates state`() = runTest {
-        viewModel = OnboardingPreferencesStepViewModel(repository, createApiClient())
         viewModel.onOptionSelected("q1", "a1")
         advanceUntilIdle()
 
@@ -84,24 +50,35 @@ class OnboardingPreferencesStepViewModelTest {
     }
 
     @Test
+    fun `onStart fetches preferences once`() = runTest {
+        coEvery { service.fetchPreferencesIfEmpty() } returns Unit
+
+        viewModel.onStart()
+        viewModel.onStart()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { service.fetchPreferencesIfEmpty() }
+    }
+
+    @Test
     fun `savePreferences success updates isSuccess`() = runTest {
-        val json = Json.encodeToString(EmptyAPIResponse())
-        viewModel = OnboardingPreferencesStepViewModel(repository, createApiClient(json))
+        val response = mockk<ApiBaseResponseResult>()
+        every { response.isSuccessful } returns true
+        coEvery { service.savePreferences(any()) } returns response
 
         viewModel.onOptionSelected("q1", "a1")
         viewModel.savePreferences()
         advanceUntilIdle()
 
-        assertTrue("Expected isSuccess to be true", viewModel.viewStateFlow.value.isSuccess)
+        assertTrue(viewModel.viewStateFlow.value.isSuccess)
     }
 
     @Test
     fun `savePreferences failure updates errorMessage`() = runTest {
-        val json = "{\"detail\": \"Error Message\"}"
-        viewModel = OnboardingPreferencesStepViewModel(
-            repository,
-            createApiClient(json, HttpStatusCode.InternalServerError)
-        )
+        val response = mockk<ApiBaseResponseResult>()
+        every { response.isSuccessful } returns false
+        every { response.errorMessage } returns "Error Message"
+        coEvery { service.savePreferences(any()) } returns response
 
         viewModel.onOptionSelected("q1", "a1")
         viewModel.savePreferences()

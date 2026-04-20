@@ -4,11 +4,12 @@ import ai.tour.guide.R
 import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.screens.onboarding.OnboardingAnimatedSharedStepScreen
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
@@ -20,13 +21,14 @@ fun OnboardingFinishStepScreen(
     viewModel: OnboardingFinishStepViewModel = koinViewModel(),
     backStack: NavBackStack<NavKey>? = null
 ) {
-    val finished = viewModel.completedStateFlow.collectAsState()
+    val finished by viewModel.completedStateFlow.collectAsStateWithLifecycle()
 
-    LaunchedEffect(finished.value) {
-        if (finished.value) {
+    LifecycleStartEffect(finished) {
+        if (finished) {
             backStack?.clear()
             backStack?.add(Route.Dashboard)
         }
+        onStopOrDispose { }
     }
 
     OnboardingAnimatedSharedStepScreen(

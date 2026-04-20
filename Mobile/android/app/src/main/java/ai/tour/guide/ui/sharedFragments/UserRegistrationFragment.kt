@@ -1,4 +1,4 @@
-package ai.tour.guide.ui.components.fragments
+package ai.tour.guide.ui.sharedFragments
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.shared.ToastOnRequestError
@@ -15,8 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 
 @Preview(showBackground = true)
@@ -34,12 +34,13 @@ fun UserRegistrationFragment(
     viewModel: OnboardingAuthStepViewModel = koinViewModel(),
     ctaButtonText: String? = null
 ) {
-    val viewModelState by viewModel.viewStateFlow.collectAsState()
+    val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
 
-    LaunchedEffect(viewModelState.isSuccess) {
+    LifecycleStartEffect(viewModelState.isSuccess) {
         if (viewModelState.isSuccess) {
             onChangesSaved()
         }
+        onStopOrDispose { }
     }
 
     ToastOnRequestError(viewModel = viewModel)

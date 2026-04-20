@@ -1,4 +1,4 @@
-package ai.tour.guide.ui.components.fragments
+package ai.tour.guide.ui.sharedFragments
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.display.SummaryIconSection

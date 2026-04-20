@@ -1,7 +1,7 @@
 package ai.tour.guide.ui.screens.main
 
 import ai.tour.guide.R
-import ai.tour.guide.ui.components.fragments.UserRegistrationFragment
+import ai.tour.guide.ui.sharedFragments.UserRegistrationFragment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding

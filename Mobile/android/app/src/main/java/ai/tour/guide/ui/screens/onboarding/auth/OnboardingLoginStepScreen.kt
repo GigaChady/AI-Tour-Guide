@@ -25,8 +25,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +40,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,13 +54,14 @@ fun OnboardingLoginStepScreen(
     backStack: NavBackStack<NavKey>? = null
 ) {
     val context = LocalContext.current
-    val viewModelState by viewModel.viewStateFlow.collectAsState()
+    val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
 
-    LaunchedEffect(viewModelState.isSuccess) {
+    LifecycleStartEffect(viewModelState.isSuccess) {
         if (viewModelState.isSuccess) {
             backStack?.clear()
             backStack?.add(Route.OnboardingPreferencesStepScreen)
         }
+        onStopOrDispose { }
     }
 
     ToastOnRequestError(viewModel = viewModel)

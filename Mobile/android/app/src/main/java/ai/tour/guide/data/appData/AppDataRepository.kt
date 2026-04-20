@@ -7,6 +7,7 @@ import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
 
@@ -37,5 +38,25 @@ class AppDataRepository(private val context: Context) {
         context.PersistedAppDataStore.updateData {
             it.copy(onboardingCompleted = completed)
         }
+    }
+
+    fun updateBearerToken(authResponse: TokenResponseDto?) {
+        if (authResponse == null) {
+            return
+        }
+        _bearerToken.value = authResponse.refreshToken
+    }
+
+    suspend fun shouldRefreshBearerToken(): Boolean {
+        val tokenEmpty = _bearerToken.value == null
+        val preferencesSnapshot = context.PersistedAppDataStore.data.first()
+        return tokenEmpty && preferencesSnapshot.onboardingCompleted
+    }
+
+    suspend fun getRefreshToken(): String {
+        val preferencesSnapshot = context.PersistedAppDataStore.data.first()
+        val refreshToken = preferencesSnapshot.refreshToken
+            ?: throw Exception("Trying to refresh bearer token with a null refresh")
+        return refreshToken
     }
 }
