@@ -1,6 +1,6 @@
 from abc import ABC
 
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 
 
 class AbstractAgent(ABC):
