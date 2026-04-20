@@ -1,9 +1,12 @@
 package ai.tour.guide.domain.preferences
 
 import ai.tour.guide.data.appData.AppDataRepository
+import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionType
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceRepository
+import ai.tour.guide.data.onboardingPreferences.OnboardingPreferencesDto
 import ai.tour.guide.network.ApiClient
 import ai.tour.guide.network.schema.response.EmptyAPIResponse
+import ai.tour.guide.network.schema.response.OnboardingPreferencesResponseDto
 import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentState
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -22,6 +25,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -33,7 +38,7 @@ class OnboardingPreferencesServiceTest {
     fun `preferences exposes repository flow`() {
         val repository = mockk<OnboardingPreferenceRepository>()
         val preferencesFlow =
-            MutableStateFlow(emptyList<ai.tour.guide.data.onboardingPreferences.OnboardingPreferencesDto>())
+            MutableStateFlow(emptyList<OnboardingPreferencesDto>())
         every { repository.preferences } returns preferencesFlow
         val service = OnboardingPreferencesService(
             onboardingPreferenceRepository = repository,
@@ -44,17 +49,55 @@ class OnboardingPreferencesServiceTest {
     }
 
     @Test
-    fun `fetchPreferencesIfEmpty delegates to repository`() = runTest {
+    fun `fetchPreferencesIfEmpty maps selected answers into view state`() = runTest {
         val repository = mockk<OnboardingPreferenceRepository>(relaxed = true)
         every { repository.preferences } returns MutableStateFlow(emptyList())
+        coEvery { repository.fetchPreferencesIfEmpty() } returns OnboardingPreferencesResponseDto(
+            items = listOf(
+                OnboardingPreferencesDto(
+                    key = "gender",
+                    type = OnboardingPreferenceQuestionType.SINGLE_CHOICE
+                ),
+                OnboardingPreferencesDto(
+                    key = "interests",
+                    type = OnboardingPreferenceQuestionType.MULTIPLE_CHOICE
+                )
+            ),
+            selectedAnswers = mapOf(
+                "gender" to JsonPrimitive("female"),
+                "interests" to JsonArray(listOf(JsonPrimitive("food"), JsonPrimitive("history")))
+            )
+        )
         val service = OnboardingPreferencesService(
             onboardingPreferenceRepository = repository,
             apiClient = createApiClient()
         )
 
-        service.fetchPreferencesIfEmpty()
+        val result = service.fetchPreferencesIfEmpty()
 
         coVerify(exactly = 1) { repository.fetchPreferencesIfEmpty() }
+        assertEquals(
+            UserPreferenceFragmentState(
+                selectedSingleOptions = mapOf("gender" to "female"),
+                selectedMultipleOptions = mapOf("interests" to setOf("food", "history"))
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `fetchPreferencesIfEmpty returns null when repository has no new response`() = runTest {
+        val repository = mockk<OnboardingPreferenceRepository>(relaxed = true)
+        every { repository.preferences } returns MutableStateFlow(emptyList())
+        coEvery { repository.fetchPreferencesIfEmpty() } returns null
+        val service = OnboardingPreferencesService(
+            onboardingPreferenceRepository = repository,
+            apiClient = createApiClient()
+        )
+
+        val result = service.fetchPreferencesIfEmpty()
+
+        assertEquals(null, result)
     }
 
     @Test
@@ -81,6 +124,37 @@ class OnboardingPreferencesServiceTest {
         assertTrue(result.isSuccessful)
         assertEquals(
             """{"items":[{"question_key":"pace","answer_key":"fast"},{"question_key":"interests","answer_keys":["art","food"]}]}""",
+            requestBody
+        )
+    }
+
+    @Test
+    fun `savePreferences skips empty answers`() = runTest {
+        val repository = mockk<OnboardingPreferenceRepository>()
+        every { repository.preferences } returns MutableStateFlow(emptyList())
+        var requestBody = ""
+        val service = OnboardingPreferencesService(
+            onboardingPreferenceRepository = repository,
+            apiClient = createApiClient(
+                onRequest = { body ->
+                    requestBody = body
+                }
+            )
+        )
+
+        val result = service.savePreferences(
+            UserPreferenceFragmentState(
+                selectedSingleOptions = mapOf("pace" to "fast", "mood" to ""),
+                selectedMultipleOptions = mapOf(
+                    "interests" to linkedSetOf("art", " "),
+                    "empty" to emptySet()
+                )
+            )
+        )
+
+        assertTrue(result.isSuccessful)
+        assertEquals(
+            """{"items":[{"question_key":"pace","answer_key":"fast"},{"question_key":"interests","answer_keys":["art"]}]}""",
             requestBody
         )
     }

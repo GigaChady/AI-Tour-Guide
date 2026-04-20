@@ -10,39 +10,32 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-interface IBaseViewModelState {
-    val errorMessage: Any?
-    val isLoading: Boolean
-    val isSuccess: Boolean
-}
-
-data class BaseViewState<T>(
+data class BaseViewModelState<T>(
     val data: T,
-    override val errorMessage: Any? = null,
-    override val isLoading: Boolean = false,
-    override val isSuccess: Boolean = false
-) : IBaseViewModelState
+    val toastMessage: Any? = null,
+    val isLoading: Boolean = false,
+    val isSuccess: Boolean = false
+)
 
-interface IBaseViewModel {
-    val stateFlow: StateFlow<IBaseViewModelState>
+interface IBaseViewModel<T> {
+    val stateFlow: StateFlow<BaseViewModelState<T>>
     fun clearError()
 }
 
-abstract class BaseViewModel<T>(initialData: T) : ViewModel(), IBaseViewModel {
-    protected val _state = MutableStateFlow(BaseViewState(initialData))
+abstract class BaseViewModel<T>(initialData: T) : ViewModel(), IBaseViewModel<T> {
+    protected val state = MutableStateFlow(BaseViewModelState(initialData))
 
-    @Suppress("UNCHECKED_CAST")
-    override val stateFlow: StateFlow<IBaseViewModelState> =
-        _state as StateFlow<IBaseViewModelState>
+    override val stateFlow: StateFlow<BaseViewModelState<T>> =
+        state as StateFlow<BaseViewModelState<T>>
 
-    val viewStateFlow: StateFlow<BaseViewState<T>> = _state.asStateFlow()
+    val viewStateFlow: StateFlow<BaseViewModelState<T>> = state.asStateFlow()
 
     private val stateLock = Mutex()
 
-    protected fun updateState(updater: BaseViewState<T>.() -> BaseViewState<T>) {
+    protected fun updateState(updater: BaseViewModelState<T>.() -> BaseViewModelState<T>) {
         viewModelScope.launch {
             stateLock.withLock {
-                _state.value = _state.value.updater()
+                state.value = state.value.updater()
             }
         }
     }
@@ -52,16 +45,16 @@ abstract class BaseViewModel<T>(initialData: T) : ViewModel(), IBaseViewModel {
     }
 
     override fun clearError() {
-        updateState { copy(errorMessage = null) }
+        updateState { copy(toastMessage = null) }
     }
 
     protected suspend fun withLoading(block: suspend () -> Unit) {
-        updateState { copy(isLoading = true, errorMessage = null) }
+        updateState { copy(isLoading = true, toastMessage = null) }
         try {
             block()
         } catch (e: Exception) {
             Log.e("BaseViewModel", e.stackTraceToString())
-            updateState { copy(errorMessage = e.message) }
+            updateState { copy(toastMessage = e.message) }
         } finally {
             updateState { copy(isLoading = false) }
         }

@@ -14,6 +14,8 @@ import android.content.Context
 import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -59,7 +61,14 @@ class AuthService(
             .addCredentialOption(googleIdOption)
             .build()
 
-        val response = credentialManager.getCredential(context, request)
+        var response: GetCredentialResponse?
+        try {
+            response = credentialManager.getCredential(context, request)
+        } catch (e: NoCredentialException) {
+            Log.e(tag, e.stackTraceToString())
+            return FailedAuthResult("No credentials found")
+        }
+
         if (response.credential.type != TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
             Log.w(tag, "Credential is not of type Google ID!")
             return FailedAuthResult("Credential is not of type Google ID!")

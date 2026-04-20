@@ -3,7 +3,7 @@ package ai.tour.guide.data.onboardingPreferences
 
 import ai.tour.guide.network.ApiClient
 import ai.tour.guide.network.ApiClientRoute
-import ai.tour.guide.network.schema.response.BaseListResponse
+import ai.tour.guide.network.schema.response.OnboardingPreferencesResponseDto
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,22 +16,25 @@ class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
     private val _preferences = MutableStateFlow<List<OnboardingPreferencesDto>>(emptyList())
     val preferences: StateFlow<List<OnboardingPreferencesDto>> = _preferences.asStateFlow()
 
-    private suspend fun fetchPreferences() {
+    private suspend fun fetchPreferences(): OnboardingPreferencesResponseDto? {
         val request =
-            apiClient.get<BaseListResponse<OnboardingPreferencesDto>>(ApiClientRoute.ONBOARDING_QUESTIONS)
+            apiClient.get<OnboardingPreferencesResponseDto>(ApiClientRoute.ONBOARDING_QUESTIONS)
         if (request.isSuccessful) {
             _preferences.value = request.body?.items ?: emptyList()
+            return request.body
         } else {
             Log.e(
                 "OnboardingPreferenceRepo",
                 "Failed to fetch preferences: ${request.errorMessage}"
             )
         }
+        return null
     }
 
-    suspend fun fetchPreferencesIfEmpty() {
+    suspend fun fetchPreferencesIfEmpty(): OnboardingPreferencesResponseDto? {
         if (_preferences.value.isEmpty()) {
-            fetchPreferences()
+            return fetchPreferences()
         }
+        return null
     }
 }
