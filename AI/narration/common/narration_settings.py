@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 
 class NarrationLanguage:
@@ -13,7 +14,7 @@ class NarrationDetailLevel(Enum):
     COUNTRY = 3
 
 class NarrationSettings:
-    def __init__(self, latitude: float, longitude: float, detail_level: NarrationDetailLevel, search_radius: int, language: NarrationLanguage, user_preferences: str):
+    def __init__(self, latitude: float, longitude: float, detail_level: NarrationDetailLevel, search_radius: int, language: NarrationLanguage, user_preferences: str, ollama_base_url: str = None):
         """
         Constructs a narration settings object.
         :param latitude: latitude of the location
@@ -22,6 +23,7 @@ class NarrationSettings:
         :param search_radius: POI search radius around user's position
         :param language: narration language
         :param user_preferences: user's interests, main narration aspects
+        :param ollama_base_url: Ollama base URL (default from OLLAMA_BASE_URL env or http://localhost:11434)
         """
         self.latitude = latitude
         self.longitude = longitude
@@ -29,3 +31,4 @@ class NarrationSettings:
         self.search_radius = search_radius
         self.language = language
         self.user_preferences = user_preferences
+        self.ollama_base_url = ollama_base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")

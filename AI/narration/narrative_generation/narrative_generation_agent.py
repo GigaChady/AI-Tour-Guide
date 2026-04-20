@@ -4,8 +4,8 @@ import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
-from AI.narration.common.narration_settings import NarrationSettings
-from AI.narration.narrative_generation.abstract_narrative_generation_agent import AbstractNarrativeGenerationAgent
+from narration.common.narration_settings import NarrationSettings
+from narration.narrative_generation.abstract_narrative_generation_agent import AbstractNarrativeGenerationAgent
 
 
 class OllamaNarrativeGenerationAgent(AbstractNarrativeGenerationAgent):
@@ -14,8 +14,10 @@ class OllamaNarrativeGenerationAgent(AbstractNarrativeGenerationAgent):
         self.model = ChatOllama(
             model=model_name,
             temperature=0.4,
-            format="json"
+            format="json",
+            base_url=narration_settings.ollama_base_url
         )
+        logging.info("OllamaNarrativeGenerationAgent initialized with model: %s", model_name)
 
     def generate_narration(self, location_name: str, location_info: str):
         logging.info(f"Starting narration generation about: {location_name}")

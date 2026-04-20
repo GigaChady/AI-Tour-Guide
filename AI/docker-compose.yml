@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    healthcheck:
+      test: [ "CMD-SHELL", "ollama list || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: serve
+    networks:
+      - ai-network
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ai-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_models:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=${OLLAMA_MODEL:-mistral-nemo}
+    command: >
+      sh -c "ollama list | awk 'NR>1 {print $1}' | grep -qx \"$$MODEL_NAME\" || ollama pull \"$$MODEL_NAME\""
+    restart: "no"
+    networks:
+      - ai-network
+
+  ai:
+    build: .
+    container_name: ai-narration
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:http://ollama:11434}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+    networks:
+      - ai-network
+
+volumes:
+  ollama_models:
+    name: ollama_models
+
+networks:
+  ai-network:
+    name: ai-network
