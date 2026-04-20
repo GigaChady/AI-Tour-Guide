@@ -2,7 +2,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 from narration.filtering.filtering_agent import FilteringAgent
 from narration.location.location_processor import LocationProcessor
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 from narration.narrative_generation.narrative_generation_agent import OllamaNarrativeGenerationAgent
 from narration.scraping.scraping_agent import LangChainScrapingAgent
 

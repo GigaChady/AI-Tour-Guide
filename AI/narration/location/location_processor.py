@@ -3,7 +3,7 @@ import logging
 import requests
 from geopy.geocoders import Nominatim
 
-from narration.common.narration_settings import NarrationSettings, NarrationDetailLevel
+from utils.schemas import NarrationSettings, NarrationDetailLevel
 
 
 class LocationProcessor:
