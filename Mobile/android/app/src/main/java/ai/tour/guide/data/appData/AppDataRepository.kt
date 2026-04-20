@@ -1,0 +1,41 @@
+package ai.tour.guide.data.appData
+
+import ai.tour.guide.network.schema.response.TokenResponseDto
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import org.koin.core.annotation.Single
+
+val Context.PersistedAppDataStore: DataStore<PersistedAppData> by dataStore(
+    fileName = "app_data.json",
+    serializer = PersistedAppDataSerializer
+)
+
+@Single
+class AppDataRepository(private val context: Context) {
+    private val _bearerToken = MutableStateFlow<String?>(null)
+    val bearerTokenFlow = _bearerToken.asStateFlow()
+
+    val onboardingCompletedFlow: Flow<Boolean> =
+        context.PersistedAppDataStore.data.map { preferences ->
+            preferences.onboardingCompleted
+        }
+
+    suspend fun updateCredentialsWithAPIResponse(response: TokenResponseDto?) {
+        if (response == null) return
+        _bearerToken.value = response.accessToken
+        context.PersistedAppDataStore.updateData {
+            it.copy(refreshToken = response.refreshToken)
+        }
+    }
+
+    suspend fun updateOnboardingCompleted(completed: Boolean) {
+        context.PersistedAppDataStore.updateData {
+            it.copy(onboardingCompleted = completed)
+        }
+    }
+}
