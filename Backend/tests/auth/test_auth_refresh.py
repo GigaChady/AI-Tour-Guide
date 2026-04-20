@@ -10,16 +10,14 @@ async def test_refresh_token():
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             email = f"refresh_{uuid.uuid4()}@example.com"
-            # Register
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
             assert response.status_code == 200
             data = response.json()
             refresh_token = data["refresh_token"]
 
-            # Use refresh token
             response = await ac.post("/auth/refresh", json={
                 "refresh_token": refresh_token
             })

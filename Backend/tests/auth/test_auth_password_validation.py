@@ -12,4 +12,4 @@ async def test_register_short_password():
                 "email": "shortpass@example.com",
                 "password": "123"
             })
-            assert response.status_code in (400, 422, 200)
+            assert response.status_code == 400

@@ -13,20 +13,18 @@ async def test_register_and_login():
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
                 email = f"test_{uuid.uuid4()}@example.com"
-                # Register
                 response = await ac.post("/auth/register", json={
                     "email": email,
-                    "password": "testpassword"
+                    "password": "Testpass1"
                 })
                 assert response.status_code == 200
                 data = response.json()
                 assert "access_token" in data
                 assert "refresh_token" in data
 
-                # Login
                 response = await ac.post("/auth/login", json={
                     "email": email,
-                    "password": "testpassword"
+                    "password": "Testpass1"
                 })
                 assert response.status_code == 200
                 data = response.json()

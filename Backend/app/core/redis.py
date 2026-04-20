@@ -6,6 +6,10 @@ _redis_client: redis.Redis = None
 async def init_redis():
     global _redis_client
     _redis_client = await redis.from_url(settings.REDIS_URL, decode_responses=True)
+    try:
+        await _redis_client.xgroup_create("location:events", "llm-workers", id="0", mkstream=True)
+    except redis.ResponseError:
+        pass  
  
  
 async def close_redis():

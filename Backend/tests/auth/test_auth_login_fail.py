@@ -10,12 +10,10 @@ async def test_login_wrong_password():
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             email = f"fail_{uuid.uuid4()}@example.com"
-            # Register
             await ac.post("/auth/register", json={
                 "email": email,
-                "password": "testpassword"
+                "password": "Testpass1"
             })
-            # Login with wrong password
             response = await ac.post("/auth/login", json={
                 "email": email,
                 "password": "wrongpassword"

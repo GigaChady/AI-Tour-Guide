@@ -7,70 +7,28 @@ from datetime import datetime, timedelta, timezone
 from geoalchemy2.elements import WKTElement
 from sqlalchemy import delete, select
 
-from app.core.database import init_db
+from app.core.config import DEFAULT_ONBOARDING_CATALOG, settings
+from app.core.database import AsyncSessionLocal, init_db, reset_database
 from app.models.models import (
     DemographicsGenderOption,
-    PreferenceQuestionDefinition,
-    PreferenceQuestionOptionDefinition,
     RefreshToken,
     Route,
     User,
     UserPreferences,
 )
-from app.core.database import AsyncSessionLocal
+from app.services.token_service import TokenService
 
+token_service = TokenService()
 
-FIRST_NAMES = [
-    "Anna",
-    "Piotr",
-    "Kasia",
-    "Marek",
-    "Ola",
-    "Tomasz",
-    "Julia",
-    "Kacper",
-    "Maja",
-    "Jakub",
-]
+FIRST_NAMES = ["Anna", "Piotr", "Kasia", "Marek", "Ola", "Tomasz", "Julia", "Kacper", "Maja", "Jakub"]
+LAST_NAMES = ["Nowak", "Kowalski", "Wiśniewski", "Wójcik", "Kowalczyk", "Kamiński", "Lewandowski", "Zieliński", "Szymański", "Dąbrowski"]
+CITIES = ["Wrocław", "Kraków", "Warszawa", "Gdańsk", "Poznań", "Łódź", "Katowice", "Szczecin"]
 
-LAST_NAMES = [
-    "Nowak",
-    "Kowalski",
-    "Wiśniewski",
-    "Wójcik",
-    "Kowalczyk",
-    "Kamiński",
-    "Lewandowski",
-    "Zieliński",
-    "Szymański",
-    "Dąbrowski",
-]
+_GENDER_CATALOG = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "gender")
+_INTERESTS_CATALOG = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "interests")
 
-CITIES = [
-    "Wrocław",
-    "Kraków",
-    "Warszawa",
-    "Gdańsk",
-    "Poznań",
-    "Łódź",
-    "Katowice",
-    "Szczecin",
-]
-
-INTERESTS = [
-    "architecture",
-    "history",
-    "culture",
-    "food_and_dining",
-    "nature",
-]
-
-GENDER_OPTIONS = [
-    ("male", "Male"),
-    ("female", "Female"),
-    ("non_binary", "Non-binary"),
-    ("prefer_not_to_say", "Prefer not to say"),
-]
+GENDER_OPTIONS = [(a["answer_key"], a["title"]) for a in _GENDER_CATALOG["answers"]]
+INTEREST_KEYS = [a["answer_key"] for a in _INTERESTS_CATALOG["answers"]]
 
 
 def _random_wkt_line() -> WKTElement:
@@ -91,8 +49,6 @@ async def _clear_existing_data() -> None:
             Route,
             UserPreferences,
             User,
-            PreferenceQuestionOptionDefinition,
-            PreferenceQuestionDefinition,
             DemographicsGenderOption,
         ]:
             await session.execute(delete(model))
@@ -107,136 +63,21 @@ async def _seed_reference_data() -> dict[str, int]:
             row.code: row
             for row in (await session.execute(select(DemographicsGenderOption))).scalars().all()
         }
-
         for sort_order, (code, label) in enumerate(GENDER_OPTIONS, start=1):
             option = existing_genders.get(code)
             if option is None:
-                option = DemographicsGenderOption(
-                    code=code,
-                    label=label,
-                    is_active=True,
-                    sort_order=sort_order,
-                )
+                option = DemographicsGenderOption(code=code, label=label, is_active=True, sort_order=sort_order)
                 session.add(option)
                 await session.flush()
             gender_id_by_code[code] = option.id
-
-        existing_questions = {
-            row.question_key: row
-            for row in (await session.execute(select(PreferenceQuestionDefinition))).scalars().all()
-        }
-        existing_options = {
-            (row.question_id, row.answer_key): row
-            for row in (await session.execute(select(PreferenceQuestionOptionDefinition))).scalars().all()
-        }
-
-        question_catalog = [
-            {
-                "question_key": "pitch",
-                "title": "Pitch",
-                "type": "percentage",
-                "sort_order": 1,
-                "min_value": 0,
-                "max_value": 100,
-                "required": True,
-                "answers": [],
-            },
-            {
-                "question_key": "speed",
-                "title": "Speed",
-                "type": "percentage",
-                "sort_order": 2,
-                "min_value": 0,
-                "max_value": 100,
-                "required": True,
-                "answers": [],
-            },
-            {
-                "question_key": "loudness",
-                "title": "Loudness",
-                "type": "percentage",
-                "sort_order": 3,
-                "min_value": 0,
-                "max_value": 100,
-                "required": True,
-                "answers": [],
-            },
-            {
-                "question_key": "language",
-                "title": "Language",
-                "type": "single_choice",
-                "sort_order": 4,
-                "required": False,
-                "answers": [
-                    ("en", "English", "Narration in English"),
-                    ("pl", "Polish", "Narracja po polsku"),
-                    ("es", "Spanish", "Narration in Spanish"),
-                    ("fr", "French", "Narration in French"),
-                    ("de", "German", "Narration in German"),
-                ],
-            },
-            {
-                "question_key": "interests",
-                "title": "Interests",
-                "type": "multi_choice",
-                "sort_order": 5,
-                "required": False,
-                "answers": [
-                    ("architecture", "Architecture", "Buildings and styles", "🏛️"),
-                    ("history", "History", "Stories and events", "📜"),
-                    ("culture", "Culture", "Traditions and local vibe", "🎭"),
-                    ("food_and_dining", "Food and dining", "Local food recommendations", "🍽️"),
-                    ("nature", "Nature", "Parks and landscapes", "🌿"),
-                ],
-            },
-        ]
-
-        for item in question_catalog:
-            question = existing_questions.get(item["question_key"])
-            if question is None:
-                question = PreferenceQuestionDefinition(
-                    question_key=item["question_key"],
-                    title=item["title"],
-                    type=item["type"],
-                    sort_order=item["sort_order"],
-                    min_value=item.get("min_value"),
-                    max_value=item.get("max_value"),
-                    required=item.get("required", False),
-                )
-                session.add(question)
-                await session.flush()
-
-            for answer_sort_order, answer in enumerate(item.get("answers", []), start=1):
-                if item["question_key"] == "interests":
-                    answer_key, title, body, trailing_content = answer
-                elif item["question_key"] == "language":
-                    answer_key, title, body = answer
-                    trailing_content = None
-                else:
-                    continue
-
-                if (question.id, answer_key) in existing_options:
-                    continue
-
-                session.add(
-                    PreferenceQuestionOptionDefinition(
-                        question_id=question.id,
-                        answer_key=answer_key,
-                        title=title,
-                        body=body,
-                        trailing_content=trailing_content,
-                        sort_order=answer_sort_order,
-                        is_active=True,
-                    )
-                )
 
         await session.commit()
 
     return gender_id_by_code
 
 
-async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[User]:
-    users: list[User] = []
+async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> None:
+    hashed_password = token_service.hash_password(settings.SEED_USER_PASSWORD)
 
     async with AsyncSessionLocal() as session:
         for index in range(count):
@@ -247,9 +88,10 @@ async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[Use
 
             user = User(
                 email=email,
-                hashed_password=f"hashed_{secrets.token_hex(16)}",
+                hashed_password=hashed_password,
                 is_active=True,
                 imie=first_name,
+                name=first_name,
                 nazwisko=last_name,
                 gender_option_id=gender_id_by_code[gender_code],
                 gender_custom=None,
@@ -257,12 +99,11 @@ async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[Use
             )
             session.add(user)
             await session.flush()
-            users.append(user)
 
             session.add(
                 UserPreferences(
                     user_id=user.id,
-                    interests=random.sample(INTERESTS, k=random.randint(1, len(INTERESTS))),
+                    interests=[{"answer_keys": random.sample(INTEREST_KEYS, k=random.randint(1, len(INTEREST_KEYS)))}],
                 )
             )
 
@@ -292,24 +133,25 @@ async def _seed_users(count: int, gender_id_by_code: dict[str, int]) -> list[Use
 
         await session.commit()
 
-    return users
-
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Seed the database with sample data.")
+    parser.add_argument("--reset-all", action="store_true", help="Drop and recreate all tables before seeding.")
     parser.add_argument("--reset", action="store_true", help="Delete existing rows before seeding.")
     parser.add_argument("--users", type=int, default=12, help="Number of users to create.")
     args = parser.parse_args()
 
     await init_db()
 
-    if args.reset:
+    if args.reset_all:
+        await reset_database()
+    elif args.reset:
         await _clear_existing_data()
 
     gender_id_by_code = await _seed_reference_data()
     await _seed_users(args.users, gender_id_by_code)
 
-    print(f"Seed completed. Created {args.users} users plus reference data.")
+    print(f"Seed completed. Created {args.users} users (password: {settings.SEED_USER_PASSWORD}) plus reference data.")
 
 
 if __name__ == "__main__":

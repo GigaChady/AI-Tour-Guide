@@ -1,41 +1,62 @@
+import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.core.audio_store import audio_store
+from app.core.config import settings
 from app.core.database import init_db
-from app.core.redis import init_redis, close_redis
-
-
-from app.routers.user import auth
-from app.routers import route, narration
-from app.routers.user import preferences as user_preferences
-from app.routers.user import demographics as user_demographics
+from app.core.redis import close_redis, init_redis
 from app.routers import map as map_router
+from app.routers import route
+from app.routers.dashboard import router as dashboard_router
+from app.routers.audio import router as audio_router
+from app.routers.user import auth
+from app.routers.user import narration_settings as user_narration_settings
+from app.routers.user import onboarding as user_onboarding
+from app.routers.user import login_settings as user_login_settings
+
+
+async def _audio_cleanup_loop() -> None:
+    while True:
+        await asyncio.sleep(60)
+        audio_store.cleanup_expired(settings.AUDIO_TTL_SECONDS)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     await init_redis()
+    cleanup_task = asyncio.create_task(_audio_cleanup_loop())
     yield
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
     await close_redis()
 
-# from app.core.database import init_db_and_session
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # initialize DB + session tied to this loop
-#     await init_db_and_session(app)
-#     # optionally initialize Redis here
-#     yield
-#     # cleanup DB engine
-#     await app.state.engine.dispose()
-
 app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    first_error = exc.errors()[0]
+    return JSONResponse(
+        status_code=422,
+        content={"detail": first_error["msg"]},
+    )
 
 
 app.include_router(auth.router)
 app.include_router(route.router)
-app.include_router(narration.router)
-app.include_router(user_preferences.router)
-app.include_router(user_demographics.router)
+app.include_router(dashboard_router)
+app.include_router(user_onboarding.router)
+app.include_router(user_narration_settings.router)
+app.include_router(user_login_settings.router)
 app.include_router(map_router.router)
+app.include_router(audio_router)
 
 
 @app.get("/health")
