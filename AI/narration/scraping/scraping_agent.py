@@ -3,8 +3,8 @@ import logging
 from langchain_core.tools import BaseTool, ToolException
 from typing_extensions import override
 
-from AI.narration.common.narration_settings import NarrationSettings
-from AI.narration.scraping.abstract_scraping_agent import AbstractScrapingAgent
+from narration.common.narration_settings import NarrationSettings
+from narration.scraping.abstract_scraping_agent import AbstractScrapingAgent
 
 
 class LangChainScrapingAgent(AbstractScrapingAgent):

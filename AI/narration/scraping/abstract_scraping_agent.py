@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
-from AI.narration.common.abstract_agent import AbstractAgent
-from AI.narration.common.narration_settings import NarrationSettings
+from narration.common.abstract_agent import AbstractAgent
+from narration.common.narration_settings import NarrationSettings
 
 
 class AbstractScrapingAgent(AbstractAgent):
