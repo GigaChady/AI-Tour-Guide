@@ -20,7 +20,7 @@ def generate_narration(session_id, lat, lng):
                      "With a capacity of around 50,000 spectators, it remains one of the "
                      "greatest architectural and engineering feats of the Roman Empire.")
 
-        # Send to backend
+        # Send to backend 
         r.publish(f"tour:{session_id}", json.dumps({
             "type": "narration",
             "data": narration
