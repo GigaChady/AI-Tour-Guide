@@ -50,7 +50,7 @@ async def _seed_users(count: int) -> None:
         for index in range(count):
             first_name = random.choice(FIRST_NAMES)
             last_name = random.choice(LAST_NAMES)
-            email = f"{first_name.lower()}.{last_name.lower()}@example.com"
+            email = f"{first_name.lower()}.{last_name.lower()}.{secrets.token_hex(4)}@example.com"
 
             user = User(
                 email=email,

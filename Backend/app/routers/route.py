@@ -11,8 +11,19 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, User
-from app.schemas.schemas import ErrorResponse, Location, RoutePoiResponse, RouteStatsResponse, RoutePoints, RouteMapResponse
+from app.schemas.schemas import ErrorResponse, RoutePoiResponse, RouteStatsResponse
+from app.services.tour_stream import handle_tour_ws
+
 router = APIRouter(prefix="/route", tags=["route"])
+
+
+@router.websocket("/ws")
+async def tour_ws(
+    websocket: WebSocket,
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    await handle_tour_ws(websocket, db, redis)
 
 
 @router.get("/{route_id}/stats", response_model=RouteStatsResponse, responses={404: {"model": ErrorResponse}})
@@ -66,37 +77,3 @@ async def route_stats(
             for p in pois
         ],
     )
-
-
-@router.get("/{route_id}/map", response_model=RouteMapResponse, responses={404: {"model": ErrorResponse}})
-async def route_map(
-    route_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    try:
-        rid = uuid.UUID(route_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Route not found.")
-
-    route = await db.get(Route, rid)
-    if not route or route.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Route not found.")
-
-    result = await db.execute(
-        text("SELECT ST_AsGeoJSON(path) FROM routes WHERE id = :id::uuid")
-        .bindparams(id=route_id)
-    )
-    geojson_str = result.scalar()
-    geojson = json.loads(geojson_str) if geojson_str else None
-
-    result = await db.execute(
-        select(RoutePoi).where(RoutePoi.route_id == rid)
-    )
-    pois = result.scalars().all()
-
-    return RouteMapResponse(
-        geojson=geojson,
-    )
-
-

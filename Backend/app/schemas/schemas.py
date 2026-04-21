@@ -9,7 +9,6 @@ class WorkerMessage(BaseModel):
     type: str
     data: Optional[Any] = None
     text: Optional[str] = None
-    narration_id: Optional[str] = None
 
 # ----------------ERROR RESPONSE SCHEMA----------------
 class ErrorResponse(BaseModel):
@@ -89,7 +88,7 @@ class NarrationSettingsRequest(BaseModel):
     language: str
     pitch: int = Field(..., ge=0, le=100)
     speed: int = Field(..., ge=0, le=10)
-    # volume: int = Field(..., ge=0, le=100)
+    volume: int = Field(..., ge=0, le=100)
     detail_level: str
     auto_play: bool
 
@@ -107,6 +106,12 @@ class SessionMeta(BaseModel):
     route_id: str
 
 
+# ----------------SESSION SCHEMAS----------------
+class SessionMeta(BaseModel):
+    user_id: str
+    route_id: str
+
+
 # ----------------USER PARAMS RESPONSE SCHEMA----------------
 class UserParamsResponse(BaseModel):
     email: str
@@ -114,7 +119,24 @@ class UserParamsResponse(BaseModel):
 
 # ----------------PREFERENCES CACHE SCHEMA----------------
 class UserPreferencesCache(BaseModel):
-    answer_keys: list[str]
+    interests: list[str]
+
+
+# ----------------ROUTE STATS SCHEMAS----------------
+class RoutePoiResponse(BaseModel):
+    id: str
+    poi_id: str | None
+    name: str
+    lat: float
+    lng: float
+    description: str | None
+
+class RouteStatsResponse(BaseModel):
+    distance_m: float
+    duration_s: int
+    started_at: datetime
+    ended_at: datetime | None
+    pois: list[RoutePoiResponse]
 
 
 # ----------------DASHBOARD SCHEMAS----------------
@@ -132,12 +154,13 @@ class PoiData(BaseModel):
 
 
 # ----------------WEBSOCKET MESSAGE SCHEMAS----------------
-class WsPreviewReadyMessage(BaseModel):
-    type: Literal["session_start"] = "session_start"
+class WsReadyMessage(BaseModel):
+    type: Literal["ready"]
+    route_id: str
     session_id: str
 
-class WsTourMessage(BaseModel):
-    type: Literal["tour_start", "tour_reconnect"]
+class WsReconnectedMessage(BaseModel):
+    type: Literal["reconnected"]
     route_id: str
     session_id: str
 
@@ -147,7 +170,6 @@ class NarrationMessage(BaseModel):
 
 class PoisMessage(BaseModel):
     type: Literal["pois"]
-    narration_id: Optional[str] = None
     data: list[PoiData]
 
 # ----------------WS CONNECT SCHEMA----------------
@@ -162,19 +184,16 @@ class NarrationTranscriptChunk(BaseModel):
 
 class NarrationTranscript(BaseModel):
     type: Literal["narration_transcript"]
-    narration_id: str
     transcript: list[NarrationTranscriptChunk]
 
-
-class NarrationWords(BaseModel):
-    type: Literal["narration_words"]
-    narration_id: str
+class NarrationChunk(BaseModel):
+    type: Literal["narration_chunk"]
     chunk_id: int
+    audio: str
     words: list
 
 class NarrationDone(BaseModel):
     type: Literal["narration_done"]
-    narration_id: str
 
 
 # ----------------REDIS LOCATION EVENT SCHEMA----------------
@@ -183,10 +202,5 @@ class LocationEvent(BaseModel):
     lat: float
     lng: float
     include_photos: int | None = None
-    is_narration: bool | None = None
 
-
-class RoutePoints(BaseModel):
-    route_id: str
-    points: list[Location]
 
