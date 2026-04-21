@@ -87,6 +87,11 @@ class UserParamsResponse(BaseModel):
     email: str
     name: str
 
+# ----------------PREFERENCES CACHE SCHEMA----------------
+class UserPreferencesCache(BaseModel):
+    answer_keys: list[str]
+
+
 # ----------------DASHBOARD SCHEMAS----------------
 class DashboardJobResponse(BaseModel):
     session_id: str
