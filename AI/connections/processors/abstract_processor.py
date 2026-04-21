@@ -6,5 +6,13 @@ class AbstractProcessor(ABC):
         pass
 
     @abstractmethod
-    def process(self, client, entry_id, payload, pubsub_prefix) -> None:
+    def process(self, event, preferences):
+        pass
+
+    @abstractmethod
+    def validate(self, entry_id, payload):
+        pass
+
+    @abstractmethod
+    def validate_prefs(self, prefs):
         pass
