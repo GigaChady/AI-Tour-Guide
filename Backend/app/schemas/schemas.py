@@ -114,28 +114,7 @@ class UserParamsResponse(BaseModel):
 
 # ----------------PREFERENCES CACHE SCHEMA----------------
 class UserPreferencesCache(BaseModel):
-    interests: list[str]
-
-
-# ----------------ROUTE STATS SCHEMAS----------------
-class RoutePoiResponse(BaseModel):
-    id: str
-    poi_id: str | None
-    name: str
-    lat: float
-    lng: float
-    description: str | None
-
-
-class RouteMapResponse(BaseModel):
-    geojson: dict | None
-
-class RouteStatsResponse(BaseModel):
-    distance_m: float
-    duration_s: int
-    started_at: datetime
-    ended_at: datetime | None
-    pois: list[RoutePoiResponse]
+    answer_keys: list[str]
 
 
 # ----------------DASHBOARD SCHEMAS----------------

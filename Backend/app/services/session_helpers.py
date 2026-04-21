@@ -23,8 +23,8 @@ async def setup_tour_session(
     )
     prefs = result.scalar_one_or_none()
     if prefs and prefs.interests:
-        cache = UserPreferencesCache(interests=prefs.interests)
-        await redis.set(f"preferences:{session_id}", cache.model_dump_json())
+        answer_keys = prefs.interests[0].get("answer_keys", []) if prefs.interests else []
+        await redis.set(f"preferences:{session_id}", json.dumps(answer_keys))
 
     pubsub = redis.pubsub()
     await pubsub.subscribe(f"tour:{session_id}")

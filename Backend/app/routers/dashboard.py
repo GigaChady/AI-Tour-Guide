@@ -24,7 +24,28 @@ async def dashboard_ws(
     db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ):
-    await handle_dashboard_ws(websocket, db, redis)
+    '''we enqueue a job to generate a POI for dasboard from location data'''
+    user_id = str(current_user.id)
+    session_svc = SessionService(redis)
+    session_id = await session_svc.create(user_id=user_id, route_id="dashboard")
+    await redis.expire(f"session:{session_id}:meta", settings.RESULT_TTL) # session for metadata
+
+    result = await db.execute(
+        select(UserPreferences).where(UserPreferences.user_id == current_user.id)
+    )
+    prefs = result.scalar_one_or_none()
+    if prefs and prefs.interests:
+        answer_keys = prefs.interests[0].get("answer_keys", []) if prefs.interests else []
+        await redis.set(f"preferences:{session_id}", json.dumps(answer_keys), ex=settings.RESULT_TTL)
+
+    await redis.xadd("location:events", {
+        "session_id": session_id,
+        "lat": str(body.lat),
+        "lng": str(body.lng),
+        "include_photos": "2", # i want 2 photos for dashboard
+    })
+
+    return DashboardJobResponse(session_id=session_id)
 
 
 # @router.post("/poi", response_model=DashboardJobResponse, status_code=202)
