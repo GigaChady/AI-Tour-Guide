@@ -1,4 +1,4 @@
-from utils.schemas import Poi, NarrationMessage, PoisMessage
+from utils.schemas import Poi, NarrationMessage, PoisMessage, PreferencesEvent
 
 
 def _mock_pois(session_id: str, lat: float, lng: float) -> list[Poi]:
@@ -26,16 +26,11 @@ def _mock_pois(session_id: str, lat: float, lng: float) -> list[Poi]:
     return pois
 
 
-def _mock_narration(session_id: str, lat: float, lng: float, pois: list[Poi]) -> NarrationMessage:
+def _mock_narration(session_id: str, preferences: PreferencesEvent, lat: float, lng: float, pois: list[Poi]) -> NarrationMessage:
     text = (
         f"Mock narration for session {session_id}. "
         f"User is near {lat:.5f}, {lng:.5f}. "
         f"Suggested stops: {', '.join(p.name for p in pois)}."
+        f"User preferences: {preferences}."
     )
-    return NarrationMessage.from_text(
-        text,
-        language="pl",
-        title="Mock AI narration",
-        poi_ids=[poi.id for poi in pois],
-        metadata={"session_id": session_id, "source": "redis-stream-mock"},
-    )
+    return NarrationMessage(text=text)
