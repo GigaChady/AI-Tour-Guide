@@ -33,7 +33,8 @@ async def enqueue_dashboard_poi(
     )
     prefs = result.scalar_one_or_none()
     if prefs and prefs.interests:
-        await redis.set(f"preferences:{session_id}", json.dumps(prefs.interests), ex=settings.RESULT_TTL) # to ttl na razie na 60s ale potem mozna zmienic
+        answer_keys = prefs.interests[0].get("answer_keys", []) if prefs.interests else []
+        await redis.set(f"preferences:{session_id}", json.dumps(answer_keys), ex=settings.RESULT_TTL)
 
     await redis.xadd("location:events", {
         "session_id": session_id,
