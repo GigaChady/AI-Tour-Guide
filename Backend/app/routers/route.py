@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, User
+from app.schemas.schemas import ErrorResponse, RoutePoiResponse, RouteStatsResponse
 from app.services.tour_stream import handle_tour_ws
 
 router = APIRouter(prefix="/route", tags=["route"])
@@ -24,7 +25,7 @@ async def tour_ws(
     await handle_tour_ws(websocket, db, redis)
 
 
-@router.get("/{route_id}/stats")
+@router.get("/{route_id}/stats", response_model=RouteStatsResponse, responses={404: {"model": ErrorResponse}})
 async def route_stats(
     route_id: str,
     current_user: User = Depends(get_current_user),
@@ -58,20 +59,20 @@ async def route_stats(
     )
     pois = result.scalars().all()
 
-    return {
-        "distance_m": distance_m,
-        "duration_s": duration_s,
-        "started_at": route.started_at,
-        "ended_at": route.ended_at,
-        "pois": [
-            {
-                "id": str(p.id),
-                "poi_id": p.poi_id,
-                "name": p.name,
-                "lat": p.lat,
-                "lng": p.lng,
-                "description": p.description,
-            }
+    return RouteStatsResponse(
+        distance_m=distance_m,
+        duration_s=duration_s,
+        started_at=route.started_at,
+        ended_at=route.ended_at,
+        pois=[
+            RoutePoiResponse(
+                id=str(p.id),
+                poi_id=p.poi_id,
+                name=p.name,
+                lat=p.lat,
+                lng=p.lng,
+                description=p.description,
+            )
             for p in pois
         ],
-    }
+    )

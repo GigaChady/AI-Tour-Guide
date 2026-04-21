@@ -13,3 +13,7 @@ docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-partition
 docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/dolnoslaskie-260323.osrm
 docker run -t -i -p 5000:5000 -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/dolnoslaskie-260323.osrm
 
+                  id                  |      email       |                       hashed_password                        | google_id | is_active |         created_at         | name |  imie  | nazwisko | gender_option_id | gender_custom | wiek 
+--------------------------------------+------------------+--------------------------------------------------------------+-----------+-----------+----------------------------+------+--------+----------+------------------+---------------+------
+ c5fced5b-645a-4ca8-93e9-094078625943 | user@example.com | $2b$12$46JvLRwk66P2ovrTENN4iuKWPxyg/XdZyR.8r2DJ4m721VrjRxeJi |           | t         | 2026-04-21 08:48:47.245981 |      | string | string   |                  |               |     
+(1 row)

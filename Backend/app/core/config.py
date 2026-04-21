@@ -12,26 +12,13 @@ class Settings(BaseSettings):
 
 #     #Google
     GOOGLE_CLIENT_ID: str
-#     GOOGLE_CLIENT_SECRET: str
-#     GOOGLE_REDIRECT_URI: str
-#     GOOGLE_MAP_KEY: str
-#     # GOOGLE_MAPS_API_URL: str = "https://maps.googleapis.com/maps/api"
+
 
 #    # PostgreSQL (asyncpg)
-#     POSTGRES_HOST: str
-#     POSTGRES_PORT: int = 5432
-#     POSTGRES_DB: str
-#     POSTGRES_USER: str
-#     POSTGRES_PASSWORD: str
     DATABASE_URL: str
-#     #Maybe add sync version for celery tasks
-#     # DATABASE_URL_SYNC: str
+
 
 #     # Redis
-    # REDIS_HOST: str = "localhost"
-    # REDIS_PORT: int = 6379
-#     # REDIS_DB: int
-    # REDIS_PASSWORD: str
     REDIS_URL: str
 
     # TTS
@@ -39,15 +26,8 @@ class Settings(BaseSettings):
     TTS_SPEAKER_WAV: str = ""                      # reserved for future use
     AUDIO_DIR: str = "audio_files"
     AUDIO_FILE_TTL_SECONDS: int = 3600
-    GOOGLE_APPLICATION_CREDENTIALS: str = ""       # only needed when TTS_PROVIDER=google
 
-    # LLM
 
-    # Route session
-    SCRAPE_INTERVAL_SECONDS: int = 120
-    # mozna tez pomyslec ze zamiast czasu bedziemy miec odleglosc od ostaniego poi
-    # i np jak user nie odejdzie za daleko to nie scrapujemy nowych danych tylko
-    # uzywamy tych co mamy ale to juz bedzie bardziej skomplikowane do zrobienia wiec na razie niech zostanie czas
 
     #Streaming
     STREAM_TIMEOUT_SECONDS: int = 120  #TODO: do ustalenia na pozniej
