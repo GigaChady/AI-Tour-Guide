@@ -22,8 +22,6 @@ async def get_current_user(
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found.")
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="User is inactive.")
     return user
 
 def get_session_service() -> SessionService:

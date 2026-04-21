@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import NullPool
-from app.models import Base
+from app.models.models import Base
 from app.main import app
 from app.core.database import get_db
 

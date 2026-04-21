@@ -27,7 +27,7 @@ async def run(token: str, lat: float = None, lng: float = None) -> None:
 
         if lat is not None and lng is not None:
             await r.xadd("location:events", {
-                "session_id": "fd12e30d-0705-40f6-b2da-1a3eb6a0ae56",
+                "session_id": session_id,
                 "lat": str(lat),
                 "lng": str(lng),
             })
@@ -35,21 +35,25 @@ async def run(token: str, lat: float = None, lng: float = None) -> None:
 
         await r.aclose()
 
-        narration_received = False
-        chunks: dict[int, bytes] = {}
+        print("Waiting for messages from backend (forwarded from Redis)...")
         while True:
             raw = await asyncio.wait_for(ws.recv(), timeout=30)
-            msg = json.loads(raw)
+            print(f"WS RAW: {raw}")
+            try:
+                msg = json.loads(raw)
+            except Exception:
+                print("Could not decode message!")
+                continue
             t = msg.get("type")
-
-            if t == "narration":
-                print(f"Received narration: {msg.get('data')}")
-                narration_received = True
-
-
+            if t == "narration_transcript":
+                print(f"[NARRATION] {msg.get('text')}")
+            elif t == "pois":
+                print(f"[POIS] {msg.get('data')}")
             elif t in ("error", "detail"):
-                print(f"{msg}")
+                print(f"[ERROR/DETAIL] {msg}")
                 break
+            else:
+                print(f"[OTHER] {msg}")
 
                   
 
