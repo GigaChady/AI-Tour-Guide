@@ -9,6 +9,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings, DEFAULT_NARRATION, GRACE_SECONDS
+from app.schemas.schemas import NarrationChunk, NarrationDone, NarrationTranscript, NarrationTranscriptChunk, PoiData, PoisMessage, NarrationMessage, Location, LocationEvent, WsConnectRequest, WsReadyMessage, WsReconnectedMessage, WorkerMessage, ErrorResponse
 from app.core.database import AsyncSessionLocal
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, UserNarrationSettings
@@ -30,13 +31,14 @@ async def handle_tour_ws(
     try:
         raw = await websocket.receive_text()  # {"token": "...", "session_id": "..."} or {"token": "..."}
         data = json.loads(raw)
-        token = data.get("token", "")
+        req = WsConnectRequest(**data)
+        token = req.token
         user_id = token_service.verify_access_token(token)
-        incoming_session_id = data.get("session_id")
+        incoming_session_id = req.session_id
     except WebSocketDisconnect:
         return
     except (json.JSONDecodeError, KeyError, ValueError):
-        await websocket.send_text(json.dumps({"detail": "unauthorized"}))
+        await websocket.send_text(ErrorResponse(detail="unauthorized").model_dump_json())
         await websocket.close(code=4401)
         return
 
@@ -55,7 +57,7 @@ async def handle_tour_ws(
     if incoming_session_id:
         result = await _try_reconnect(redis, user_id, incoming_session_id)
         if result is None:
-            await websocket.send_text(json.dumps({"detail": "session not found or expired"}))
+            await websocket.send_text(ErrorResponse(detail="session not found or expired").model_dump_json())
             await websocket.close(code=4404)
             return
         session_id, session_svc, pubsub, route_id = result
@@ -70,7 +72,7 @@ async def handle_tour_ws(
             await db.refresh(route)
             route_id = str(route.id)
         except Exception:
-            await websocket.send_text(json.dumps({"detail": "internal error"}))
+            await websocket.send_text(ErrorResponse(detail="internal error").model_dump_json())
             await websocket.close(code=4500)
             return
 
@@ -79,20 +81,16 @@ async def handle_tour_ws(
 
     try:
         if incoming_session_id:
-            await websocket.send_text(json.dumps({
-                "type": "reconnected",
-                "route_id": route_id,
-                "session_id": session_id,
-            }))
+            await websocket.send_text(WsReconnectedMessage(
+                type="reconnected", route_id=route_id, session_id=session_id,
+            ).model_dump_json())
         else:
             session_id, session_svc, pubsub = await setup_tour_session(
                 redis, db, user_id, route_id=route_id
             )
-            await websocket.send_text(json.dumps({
-                "type": "ready",
-                "route_id": route_id,
-                "session_id": session_id,
-            }))
+            await websocket.send_text(WsReadyMessage(
+                type="ready", route_id=route_id, session_id=session_id,
+            ).model_dump_json())
 
         client_task = asyncio.create_task(
             _handle_client_messages(websocket, db, redis, session_id, route_id, disconnect_event)
@@ -138,7 +136,7 @@ async def handle_tour_ws(
 async def _try_reconnect(redis, user_id: str, session_id: str):
     session_svc = SessionService(redis)
     meta = await session_svc.get_meta(session_id)
-    if not meta or meta.get("user_id") != user_id:
+    if not meta or meta.user_id != user_id:
         return None
 
     deleted = await redis.delete(f"session:{session_id}:grace")
@@ -147,7 +145,7 @@ async def _try_reconnect(redis, user_id: str, session_id: str):
 
     pubsub = redis.pubsub()
     await pubsub.subscribe(f"tour:{session_id}")
-    route_id = meta.get("route_id")
+    route_id = meta.route_id
     return session_id, session_svc, pubsub, route_id
 
 
@@ -187,15 +185,10 @@ async def _handle_client_messages(
             return
         try:
             data = json.loads(raw)  # {"lat": 50.123, "lng": 19.456}
-            lat = data.get("lat")
-            lng = data.get("lng")
-            if lat is not None and lng is not None:
-                await _save_location(db, route_id, lat=float(lat), lng=float(lng))
-                await redis.xadd("location:events", {
-                    "session_id": session_id,
-                    "lat": str(lat),
-                    "lng": str(lng),
-                })
+            loc = Location(**data)
+            await _save_location(db, route_id, lat=loc.lat, lng=loc.lng)
+            event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=1)
+            await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump().items()})
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             pass
 
@@ -205,32 +198,36 @@ async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str, n
         if message["type"] != "message":
             continue
         try:
-            data = json.loads(message["data"])  # {"type": "pois", "data": [...]} or {"type": "narration", "text": "..."}
-            msg_type = data.get("type")
-            if msg_type == "pois":
-                poi_list = data.get("data", [])
-                await websocket.send_text(json.dumps({"type": "pois", "data": poi_list}))
+            data = WorkerMessage(**json.loads(message["data"]))
+            if data.type == "pois":
+                poi_list = data.data or []
+                msg = PoisMessage(
+                    type="pois",
+                    data=[PoiData(**poi) for poi in poi_list]
+                )
+                await websocket.send_text(msg.model_dump_json())
                 await _save_pois(route_id, poi_list)
-            elif msg_type == "narration":
-                await _stream_narration(websocket, data.get("text", ""), narration_cfg)
+            elif data.type == "narration":
+                msg = NarrationMessage(type="narration", text=data.text or "")
+                await _stream_narration(websocket, msg.text, narration_cfg)
         except WebSocketDisconnect:
             raise
         except Exception:
             pass
 
 
-async def _save_pois(route_id: str, poi_list: list) -> None: #TODO do ustalenia jak bede wiedzial co dostaje do workera
+async def _save_pois(route_id: str, poi_list: list) -> None:
     async with AsyncSessionLocal() as db:
         for poi in poi_list:
+            photos = poi.get("photos", [])
             db.add(RoutePoi(
                 route_id=uuid.UUID(route_id),
                 poi_id=poi.get("id"),
                 name=poi.get("name", ""),
                 lat=float(poi.get("lat", 0)),
                 lng=float(poi.get("lng", 0)),
-                description=poi.get("description"),
-                image_url=poi.get("image_url"),
-                image_base64=poi.get("image_base64"),
+                description=poi.get("desc"),
+                image_url=photos[0] if photos else None,
             ))
         await db.commit()
 
@@ -243,15 +240,15 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
     try:
         tts = TTSFactory.get_provider()
     except Exception:
-        await websocket.send_text(json.dumps({"detail": "TTS provider unavailable"}))
+        await websocket.send_text(ErrorResponse(detail="TTS provider unavailable").model_dump_json())
         return
 
     cfg = DEFAULT_NARRATION | narration_cfg
 
-    await websocket.send_text(json.dumps({
-        "type": "narration_transcript",
-        "transcript": [{"chunk_id": cid, "text": sentence} for cid, sentence in chunks],
-    }))
+    await websocket.send_text(NarrationTranscript(
+        type="narration_transcript",
+        transcript=[NarrationTranscriptChunk(chunk_id=cid, text=sentence) for cid, sentence in chunks],
+    ).model_dump_json())
 
     async def _synth(chunk_id: int, sentence: str):
         try:
@@ -272,13 +269,13 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
             chunk_id, audio, words = await coro
             if audio is None:
                 continue
-            await websocket.send_text(json.dumps({
-                "type": "narration_chunk",
-                "chunk_id": chunk_id,
-                "audio": base64.b64encode(audio).decode(),
-                "words": words,
-            }))
-        await websocket.send_text(json.dumps({"type": "narration_done"}))
+            await websocket.send_text(NarrationChunk(
+                type="narration_chunk",
+                chunk_id=chunk_id,
+                audio=base64.b64encode(audio).decode(),
+                words=words,
+            ).model_dump_json())
+        await websocket.send_text(NarrationDone(type="narration_done").model_dump_json())
     finally:
         for t in tasks:
             t.cancel()

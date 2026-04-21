@@ -1,23 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import DEFAULT_ONBOARDING_CATALOG
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.models import DemographicsGenderOption, User, UserPreferences
+from app.models.models import User, UserPreferences
 from app.schemas.schemas import (
+    ErrorResponse,
     OnboardingAnswerRequest,
-    OnboardingAnswerResponse,
+    OnboardingAnswersRequest,
     OnboardingOption,
     OnboardingQuestion,
-    OnboardingAnswersRequest,
+    OnboardingQuestionsResponse,
+    OnboardingSelectedAnswers,
 )
-#TODO: fix some onboarding logic regarding responce model
+
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-def _options_from_catalog(question_key: str) -> list[OnboardingOption]:
+def _options_from_catalog(question_key: str) -> dict:
     item = next((i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == question_key), None)
     if not item:
         return {"items": [], "detail": None}
@@ -35,37 +37,16 @@ def _options_from_catalog(question_key: str) -> list[OnboardingOption]:
     }
 
 
-async def _gender_options(db: AsyncSession) -> list[OnboardingOption]:
-    result = await db.execute(
-        select(DemographicsGenderOption)
-        .where(DemographicsGenderOption.is_active == True)
-        .order_by(DemographicsGenderOption.sort_order.asc(), DemographicsGenderOption.id.asc())
-    )
-    rows = result.scalars().all()
-    if rows:
-        return {"items": [OnboardingOption(key=row.code, title=row.label) for row in rows], "detail": None}
-    return _options_from_catalog("gender")
-
-
-def _interests_options() -> dict:
-    return _options_from_catalog("interests")
-
-
-
-def _build_questions(
-    gender_opts: dict,
-    interests_opts: dict,
-) -> dict:
+def _build_questions() -> dict:
     gender_catalog = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "gender")
     interests_catalog = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "interests")
     return {
         "items": [
-            OnboardingQuestion(key="gender", title=gender_catalog["title"], type="single_choice", options=gender_opts["items"]),
-            OnboardingQuestion(key="interests", title=interests_catalog["title"], type="multi_choice", options=interests_opts["items"]),
+            OnboardingQuestion(key="gender", title=gender_catalog["title"], type="single_choice", options=_options_from_catalog("gender")["items"]),
+            OnboardingQuestion(key="interests", title=interests_catalog["title"], type="multi_choice", options=_options_from_catalog("interests")["items"]),
         ],
         "detail": None
     }
-
 
 
 def _normalize_onboarding_answers(
@@ -78,7 +59,7 @@ def _normalize_onboarding_answers(
     if missing:
         raise HTTPException(status_code=422, detail=f"Missing answers for: {sorted(missing)}")
 
-    normalized: list[OnboardingAnswerResponse] = []
+    normalized: list[OnboardingAnswerRequest] = []
     for item in answers:
         question = by_key.get(item.question_key)
         if not question:
@@ -91,9 +72,9 @@ def _normalize_onboarding_answers(
                 raise HTTPException(status_code=422, detail=f"answer_key is required for question_key: {item.question_key}")
             if item.answer_key not in valid_keys:
                 raise HTTPException(status_code=422, detail=f"Invalid answer_key for question_key: {item.question_key}")
-            normalized.append(OnboardingAnswerResponse(question_key=item.question_key, answer_key=item.answer_key))
+            normalized.append(OnboardingAnswerRequest(question_key=item.question_key, answer_key=item.answer_key))
 
-        else:  
+        else:
             selected = item.answer_keys if item.answer_keys is not None else (
                 [item.answer_key] if item.answer_key is not None else None
             )
@@ -103,51 +84,35 @@ def _normalize_onboarding_answers(
             invalid = [k for k in deduped if k not in valid_keys]
             if invalid:
                 raise HTTPException(status_code=422, detail=f"Invalid answer_keys for question_key {item.question_key}: {invalid}")
-            normalized.append(OnboardingAnswerResponse(question_key=item.question_key, answer_keys=deduped))
+            normalized.append(OnboardingAnswerRequest(question_key=item.question_key, answer_keys=deduped))
 
     return {"items": normalized, "detail": None}
 
 
-
-
-@router.get("/onboarding/questions")
+@router.get("/onboarding/questions", response_model=OnboardingQuestionsResponse)
 async def get_onboarding_questions(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    gender_opts = await _gender_options(db)
-    interests_opts = _interests_options()
-    questions = _build_questions(
-        gender_opts=gender_opts,
-        interests_opts=interests_opts,
-    )
+    questions = _build_questions()
 
-    selected_answers = {}
-    if current_user.gender_option_id:
-        result = await db.execute(
-            select(DemographicsGenderOption).where(DemographicsGenderOption.id == current_user.gender_option_id)
-        )
-        gender_option = result.scalar_one_or_none()
-        selected_answers["gender"] = gender_option.code
+    selected_answers = {
+        "gender": current_user.gender,
+        "interests": [],
+    }
 
     result = await db.execute(select(UserPreferences).where(UserPreferences.user_id == current_user.id))
     user_prefs = result.scalar_one_or_none()
     if user_prefs and user_prefs.interests:
-        interests = user_prefs.interests[0].get("answer_keys") if user_prefs.interests else []
-        selected_answers["interests"] = interests
-    else:
-        selected_answers["interests"] = []
+        selected_answers["interests"] = user_prefs.interests
 
-    return {
-        **questions,
-        "selected_answers": selected_answers
-    }
+    return OnboardingQuestionsResponse(
+        items=questions["items"],
+        selected_answers=OnboardingSelectedAnswers(**selected_answers),
+    )
 
 
-
-
-
-@router.post("/onboarding/answers", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/onboarding/answers", status_code=status.HTTP_204_NO_CONTENT, responses={422: {"model": ErrorResponse}})
 async def save_onboarding_answers(
     body: OnboardingAnswersRequest,
     db: AsyncSession = Depends(get_db),
@@ -157,38 +122,17 @@ async def save_onboarding_answers(
     if not answers:
         raise HTTPException(status_code=422, detail="Answers cannot be empty")
 
-    gender_opts = await _gender_options(db)
-    interests_opts = _interests_options()
-    questions = _build_questions(
-        gender_opts=gender_opts,
-        interests_opts=interests_opts,
-    )
+    questions = _build_questions()
     normalized = _normalize_onboarding_answers(answers, questions)
-
     by_key = {item.question_key: item for item in normalized["items"]}
 
-    gender_answer = by_key["gender"]
-    selected_code = str(gender_answer.answer_key)
-    option_result = await db.execute(
-        select(DemographicsGenderOption).where(
-            DemographicsGenderOption.code == selected_code,
-            DemographicsGenderOption.is_active == True,
-        )
-    )
-    option = option_result.scalar_one_or_none()
-    if option:
-        current_user.gender_option_id = option.id
-        current_user.gender_custom = None
-    else:
-        current_user.gender_option_id = None
-        current_user.gender_custom = selected_code
+    current_user.gender = by_key["gender"].answer_key
 
     result = await db.execute(select(UserPreferences).where(UserPreferences.user_id == current_user.id))
     user_prefs = result.scalar()
     if not user_prefs:
         user_prefs = UserPreferences(user_id=current_user.id, interests=[])
         db.add(user_prefs)
-    user_prefs.interests = [{"answer_keys": by_key["interests"].answer_keys}]
+    user_prefs.interests = by_key["interests"].answer_keys
 
     await db.commit()
-    return

@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.models import User, RefreshToken
 from app.schemas.schemas import (
-    RegisterRequest, LoginRequest, GoogleAuthRequest,
+    ErrorResponse, RegisterRequest, LoginRequest, GoogleAuthRequest,
     TokenResponse, RefreshRequest, LogoutRequest
 )
 from app.services.token_service import token_service
@@ -63,7 +63,7 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
     return
 
 
-@router.post("/register", response_model=TokenResponse) 
+@router.post("/register", response_model=TokenResponse, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     normalized_email = body.email.strip().lower() 
 
@@ -80,8 +80,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         email=normalized_email,
         hashed_password=token_service.hash_password(body.password),
 
-        imie=getattr(body, "imie", None) or getattr(body, "name", None),
-        nazwisko=getattr(body, "nazwisko", None),
+        name=getattr(body, "name", None),
     )
     db.add(user)
 
@@ -98,7 +97,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     return await token_service.issue_tokens(user, db)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, responses={401: {"model": ErrorResponse}})
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     normalized_email = body.email.strip().lower() 
     masked_email = _mask_email_for_logs(normalized_email) 
@@ -115,7 +114,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     return await token_service.issue_tokens(user, db)
 
 
-@router.post("/google", response_model=TokenResponse)
+@router.post("/google", response_model=TokenResponse, responses={401: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
 async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
     try:
         user_info = id_token.verify_oauth2_token(
@@ -157,8 +156,7 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
         user = User(
             email=normalized_email,
             google_id=google_sub,
-            imie=user_info.get("given_name"),
-            nazwisko=user_info.get("family_name"),
+            name=user_info.get("given_name"),
         )
         db.add(user)
 
@@ -175,7 +173,7 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     return await token_service.issue_tokens(user, db)
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh", response_model=TokenResponse, responses={401: {"model": ErrorResponse}})
 async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     token_hash = token_service.hash_refresh_token(body.refresh_token)
 

@@ -4,8 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.models.models import User
-from app.schemas.schemas import ChangePasswordRequest, ChangeEmailRequest, ChangeNameRequest, UserParamsResponse
-from pydantic import BaseModel
+from app.schemas.schemas import ChangePasswordRequest, ChangeEmailRequest, ChangeNameRequest, ErrorResponse, UserParamsResponse
 
 from app.routers.user.auth import _validate_password_strength
 from app.services.token_service import token_service
@@ -13,7 +12,7 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}})
 async def change_password(
     body: ChangePasswordRequest,
     db: AsyncSession = Depends(get_db),
@@ -24,7 +23,7 @@ async def change_password(
     await db.commit()
     return
 
-@router.post("/change-email", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/change-email", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
 async def change_email(
     body: ChangeEmailRequest,
     db: AsyncSession = Depends(get_db),
@@ -45,7 +44,7 @@ async def change_email(
     return
 
 
-@router.post("/change-name", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/change-name", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}})
 async def change_name(
     body: ChangeNameRequest,
     db: AsyncSession = Depends(get_db),
