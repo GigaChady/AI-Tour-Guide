@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # ====== BACKEND CONNECTIONS =====
 
-class BackendLocationEvent(BaseModel):
+class LocationEvent(BaseModel):
     # Strict contract for messages pushed by Backend to Redis stream `location:events`.
     model_config = ConfigDict(
         extra="forbid",
@@ -27,6 +27,21 @@ class BackendLocationEvent(BaseModel):
     lat: float = Field(description="Latitude, accepts numeric strings")
     lng: float = Field(description="Longitude, accepts numeric strings")
 
+    def __str__(self):
+        return f"lat {self.lat} lng {self.lng}"
+
+
+class PreferencesEvent(BaseModel):
+    # Loose contract for now
+
+    model_config = ConfigDict(
+        extra="allow"
+    )
+
+    data: Any = None
+
+    def __str__(self):
+        return f"{self.data}"
 
 class PoisMessage(BaseModel):
     """
@@ -45,27 +60,27 @@ class NarrationMessage(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     type: str = "narration"
-    data: NarrationData
+    text: str
 
-    @classmethod
-    def from_text(
-        cls,
-        text: str,
-        *,
-        language: str | None = None,
-        title: str | None = None,
-        poi_ids: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> "NarrationMessage":
-        return cls(
-            data=NarrationData(
-                text=text,
-                language=language,
-                title=title,
-                poi_ids=poi_ids or [],
-                metadata=metadata or {},
-            )
-        )
+    # @classmethod
+    # def from_text(
+    #     cls,
+    #     text: str,
+    #     *,
+    #     language: str | None = None,
+    #     title: str | None = None,
+    #     poi_ids: list[str] | None = None,
+    #     metadata: dict[str, Any] | None = None,
+    # ) -> "NarrationMessage":
+    #     return cls(
+    #         data=NarrationData(
+    #             text=text,
+    #             language=language,
+    #             title=title,
+    #             poi_ids=poi_ids or [],
+    #             metadata=metadata or {},
+    #         )
+    #     )
 
 class Poi(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -79,7 +94,7 @@ class Poi(BaseModel):
     image_base64: str | None = None
 
 
-class NarrationData(BaseModel):
+class NarrationData(BaseModel): # Deprecated
     model_config = ConfigDict(extra="ignore")
 
     text: str = ""

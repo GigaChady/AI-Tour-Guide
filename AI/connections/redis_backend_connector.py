@@ -2,6 +2,7 @@ from __future__ import annotations
 import logging
 import time
 import redis
+import json
 from connections.configs.redis_config import RedisWorkerConfig
 from connections.processors.abstract_processor import AbstractProcessor
 from connections.processors.redis_backend_processor import RedisBackendProcessor
@@ -33,6 +34,13 @@ class RedisStreamWorker:
             entries.extend(stream_entries)
         return entries
 
+    def _publish(self, session_id, poi_message, narration_message) -> None:
+        channel = f"{self.config.pubsub_prefix}{session_id}"
+        self.client.publish(channel, poi_message)
+        self.client.publish(channel, narration_message)
+        logger.info("Published stream event for session %s", session_id)
+
+
     def run(self) -> None:
         logger.info("Starting AI stream worker for %s", self.config.stream_key)
         while True:
@@ -43,12 +51,22 @@ class RedisStreamWorker:
 
                 for entry_id, payload in entries:
                     try:
-                        self.processor.process(
-                            self.client,
-                            entry_id,
-                            payload,
-                            pubsub_prefix=self.config.pubsub_prefix,
-                        )
+                        # Validate correctness of the message
+                        session_id, event = self.processor.validate(entry_id, payload)
+
+                        # Get Cached preferences for the session, if any
+                        prefs_json = self.client.get(f"{self.config.pref_cache}{session_id}")
+                        prefs = json.loads(prefs_json) if prefs_json else {}
+                        logger.info("Validated stream event %s for session %s", entry_id, session_id)
+
+                        prefs_event = self.processor.validate_prefs(prefs)
+                        logger.info("Validated preferences event for session %s", session_id)
+
+                        # Process into narration and pois messages
+                        session_id, narration_msg, pois_msg = self.processor.process(event, prefs_event)
+
+                        self._publish(session_id, pois_msg, narration_msg)
+
                     except Exception:
                         logger.exception("Failed to process stream event %s; skipping", entry_id)
                     finally:
