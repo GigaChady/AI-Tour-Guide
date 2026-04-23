@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class LocationEvent(BaseModel):
     # Strict contract for messages pushed by Backend to Redis stream `location:events`.
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         json_schema_extra={
             "examples": [
                 {
@@ -26,6 +26,7 @@ class LocationEvent(BaseModel):
     session_id: str = Field(min_length=1, description="Tour session identifier")
     lat: float = Field(description="Latitude, accepts numeric strings")
     lng: float = Field(description="Longitude, accepts numeric strings")
+    include_photos: int | None = None
 
     def __str__(self):
         return f"lat {self.lat} lng {self.lng}"

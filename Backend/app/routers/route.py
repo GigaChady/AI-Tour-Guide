@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -11,18 +11,7 @@ from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, User
 from app.schemas.schemas import ErrorResponse, RoutePoiResponse, RouteStatsResponse
-from app.services.tour_stream import handle_tour_ws
-
 router = APIRouter(prefix="/route", tags=["route"])
-
-
-@router.websocket("/ws")
-async def tour_ws(
-    websocket: WebSocket,
-    db: AsyncSession = Depends(get_db),
-    redis=Depends(get_redis),
-):
-    await handle_tour_ws(websocket, db, redis)
 
 
 @router.get("/{route_id}/stats", response_model=RouteStatsResponse, responses={404: {"model": ErrorResponse}})

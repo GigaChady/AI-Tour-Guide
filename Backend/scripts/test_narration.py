@@ -1,67 +1,93 @@
 import argparse
 import asyncio
-import base64
 import json
+import struct
 
-import redis.asyncio as aioredis
 import websockets
 
 '''Wywolujesz
-python scripts/test_narration.py --token <token> --text "Zamek pochodzi z XIV wieku. Byl siedziba krolow."
+python scripts/test_narration.py --token <token>
+python scripts/test_narration.py --token <token> --lat 50.0 --lng 20.0
+python scripts/test_narration.py --token <token> --lat 50.0 --lng 20.0 --start-tour
+python scripts/test_narration.py --token <token> --session-id <id>  # reconnect to existing tour
 '''
 
 WS_URL = "ws://localhost:8000/route/ws"
-REDIS_URL = "redis://redis:6379"
 
 
+async def run(token: str, lat: float = None, lng: float = None, session_id: str = None, start_tour: bool = False) -> None:
+    connect_msg = {"token": token}
+    if session_id:
+        connect_msg["session_id"] = session_id
 
-async def run(token: str, lat: float = None, lng: float = None) -> None:
     async with websockets.connect(WS_URL) as ws:
-        await ws.send(json.dumps({"token": token}))
-        msg = json.loads(await ws.recv())
-        assert msg["type"] == "ready", f"Expected ready, got: {msg}"
-        session_id = msg["session_id"]
-        route_id = msg["route_id"]
+        await ws.send(json.dumps(connect_msg))
+        raw = json.loads(await ws.recv())
 
-        r = await aioredis.from_url(REDIS_URL, decode_responses=True)
+        if "session_id" not in raw:
+            print(f"Unexpected initial message: {raw}")
+            return
+
+        session_id = raw["session_id"]
+        route_id = raw.get("route_id")
+        mode = "tour" if route_id else "preview"
+        print(f"Connected: mode={mode}, session_id={session_id}, route_id={route_id}")
+
+        if start_tour and mode == "preview":
+            await ws.send(json.dumps({"type": "start_tour"}))
+            tour_msg = json.loads(await ws.recv())
+            route_id = tour_msg.get("route_id")
+            mode = "tour"
+            print(f"Tour started: route_id={route_id}")
 
         if lat is not None and lng is not None:
-            await r.xadd("location:events", {
-                "session_id": session_id,
-                "lat": str(lat),
-                "lng": str(lng),
-            })
-            print(f"Sent lat/lng to Redis: lat={lat}, lng={lng}")
+            await ws.send(json.dumps({"lat": lat, "lng": lng}))
+            print(f"Sent lat/lng via WS: lat={lat}, lng={lng}")
 
-        await r.aclose()
-
-        print("Waiting for messages from backend (forwarded from Redis)...")
+        print("Waiting for messages from backend...")
         while True:
-            raw = await asyncio.wait_for(ws.recv(), timeout=30)
-            print(f"WS RAW: {raw}")
+            try:
+                raw = await asyncio.wait_for(ws.recv(), timeout=30)
+            except asyncio.TimeoutError:
+                print("Timeout waiting for messages")
+                break
+
+            if isinstance(raw, bytes):
+                chunk_id = struct.unpack(">I", raw[:4])[0]
+                print(f"[AUDIO] chunk_id={chunk_id}, bytes={len(raw) - 4}")
+                continue
+
             try:
                 msg = json.loads(raw)
             except Exception:
-                print("Could not decode message!")
+                print(f"Could not decode message: {raw!r}")
                 continue
+
             t = msg.get("type")
-            if t == "narration":
-                print(f"[NARRATION] {msg.get('text')}")
-            elif t == "pois":
+            if t == "pois":
                 print(f"[POIS] {msg.get('data')}")
-            elif t in ("error", "detail"):
-                print(f"[ERROR/DETAIL] {msg}")
+            elif t == "narration_transcript":
+                print(f"[NARRATION_TRANSCRIPT] {msg.get('transcript')}")
+            elif t == "narration_words":
+                print(f"[NARRATION_WORDS] chunk_id={msg.get('chunk_id')}")
+            elif t == "narration_done":
+                print("[NARRATION_DONE]")
+            elif t == "session_ended":
+                print(f"[SESSION_ENDED] reason={msg.get('reason')}")
+                break
+            elif "detail" in msg:
+                print(f"[ERROR] {msg}")
                 break
             else:
                 print(f"[OTHER] {msg}")
-
-                  
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", required=True)
-    parser.add_argument("--lat", type=float, default=None, help="Latitude to send to Redis (optional)")
-    parser.add_argument("--lng", type=float, default=None, help="Longitude to send to Redis (optional)")
+    parser.add_argument("--lat", type=float, default=None)
+    parser.add_argument("--lng", type=float, default=None)
+    parser.add_argument("--session-id", default=None, help="Reconnect to an existing tour session")
+    parser.add_argument("--start-tour", action="store_true", help="Send start_tour after connecting in preview mode")
     args = parser.parse_args()
-    asyncio.run(run(args.token, args.lat, args.lng))
+    asyncio.run(run(args.token, args.lat, args.lng, args.session_id, args.start_tour))
