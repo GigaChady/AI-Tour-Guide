@@ -28,6 +28,13 @@ class SessionService:
             return SessionMeta.model_validate_json(meta)
         return None
 
+    async def update_route_id(self, session_id: str, route_id: str) -> None:
+        meta = await self.get_meta(session_id)
+        if meta:
+            meta.route_id = route_id
+            await self.redis.set(f"session:{session_id}:meta", meta.model_dump_json())
+    
+
     async def verify(self, session_id: str, user_id: str) -> bool:
         meta = await self.get_meta(session_id)
         if not meta:

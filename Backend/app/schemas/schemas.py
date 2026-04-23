@@ -144,13 +144,10 @@ class PoiData(BaseModel):
 
 
 # ----------------WEBSOCKET MESSAGE SCHEMAS----------------
-class WsReadyMessage(BaseModel):
-    type: Literal["ready"]
-    route_id: str
+class WsPreviewReadyMessage(BaseModel):
     session_id: str
 
-class WsReconnectedMessage(BaseModel):
-    type: Literal["reconnected"]
+class WsTourMessage(BaseModel):
     route_id: str
     session_id: str
 
@@ -176,10 +173,10 @@ class NarrationTranscript(BaseModel):
     type: Literal["narration_transcript"]
     transcript: list[NarrationTranscriptChunk]
 
-class NarrationChunk(BaseModel):
-    type: Literal["narration_chunk"]
+
+class NarrationWords(BaseModel):
+    type: Literal["narration_words"]
     chunk_id: int
-    audio: str
     words: list
 
 class NarrationDone(BaseModel):
