@@ -91,14 +91,10 @@ class NarrationSettingsRequest(BaseModel):
 
 
 # ----------------USER SETTINGS SCHEMAS----------------
-class ChangeNameRequest(BaseModel):
-    name: str
-
-class ChangePasswordRequest(BaseModel):
-    new_password: str
-
-class ChangeEmailRequest(BaseModel):
-    new_email: EmailStr
+class UpdateUserParamsRequest(BaseModel):
+    name: str | None = None
+    new_email: EmailStr | None = None
+    new_password: str | None = None
 
 # ----------------SESSION SCHEMAS----------------
 class SessionMeta(BaseModel):

@@ -45,7 +45,7 @@ async def run(token: str, lat: float = None, lng: float = None) -> None:
                 print("Could not decode message!")
                 continue
             t = msg.get("type")
-            if t == "narration_transcript":
+            if t == "narration":
                 print(f"[NARRATION] {msg.get('text')}")
             elif t == "pois":
                 print(f"[POIS] {msg.get('data')}")
