@@ -106,12 +106,6 @@ class SessionMeta(BaseModel):
     route_id: str
 
 
-# ----------------SESSION SCHEMAS----------------
-class SessionMeta(BaseModel):
-    user_id: str
-    route_id: str
-
-
 # ----------------USER PARAMS RESPONSE SCHEMA----------------
 class UserParamsResponse(BaseModel):
     email: str

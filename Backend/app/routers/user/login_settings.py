@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.models.models import User
-from app.schemas.schemas import ChangePasswordRequest, ChangeEmailRequest, ChangeNameRequest, ErrorResponse, UserParamsResponse
+from app.schemas.schemas import UpdateUserParamsRequest, ErrorResponse, UserParamsResponse
 
 from app.routers.user.auth import _validate_password_strength
 from app.services.token_service import token_service
@@ -12,20 +12,10 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}})
-async def change_password(
-    body: ChangePasswordRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    _validate_password_strength(body.new_password)
-    current_user.hashed_password = token_service.hash_password(body.new_password)
-    await db.commit()
-    return
 
-@router.post("/change-email", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
-async def change_email(
-    body: ChangeEmailRequest,
+@router.patch("/update-params", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
+async def update_user_params(
+    body: UpdateUserParamsRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -52,19 +42,6 @@ async def change_email(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already in use")
-    return
-
-
-@router.post("/change-name", status_code=status.HTTP_204_NO_CONTENT, responses={400: {"model": ErrorResponse}})
-async def change_name(
-    body: ChangeNameRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not body.name:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Name is required")
-    current_user.name = body.name
-    await db.commit()
     return
 
 
