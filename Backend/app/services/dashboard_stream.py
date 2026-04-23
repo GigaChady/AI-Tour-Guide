@@ -195,6 +195,7 @@ async def _handle_client(
                 await db.refresh(route)
                 route_id = str(route.id)
             except Exception:
+                await db.rollback()
                 await websocket.send_text(ErrorResponse(detail="internal error").model_dump_json())
                 return
             state["mode"] = "tour"
@@ -259,18 +260,21 @@ async def _grace_cleanup(session_id: str, route_id: str) -> None:
 #same as before
 async def _save_pois(route_id: str, poi_list: list) -> None:
     async with AsyncSessionLocal() as db:
-        for poi in poi_list:
-            photos = poi.get("photos", [])
-            db.add(RoutePoi(
-                route_id=uuid.UUID(route_id),
-                poi_id=poi.get("id"),
-                name=poi.get("name", ""),
-                lat=float(poi.get("lat", 0)),
-                lng=float(poi.get("lng", 0)),
-                description=poi.get("desc"),
-                image_url=photos[0] if photos else None,
-            ))
-        await db.commit()
+        try:
+            for poi in poi_list:
+                photos = poi.get("photos", [])
+                db.add(RoutePoi(
+                    route_id=uuid.UUID(route_id),
+                    poi_id=poi.get("id"),
+                    name=poi.get("name", ""),
+                    lat=float(poi.get("lat", 0)),
+                    lng=float(poi.get("lng", 0)),
+                    description=poi.get("desc"),
+                    image_url=photos[0] if photos else None,
+                ))
+            await db.commit()
+        except Exception:
+            await db.rollback()
 
 
 #same as before
@@ -327,55 +331,61 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
 
 # same as before
 async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float) -> None:
-    result = await db.execute(
-        text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id")
-        .bindparams(route_id=route_id)
-    )
-    n_points = result.scalar()
+    try:
+        result = await db.execute(
+            text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id::uuid")
+            .bindparams(route_id=route_id)
+        )
+        n_points = result.scalar()
 
-    if n_points is None:
-        await db.execute(
-            text(
-                "UPDATE routes SET path = ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) "
-                "WHERE id = :route_id"
-            ).bindparams(lng=lng, lat=lat, route_id=route_id)
-        )
-    elif n_points == 1:
-        await db.execute(
-            text(
-                "UPDATE routes SET path = ST_MakeLine(path, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) "
-                "WHERE id = :route_id"
-            ).bindparams(lng=lng, lat=lat, route_id=route_id)
-        )
-    else:
-        await db.execute(
-            text(
-                "UPDATE routes SET path = ST_AddPoint(path, ST_MakePoint(:lng, :lat)) "
-                "WHERE id = :route_id"
-            ).bindparams(lng=lng, lat=lat, route_id=route_id)
-        )
-    await db.commit()
+        if n_points is None:
+            await db.execute(
+                text(
+                    "UPDATE routes SET path = ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) "
+                    "WHERE id = :route_id::uuid"
+                ).bindparams(lng=lng, lat=lat, route_id=route_id)
+            )
+        elif n_points == 1:
+            await db.execute(
+                text(
+                    "UPDATE routes SET path = ST_MakeLine(path, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) "
+                    "WHERE id = :route_id::uuid"
+                ).bindparams(lng=lng, lat=lat, route_id=route_id)
+            )
+        else:
+            await db.execute(
+                text(
+                    "UPDATE routes SET path = ST_AddPoint(path, ST_MakePoint(:lng, :lat)) "
+                    "WHERE id = :route_id::uuid"
+                ).bindparams(lng=lng, lat=lat, route_id=route_id)
+            )
+        await db.commit()
+    except Exception:
+        await db.rollback()
 
 #same as before
 async def _finalize_route(db: AsyncSession, route_id: str) -> None:
-    result = await db.execute(
-        text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id")
-        .bindparams(route_id=route_id)
-    )
-    n_points = result.scalar()
+    try:
+        result = await db.execute(
+            text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id::uuid")
+            .bindparams(route_id=route_id)
+        )
+        n_points = result.scalar()
 
-    if n_points and n_points >= 2:
-        route = await db.get(Route, uuid.UUID(route_id))
-        if route:
-            route.ended_at = datetime.now(timezone.utc).replace(tzinfo=None)
-            result = await db.execute(
-                text(
-                    "SELECT ST_Length(ST_GeogFromWKB(ST_AsBinary(path))) "
-                    "FROM routes WHERE id = :route_id"
-                ).bindparams(route_id=route_id)
-            )
-            route.distance_m = result.scalar()
-            await db.commit()
+        if n_points and n_points >= 2:
+            route = await db.get(Route, uuid.UUID(route_id))
+            if route:
+                route.ended_at = datetime.now(timezone.utc).replace(tzinfo=None)
+                result = await db.execute(
+                    text(
+                        "SELECT ST_Length(ST_GeogFromWKB(ST_AsBinary(path))) "
+                        "FROM routes WHERE id = :route_id::uuid"
+                    ).bindparams(route_id=route_id)
+                )
+                route.distance_m = result.scalar()
+                await db.commit()
+    except Exception:
+        await db.rollback()
 
 
 

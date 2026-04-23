@@ -34,7 +34,7 @@ async def route_stats(
         result = await db.execute(
             text(
                 "SELECT ST_Length(ST_GeogFromWKB(ST_AsBinary(path))) "
-                "FROM routes WHERE id = :id AND path IS NOT NULL"
+                "FROM routes WHERE id = :id::uuid AND path IS NOT NULL"
             ).bindparams(id=route_id)
         )
         distance_m = result.scalar() or 0.0
