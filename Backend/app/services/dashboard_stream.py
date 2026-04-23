@@ -1,6 +1,6 @@
 import asyncio
-import base64
 import json
+import struct
 import uuid
 from datetime import datetime, timezone
 
@@ -9,31 +9,29 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings, DEFAULT_NARRATION, GRACE_SECONDS
-from app.schemas.schemas import NarrationChunk, NarrationDone, NarrationTranscript, NarrationTranscriptChunk, PoiData, PoisMessage, NarrationMessage, Location, LocationEvent, WsConnectRequest, WsReadyMessage, WsReconnectedMessage, WorkerMessage, ErrorResponse
 from app.core.database import AsyncSessionLocal
 from app.core.redis import get_redis
-from app.models.models import Route, RoutePoi, UserNarrationSettings
-from app.services.session_helpers import setup_tour_session, teardown_tour_session
+from app.models.models import Route, RoutePoi, UserNarrationSettings, UserPreferences
+from app.schemas.schemas import (
+    ErrorResponse, Location, LocationEvent, WsConnectRequest,
+    WsPreviewReadyMessage, WsTourMessage,
+    PoisMessage, PoiData, WorkerMessage, UserPreferencesCache,
+    NarrationTranscript, NarrationTranscriptChunk, NarrationWords, NarrationDone,
+)
 from app.services.session_service import SessionService
+from app.services.session_helpers import teardown_tour_session
 from app.services.token_service import token_service
 from app.services.tts.chunker import split as chunk_text
 from app.services.tts.factory import TTSFactory
 
-
-
-async def handle_tour_ws(
-    websocket: WebSocket,
-    db: AsyncSession,
-    redis,
-) -> None:
+async def handle_dashboard_ws(websocket: WebSocket, db: AsyncSession, redis) -> None:
     await websocket.accept()
 
     try:
-        raw = await websocket.receive_text()  # {"token": "...", "session_id": "..."} or {"token": "..."}
-        data = json.loads(raw)
+        raw = await websocket.receive_text()
+        data = json.loads(raw) # {"token": "...", "session_id": "..."} session_id is optional, only for reconnecting to an existing tour session
         req = WsConnectRequest(**data)
-        token = req.token
-        user_id = token_service.verify_access_token(token)
+        user_id = token_service.verify_access_token(req.token)
         incoming_session_id = req.session_id
     except WebSocketDisconnect:
         return
@@ -45,58 +43,50 @@ async def handle_tour_ws(
     result = await db.execute(
         select(UserNarrationSettings).where(UserNarrationSettings.user_id == uuid.UUID(user_id))
     )
+
     ns = result.scalar_one_or_none()
     narration_cfg = (ns.settings or {}) if ns else {}
 
-    pubsub = None
     session_svc = None
     session_id = None
+    pubsub = None
     route_id = None
-    '''when we lost connection, we set a grace key in redis and wait for the client to reconnect period 
-    if client recoonects we remove grace key and restore session if client doesn't reconnect in time, we finalize route and cleanup session'''
+    mode = "preview"
+
     if incoming_session_id:
-        result = await _try_reconnect(redis, user_id, incoming_session_id)
-        if result is None:
+        reconnect = await _try_reconnect(redis, user_id, incoming_session_id)
+        if reconnect is None:
             await websocket.send_text(ErrorResponse(detail="session not found or expired").model_dump_json())
             await websocket.close(code=4404)
             return
-        session_id, session_svc, pubsub, route_id = result
+        session_id, session_svc, pubsub, route_id = reconnect
+        mode = "tour"
     else:
-        try:
-            route = Route(
-                user_id=uuid.UUID(user_id),
-                started_at=datetime.now(timezone.utc).replace(tzinfo=None),
-            )
-            db.add(route)
-            await db.commit()
-            await db.refresh(route)
-            route_id = str(route.id)
-        except Exception:
-            await websocket.send_text(ErrorResponse(detail="internal error").model_dump_json())
-            await websocket.close(code=4500)
-            return
+        session_svc = SessionService(redis)
+        session_id = await session_svc.create(user_id=user_id, route_id="dashboard")
+        await _cache_preferences(db, redis, session_id, user_id)
+        pubsub = redis.pubsub()
+        await pubsub.subscribe(f"tour:{session_id}")
 
-    disconnected = False
+    state = {"mode": mode, "route_id": route_id}
     disconnect_event = asyncio.Event()
 
     try:
         if incoming_session_id:
-            await websocket.send_text(WsReconnectedMessage(
-                type="reconnected", route_id=route_id, session_id=session_id,
+            await websocket.send_text(WsTourMessage(
+                route_id=route_id, session_id=session_id,
             ).model_dump_json())
         else:
-            session_id, session_svc, pubsub = await setup_tour_session(
-                redis, db, user_id, route_id=route_id
-            )
-            await websocket.send_text(WsReadyMessage(
-                type="ready", route_id=route_id, session_id=session_id,
+            await websocket.send_text(WsPreviewReadyMessage(
+                session_id=session_id,
             ).model_dump_json())
 
         client_task = asyncio.create_task(
-            _handle_client_messages(websocket, db, redis, session_id, route_id, disconnect_event)
+            _handle_client(websocket, db, redis, session_id, session_svc, user_id, state, disconnect_event)
         )
+
         worker_task = asyncio.create_task(
-            _handle_worker_messages(websocket, pubsub, route_id, narration_cfg)
+            _handle_worker(websocket, pubsub, state, narration_cfg)
         )
 
         done, pending = await asyncio.wait(
@@ -110,38 +100,39 @@ async def handle_tour_ws(
             except (asyncio.CancelledError, Exception):
                 pass
 
-        disconnected = disconnect_event.is_set() or any(
-            not t.cancelled() and isinstance(t.exception(), WebSocketDisconnect)
-            for t in done
-        )
+        disconnected = disconnect_event.is_set()
 
     except WebSocketDisconnect:
         disconnected = True
     finally:
-        if disconnected and session_id is not None:
-            if pubsub is not None:
-                try:
-                    await pubsub.unsubscribe(f"tour:{session_id}")
-                    await pubsub.aclose()
-                except Exception:
-                    pass
-            await redis.set(f"session:{session_id}:grace", "1")
-            asyncio.create_task(_grace_period_cleanup(session_id, route_id))
-        else:
-            await _finalize_route(db, route_id)
-            if session_svc is not None and session_id is not None:
+        current_route_id = state["route_id"]
+        if state["mode"] == "tour" and current_route_id is not None:
+            if disconnected:
+                if pubsub is not None:
+                    try:
+                        await pubsub.unsubscribe(f"tour:{session_id}")
+                        await pubsub.aclose()
+                    except Exception:
+                        pass
+                await redis.set(f"session:{session_id}:grace", "1")
+                asyncio.create_task(_grace_cleanup(session_id, current_route_id))
+            else:
+                await _finalize_route(db, current_route_id)
                 await teardown_tour_session(redis, session_svc, session_id, pubsub)
+        else:
+            await teardown_tour_session(redis, session_svc, session_id, pubsub)
 
 
+# same as before
 async def _try_reconnect(redis, user_id: str, session_id: str):
     session_svc = SessionService(redis)
     meta = await session_svc.get_meta(session_id)
     if not meta or meta.user_id != user_id:
         return None
-
+    
     deleted = await redis.delete(f"session:{session_id}:grace")
     if not deleted:
-        return None 
+        return None
 
     pubsub = redis.pubsub()
     await pubsub.subscribe(f"tour:{session_id}")
@@ -149,23 +140,25 @@ async def _try_reconnect(redis, user_id: str, session_id: str):
     return session_id, session_svc, pubsub, route_id
 
 
-async def _grace_period_cleanup(session_id: str, route_id: str) -> None:
-    await asyncio.sleep(GRACE_SECONDS)
-    redis = get_redis()
-    deleted = await redis.delete(f"session:{session_id}:grace")
-    if deleted: 
-        async with AsyncSessionLocal() as db:
-            await _finalize_route(db, route_id)
-        session_svc = SessionService(redis)
-        await teardown_tour_session(redis, session_svc, session_id, pubsub=None)
+async def _cache_preferences(db: AsyncSession, redis, session_id: str, user_id: str) -> None:
+    result = await db.execute(
+        select(UserPreferences).where(UserPreferences.user_id == uuid.UUID(user_id))
+    )
+    prefs = result.scalar_one_or_none()
+    if prefs and prefs.interests:
+        cache = UserPreferencesCache(interests=prefs.interests)
+        await redis.set(f"preferences:{session_id}", cache.model_dump_json())
 
 
-async def _handle_client_messages(
+
+async def _handle_client(
     websocket: WebSocket,
     db: AsyncSession,
     redis,
     session_id: str,
-    route_id: str,
+    session_svc: SessionService,
+    user_id: str,
+    state: dict,
     disconnect_event: asyncio.Event,
 ) -> None:
     while True:
@@ -183,17 +176,55 @@ async def _handle_client_messages(
         except WebSocketDisconnect:
             disconnect_event.set()
             return
+
         try:
-            data = json.loads(raw)  # {"lat": 50.123, "lng": 19.456}
-            loc = Location(**data)
-            await _save_location(db, route_id, lat=loc.lat, lng=loc.lng)
-            event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=1)
-            await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump().items()})
-        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
-            pass
+            data = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            continue
+
+        msg_type = data.get("type")
+
+        if msg_type == "start_tour" and state["mode"] == "preview": 
+            try:
+                route = Route(
+                    user_id=uuid.UUID(user_id),
+                    started_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+                db.add(route)
+                await db.commit()
+                await db.refresh(route)
+                route_id = str(route.id)
+            except Exception:
+                await websocket.send_text(ErrorResponse(detail="internal error").model_dump_json())
+                return
+            state["mode"] = "tour"
+            state["route_id"] = route_id
+            await session_svc.update_route_id(session_id, route_id)
+            await websocket.send_text(WsTourMessage(
+                route_id=route_id, session_id=session_id,
+            ).model_dump_json())
+
+        elif msg_type == "end_tour" and state["mode"] == "tour":
+            try:
+                await websocket.send_text(json.dumps({"type": "session_ended", "reason": "user_ended"}))
+            except Exception:
+                pass
+            return
+
+        else:
+            try:
+                loc = Location(**data)
+                # include_photos = 1 if state["mode"] == "tour" else 2
+                # if state["mode"] == "tour" and state["route_id"]:
+                #     await _save_location(db, state["route_id"], lat=loc.lat, lng=loc.lng)
+                # event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=include_photos)
+                event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng)
+                await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump(exclude_none=True).items()})
+            except (KeyError, TypeError, ValueError):
+                pass
 
 
-async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str, narration_cfg: dict) -> None:
+async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cfg: dict) -> None:
     async for message in pubsub.listen():
         if message["type"] != "message":
             continue
@@ -202,20 +233,31 @@ async def _handle_worker_messages(websocket: WebSocket, pubsub, route_id: str, n
             if data.type == "pois":
                 poi_list = data.data or []
                 msg = PoisMessage(
-                    type="pois",
+                    type="pois", 
                     data=[PoiData(**poi) for poi in poi_list]
                 )
                 await websocket.send_text(msg.model_dump_json())
-                await _save_pois(route_id, poi_list)
-            elif data.type == "narration":
-                msg = NarrationMessage(type="narration", text=data.text or "")
-                await _stream_narration(websocket, msg.text, narration_cfg)
+                if state["mode"] == "tour" and state["route_id"]:
+                    await _save_pois(state["route_id"], poi_list)
+            elif data.type == "narration" and state["mode"] == "tour":
+                await _stream_narration(websocket, data.text or "", narration_cfg)
         except WebSocketDisconnect:
             raise
         except Exception:
             pass
 
 
+async def _grace_cleanup(session_id: str, route_id: str) -> None:
+    await asyncio.sleep(GRACE_SECONDS)
+    redis = get_redis()
+    deleted = await redis.delete(f"session:{session_id}:grace")
+    if deleted:
+        async with AsyncSessionLocal() as db:
+            await _finalize_route(db, route_id)
+        session_svc = SessionService(redis)
+        await teardown_tour_session(redis, session_svc, session_id, pubsub=None)
+
+#same as before
 async def _save_pois(route_id: str, poi_list: list) -> None:
     async with AsyncSessionLocal() as db:
         for poi in poi_list:
@@ -232,6 +274,7 @@ async def _save_pois(route_id: str, poi_list: list) -> None:
         await db.commit()
 
 
+#same as before
 async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict) -> None:
     chunks = chunk_text(text)
     if not chunks:
@@ -249,6 +292,7 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
         type="narration_transcript",
         transcript=[NarrationTranscriptChunk(chunk_id=cid, text=sentence) for cid, sentence in chunks],
     ).model_dump_json())
+
 
     async def _synth(chunk_id: int, sentence: str):
         try:
@@ -269,18 +313,20 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
             chunk_id, audio, words = await coro
             if audio is None:
                 continue
-            await websocket.send_text(NarrationChunk(
-                type="narration_chunk",
-                chunk_id=chunk_id,
-                audio=base64.b64encode(audio).decode(),
-                words=words,
-            ).model_dump_json())
+            await websocket.send_bytes(struct.pack(">I", chunk_id) + audio) # binary frames instead of base64
+            if words:
+                await websocket.send_text(NarrationWords(
+                    type="narration_words", chunk_id=chunk_id, words=words,
+                ).model_dump_json())
         await websocket.send_text(NarrationDone(type="narration_done").model_dump_json())
     finally:
         for t in tasks:
             t.cancel()
 
 
+
+
+# same as before
 async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float) -> None:
     result = await db.execute(
         text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id")
@@ -311,7 +357,7 @@ async def _save_location(db: AsyncSession, route_id: str, lat: float, lng: float
         )
     await db.commit()
 
-
+#same as before
 async def _finalize_route(db: AsyncSession, route_id: str) -> None:
     result = await db.execute(
         text("SELECT ST_NPoints(path) FROM routes WHERE id = :route_id")
@@ -331,3 +377,6 @@ async def _finalize_route(db: AsyncSession, route_id: str) -> None:
             )
             route.distance_m = result.scalar()
             await db.commit()
+
+
+
