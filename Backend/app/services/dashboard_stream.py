@@ -74,7 +74,7 @@ async def handle_dashboard_ws(websocket: WebSocket, db: AsyncSession, redis) -> 
     try:
         if incoming_session_id:
             await websocket.send_text(WsTourMessage(
-                route_id=route_id, session_id=session_id,
+                type="tour_reconnect", route_id=route_id, session_id=session_id,
             ).model_dump_json())
         else:
             await websocket.send_text(WsPreviewReadyMessage(
@@ -169,7 +169,7 @@ async def _handle_client(
             )
         except asyncio.TimeoutError:
             try:
-                await websocket.send_text(json.dumps({"type": "session_ended", "reason": "timeout"}))
+                await websocket.send_text(ErrorResponse(detail="timeout").model_dump_json())
             except Exception:
                 pass
             return
@@ -202,14 +202,10 @@ async def _handle_client(
             state["route_id"] = route_id
             await session_svc.update_route_id(session_id, route_id)
             await websocket.send_text(WsTourMessage(
-                route_id=route_id, session_id=session_id,
+                type="tour_start", route_id=route_id, session_id=session_id,
             ).model_dump_json())
 
         elif msg_type == "end_tour" and state["mode"] == "tour":
-            try:
-                await websocket.send_text(json.dumps({"type": "session_ended", "reason": "user_ended"}))
-            except Exception:
-                pass
             return
 
         else:
