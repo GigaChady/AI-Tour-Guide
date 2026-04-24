@@ -69,7 +69,7 @@ async def run(token: str, lat: float = None, lng: float = None, session_id: str 
             elif t == "narration_transcript":
                 print(f"[NARRATION_TRANSCRIPT] {msg.get('transcript')}")
             elif t == "narration_words":
-                print(f"[NARRATION_WORDS] chunk_id={msg.get('chunk_id')}")
+                print(f"[NARRATION_WORDS] chunk_id={msg.get('chunk_id')}, words={msg.get('words')}")
             elif t == "narration_done":
                 print("[NARRATION_DONE]")
             elif t == "session_ended":

@@ -145,9 +145,11 @@ class PoiData(BaseModel):
 
 # ----------------WEBSOCKET MESSAGE SCHEMAS----------------
 class WsPreviewReadyMessage(BaseModel):
+    type: Literal["session_start"] = "session_start"
     session_id: str
 
 class WsTourMessage(BaseModel):
+    type: Literal["tour_start", "tour_reconnect"]
     route_id: str
     session_id: str
 
