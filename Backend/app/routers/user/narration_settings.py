@@ -27,6 +27,7 @@ async def save_narration_settings(
 
 @router.get("/narration-settings", status_code=status.HTTP_200_OK)
 async def get_narration_settings(
+    body: NarrationSettingsRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
