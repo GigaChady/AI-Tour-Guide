@@ -1,4 +1,3 @@
-
 services:
   # === BACKEND ===
 
@@ -106,6 +105,21 @@ services:
       redis:
         condition: service_healthy
 
+  minio:
+    image: minio/minio:latest
+    container_name: tourguide-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+    volumes:
+      - minio_data:/data
+    networks:
+      - ai-network
+
 
 # === AI ===
 
@@ -155,6 +169,12 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - PYTHONUNBUFFERED=1
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_PUBLIC_ENDPOINT=localhost:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin12345
+      - MINIO_BUCKET=poi-images
+      - MINIO_SECURE=false
     volumes:
       - ./AI:/app
     networks:
@@ -167,6 +187,7 @@ volumes:
   tts_edge_cache:
   ollama_models:
     name: ollama_models
+  minio_data:
 
 networks:
   ai-network:
