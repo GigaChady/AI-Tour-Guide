@@ -3,7 +3,7 @@ import os
 
 from narration.narration_manager import NarrationManager
 from utils.schemas import NarrationSettings, NarrationDetailLevel, NarrationLanguage
-from connections.redis_backend_connector import run_worker
+from connections.redis_stream_worker import run_worker
 
 if __name__ == "__main__":
     # Logging config (debug)
