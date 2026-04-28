@@ -34,7 +34,7 @@ class PreferencesEvent(BaseModel):
     interests: list[str] | None = None
 
     def __str__(self):
-        return f"{self.data}"
+        return f"{self.interests.__str__()}"
 
 class PoisMessage(BaseModel):
     """
