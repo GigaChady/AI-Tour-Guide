@@ -2,13 +2,10 @@ package ai.tour.guide.network.schema.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class NarrationResponseDto(
     val type: String,
-    @SerialName("narration_id")
-    val narrationId: String? = null,
     val transcript: List<NarrationTranscriptChunkDto>
 )
 
@@ -18,23 +15,3 @@ data class NarrationTranscriptChunkDto(
     val chunkId: Int,
     val text: String,
 )
-
-@Serializable
-data class NarrationWordsResponseDto(
-    val type: String,
-    @SerialName("narration_id")
-    val narrationId: String? = null,
-    @SerialName("chunk_id")
-    val chunkId: Int,
-    val words: JsonElement
-)
-
-@Serializable
-data class NarrationWordDto(
-    val text: String,
-    @SerialName("offset_ms")
-    val offsetMs: Double,
-    @SerialName("duration_ms")
-    val durationMs: Double
-) {
-}

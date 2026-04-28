@@ -4,8 +4,8 @@ import ai.tour.guide.R
 import ai.tour.guide.ui.components.audio.AudioPlayerWidget
 import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.sharedFragments.TourSummaryBottomSheet
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,28 +13,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 
 @Preview(showBackground = true)
@@ -45,57 +40,7 @@ fun TourAudioPlayerScreen(
     viewModel: TourRouteViewModel = koinInject()
 ) {
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
-    val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
-    val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
-    val playerEnabled by viewModel.playerEnabledFlow.collectAsStateWithLifecycle(false)
-    val currentStopIdx by viewModel.currentStopIndex.collectAsStateWithLifecycle(1)
-    val allStopsCount by viewModel.stopsCount.collectAsStateWithLifecycle(1)
-    val currentStop by viewModel.currentStopFlow.collectAsStateWithLifecycle(null)
-
     var showBottomSheet by remember { mutableStateOf(false) }
-    val narrationScrollState = rememberScrollState()
-    var narrationTextLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val progressFraction = remember(playbackState.positionMs, playbackState.durationMs) {
-        if (playbackState.durationMs <= 0L) {
-            0f
-        } else {
-            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(
-                0f,
-                1f
-            )
-        }
-    }
-
-    LaunchedEffect(viewModelState.data.currentWordStartOffset, narrationTextLayoutResult) {
-        val currentWordStartOffset =
-            viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
-        val layoutResult = narrationTextLayoutResult ?: return@LaunchedEffect
-        if (currentWordStartOffset !in 0 until layoutResult.layoutInput.text.length) {
-            return@LaunchedEffect
-        }
-
-        val wordTop = layoutResult
-            .getBoundingBox(currentWordStartOffset)
-            .top
-            .toInt()
-        narrationScrollState.animateScrollTo(
-            value = (wordTop - NARRATION_SCROLL_TOP_PADDING_PX).coerceIn(
-                minimumValue = 0,
-                maximumValue = narrationScrollState.maxValue
-            )
-        )
-    }
-
-    val onSessionFinished = {
-        backStack?.clear()
-        backStack?.add(Route.TripEndSummary)
-    }
-
-    LaunchedEffect(viewModelState.data.isSuccess) {
-        if (viewModelState.data.isSuccess) {
-            onSessionFinished()
-        }
-    }
 
     LifecycleStartEffect(Unit) {
         viewModel.onStart()
@@ -124,37 +69,19 @@ fun TourAudioPlayerScreen(
                     style = MaterialTheme.typography.labelLarge
                 )
                 Text(
-                    text = currentStop?.locationTitle?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.tour_audio_player_example_location),
+                    text = stringResource(R.string.tour_audio_player_example_location),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
-
-            if (!currentStop?.locationImage.isNullOrBlank()) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillMaxHeight(0.3f)
-                        .fillMaxWidth()
-                        .padding(0.dp),
-                    model = currentStop?.locationImage,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight(0.3f)
-                        .fillMaxWidth()
-                        .padding(0.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(0.2f)
-                    )
-                }
-            }
-
+            Image(
+                modifier = Modifier
+                    .fillMaxHeight(0.3f)
+                    .fillMaxWidth()
+                    .padding(0.dp),
+                painter = painterResource(R.drawable.dashboard_example_img_2),
+                contentDescription = null
+            )
             Text(
                 text = stringResource(R.string.tour_audio_player_narration_header_title),
                 color = MaterialTheme.colorScheme.onBackground,
@@ -164,42 +91,20 @@ fun TourAudioPlayerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .verticalScroll(narrationScrollState)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = viewModelState.data.styledText,
+                    text = viewModelState.data.text,
                     color = MaterialTheme.colorScheme.outline,
-                    style = MaterialTheme.typography.bodyLarge,
-                    onTextLayout = { narrationTextLayoutResult = it }
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
-            AudioPlayerWidget(
-                controlsEnabled = playerEnabled,
-                onEndClicked = {
-                    onSessionFinished()
-                },
-                onSpeakerClicked = {
-                    showBottomSheet = true
-                },
-                onPreviousClicked = {
-                    viewModel.onPrevClicked()
-                },
-                onPlayClicked = {
-                    viewModel.onPlayClicked()
-                },
-                onPauseClicked = {
-                    viewModel.onPauseClicked()
-                },
-                onNextClicked = {
-                    viewModel.onNextClicked()
-                },
-                isPlaying = isPlaying,
-                progressFraction = progressFraction,
-                totalMediaCount = allStopsCount,
-                currentMediaIndex = currentStopIdx
-            )
+            AudioPlayerWidget(onEndClicked = {
+                backStack?.clear()
+                backStack?.add(Route.TripEndSummary)
+            }, onSpeakerClicked = {
+                showBottomSheet = true
+            })
         }
     }
 }
-
-private const val NARRATION_SCROLL_TOP_PADDING_PX = 48

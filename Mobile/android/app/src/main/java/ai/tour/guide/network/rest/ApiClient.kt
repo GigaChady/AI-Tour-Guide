@@ -143,7 +143,6 @@ enum class ApiClientRoute(val path: String) {
     USER_ONBOARDING_QUESTIONS("/user/onboarding/questions"),
     USER_ONBOARDING_ANSWERS("/user/onboarding/answers"),
     USER_ME_PARAMS("/user/me-params"),
-    USER_NARRATION_SETTINGS("/user/narration-settings")
 }
 
 class ApiResponse<T : IAPIResponseDto> : ApiBaseResponseResult {
