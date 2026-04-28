@@ -22,7 +22,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -104,4 +104,9 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.auth)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.websockets)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.slf4j.android)
+    debugImplementation(libs.leakcanary.android)
 }
