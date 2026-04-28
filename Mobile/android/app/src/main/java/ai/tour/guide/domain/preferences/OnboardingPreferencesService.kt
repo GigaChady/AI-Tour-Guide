@@ -3,9 +3,9 @@ package ai.tour.guide.domain.preferences
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionType
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceRepository
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferencesDto
-import ai.tour.guide.network.ApiBaseResponseResult
-import ai.tour.guide.network.ApiClient
-import ai.tour.guide.network.ApiClientRoute
+import ai.tour.guide.network.rest.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiClient
+import ai.tour.guide.network.rest.ApiClientRoute
 import ai.tour.guide.network.schema.request.OnboardingPreferenceToSave
 import ai.tour.guide.network.schema.request.SaveOnboardingPreferenceRequestDto
 import ai.tour.guide.network.schema.response.EmptyAPIResponse
@@ -28,7 +28,7 @@ class OnboardingPreferencesService(
     suspend fun savePreferences(state: UserPreferenceFragmentState): ApiBaseResponseResult {
         val data = parseStateToDto(state)
         return apiClient.post<SaveOnboardingPreferenceRequestDto, EmptyAPIResponse>(
-            ApiClientRoute.ONBOARDING_ANSWERS,
+            ApiClientRoute.USER_ONBOARDING_ANSWERS,
             data
         )
     }

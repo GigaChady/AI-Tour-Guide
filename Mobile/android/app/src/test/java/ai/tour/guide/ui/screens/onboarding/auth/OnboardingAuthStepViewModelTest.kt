@@ -2,7 +2,7 @@ package ai.tour.guide.ui.screens.onboarding.auth
 
 import ai.tour.guide.R
 import ai.tour.guide.domain.auth.AuthService
-import ai.tour.guide.network.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiBaseResponseResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

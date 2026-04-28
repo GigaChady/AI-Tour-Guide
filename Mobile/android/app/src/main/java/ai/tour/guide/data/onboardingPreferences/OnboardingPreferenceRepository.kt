@@ -1,8 +1,8 @@
 package ai.tour.guide.data.onboardingPreferences
 
 
-import ai.tour.guide.network.ApiClient
-import ai.tour.guide.network.ApiClientRoute
+import ai.tour.guide.network.rest.ApiClient
+import ai.tour.guide.network.rest.ApiClientRoute
 import ai.tour.guide.network.schema.response.OnboardingPreferencesResponseDto
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
 
     private suspend fun fetchPreferences(): OnboardingPreferencesResponseDto? {
         val request =
-            apiClient.get<OnboardingPreferencesResponseDto>(ApiClientRoute.ONBOARDING_QUESTIONS)
+            apiClient.get<OnboardingPreferencesResponseDto>(ApiClientRoute.USER_ONBOARDING_QUESTIONS)
         if (request.isSuccessful) {
             _preferences.value = request.body?.items ?: emptyList()
             return request.body
