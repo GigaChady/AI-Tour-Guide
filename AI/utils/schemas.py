@@ -12,15 +12,6 @@ class LocationEvent(BaseModel):
     # Strict contract for messages pushed by Backend to Redis stream `location:events`.
     model_config = ConfigDict(
         extra="ignore",
-        json_schema_extra={
-            "examples": [
-                {
-                    "session_id": "8b7d1c6e-6f9f-4ee9-b75a-3eb7d795c2f8",
-                    "lat": "52.2297",
-                    "lng": "21.0122",
-                }
-            ]
-        },
     )
 
     session_id: str = Field(min_length=1, description="Tour session identifier")
@@ -40,7 +31,7 @@ class PreferencesEvent(BaseModel):
         extra="allow"
     )
 
-    data: Any = None
+    interests: list[str] | None = None
 
     def __str__(self):
         return f"{self.data}"

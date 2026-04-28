@@ -5,7 +5,7 @@ import redis
 import json
 from connections.configs.redis_config import RedisWorkerConfig
 from connections.processors.abstract_processor import AbstractProcessor
-from connections.processors.redis_backend_processor import RedisBackendProcessor
+from connections.processors.backend_processor import BackendProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class RedisStreamWorker:
 
 def run_worker() -> None:
     config = RedisWorkerConfig()
-    worker = RedisStreamWorker(config=config, processor=RedisBackendProcessor())
+    worker = RedisStreamWorker(config=config, processor=BackendProcessor())
     worker.run()
 
 
