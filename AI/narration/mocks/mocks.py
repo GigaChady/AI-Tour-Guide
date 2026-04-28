@@ -41,5 +41,7 @@ def _mock_image_url(poi_name: str, filepath: str) -> str:
         image_bytes = f.read()
     storage = MinioImageStorage()
 
-    result = storage.upload_bytes(poi_name, image_bytes) # WARNING: swithc to poi_id in production to avoid duplicates
+    storage_name = poi_name.replace(" ", "_").lower() + ".jpg"
+
+    result = storage.upload_bytes(storage_name, image_bytes) # WARNING: swithc to poi_id in production to avoid duplicates
     return result["image_url"]
