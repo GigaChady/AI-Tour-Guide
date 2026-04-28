@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from io import BytesIO
@@ -25,10 +26,30 @@ class MinioImageStorage:
         )
 
         self._ensure_bucket_exists()
+        self._ensure_public_read_policy()
 
     def _ensure_bucket_exists(self):
         if not self.client.bucket_exists(self.bucket):
             self.client.make_bucket(self.bucket)
+
+    def _ensure_public_read_policy(self):
+        """
+        Sets a bucket policy to allow public read access to all objects in the bucket.
+        TODO: In production, consider more restrictive policies and proper authentication instead of public access.
+        """
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": ["*"]},
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{self.bucket}/*"],
+                }
+            ],
+        }
+
+        self.client.set_bucket_policy(self.bucket, json.dumps(policy))
 
     def object_exists(self, object_name: str) -> bool:
         try:
