@@ -195,5 +195,6 @@ class LocationEvent(BaseModel):
     lat: float
     lng: float
     include_photos: int | None = None
+    is_narration: bool | None = None
 
 
