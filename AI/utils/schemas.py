@@ -12,21 +12,13 @@ class LocationEvent(BaseModel):
     # Strict contract for messages pushed by Backend to Redis stream `location:events`.
     model_config = ConfigDict(
         extra="ignore",
-        json_schema_extra={
-            "examples": [
-                {
-                    "session_id": "8b7d1c6e-6f9f-4ee9-b75a-3eb7d795c2f8",
-                    "lat": "52.2297",
-                    "lng": "21.0122",
-                }
-            ]
-        },
     )
 
     session_id: str = Field(min_length=1, description="Tour session identifier")
     lat: float = Field(description="Latitude, accepts numeric strings")
     lng: float = Field(description="Longitude, accepts numeric strings")
     include_photos: int | None = None
+    is_narration: bool | None = None
 
     def __str__(self):
         return f"lat {self.lat} lng {self.lng}"
@@ -39,10 +31,10 @@ class PreferencesEvent(BaseModel):
         extra="allow"
     )
 
-    data: Any = None
+    interests: list[str] | None = None
 
     def __str__(self):
-        return f"{self.data}"
+        return f"{self.interests.__str__()}"
 
 class PoisMessage(BaseModel):
     """
@@ -86,13 +78,11 @@ class NarrationMessage(BaseModel):
 class Poi(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    id: str
-    name: str = ""
+    name: str
+    photos: list[str] = Field(default_factory=list) # As a list of paths to photos
+    desc: str | None = None
     lat: float
     lng: float
-    description: str | None = None
-    image_url: str | None = None
-    image_base64: str | None = None
 
 
 class NarrationData(BaseModel): # Deprecated

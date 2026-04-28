@@ -1,9 +1,10 @@
+import os
 from abc import abstractmethod, ABC
 
 
 class AbstractProcessor(ABC):
     def __init__(self):
-        pass
+        self.is_mock = bool(os.getenv("AI_MOCK", True))
 
     @abstractmethod
     def process(self, event, preferences):
