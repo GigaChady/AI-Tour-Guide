@@ -1,4 +1,4 @@
-package ai.tour.guide.ui.screens.main
+package ai.tour.guide.ui.screens.main.route
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.audio.AudioPlayerWidget
@@ -24,19 +24,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 
 @Preview(showBackground = true)
 @Composable
-fun TourAudioPlayerScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
+fun TourAudioPlayerScreen(
+    modifier: Modifier = Modifier,
+    backStack: NavBackStack<NavKey>? = null,
+    viewModel: TourRouteViewModel = koinInject()
+) {
+    val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    LifecycleStartEffect(Unit) {
+        viewModel.onStart()
+        onStopOrDispose {
+            viewModel.onDestroy()
+        }
+    }
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -82,7 +94,7 @@ fun TourAudioPlayerScreen(modifier: Modifier = Modifier, backStack: NavBackStack
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = buildNarrationSpannableText(),
+                    text = viewModelState.data.text,
                     color = MaterialTheme.colorScheme.outline,
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -94,25 +106,5 @@ fun TourAudioPlayerScreen(modifier: Modifier = Modifier, backStack: NavBackStack
                 showBottomSheet = true
             })
         }
-    }
-}
-
-@Composable
-fun buildNarrationSpannableText(): AnnotatedString {
-    val beforeText =
-        stringResource(R.string.tour_audio_player_narration_header_example_content_before)
-    val currentText =
-        stringResource(R.string.tour_audio_player_narration_header_example_content_current)
-    val afterText =
-        stringResource(R.string.tour_audio_player_narration_header_example_content_after)
-
-    return buildAnnotatedString {
-        append(beforeText)
-        append(" ")
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
-            append(currentText)
-        }
-        append(" ")
-        append(afterText)
     }
 }

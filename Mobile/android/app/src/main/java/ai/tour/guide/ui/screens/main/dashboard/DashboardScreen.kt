@@ -1,4 +1,4 @@
-package ai.tour.guide.ui.screens.main
+package ai.tour.guide.ui.screens.main.dashboard
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.display.ImageCarousel
@@ -30,10 +30,12 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
+fun DashboardScreen(
+    modifier: Modifier = Modifier,
+    backStack: NavBackStack<NavKey>? = null
+) {
     val part1 = stringResource(R.string.dashboard_header_text_content_part1)
     val part2 = stringResource(R.string.dashboard_header_text_content_part2)
-
     val headerText = remember(part1, part2) {
         buildAnnotatedString {
             append(part1)

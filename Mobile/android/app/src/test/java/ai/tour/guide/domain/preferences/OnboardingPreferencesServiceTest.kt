@@ -4,7 +4,7 @@ import ai.tour.guide.data.appData.AppDataRepository
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceQuestionType
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferenceRepository
 import ai.tour.guide.data.onboardingPreferences.OnboardingPreferencesDto
-import ai.tour.guide.network.ApiClient
+import ai.tour.guide.network.rest.ApiClient
 import ai.tour.guide.network.schema.response.EmptyAPIResponse
 import ai.tour.guide.network.schema.response.OnboardingPreferencesResponseDto
 import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentState
