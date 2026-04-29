@@ -5,6 +5,7 @@ from geopy.geocoders import Nominatim
 
 from utils.schemas import NarrationSettings, NarrationDetailLevel
 
+logger = logging.getLogger(__file__)
 
 class LocationProcessor:
     def __init__(self, narration_settings: NarrationSettings, user_agent: str):
@@ -38,6 +39,8 @@ class LocationProcessor:
             try:
                 logging.info(f"Attempting to get nearby POIs from server: {url}")
                 response = requests.get(url, params={'data': query}, timeout=15)
+
+                logger.info(f"Response from server: {response.url}, status code: {response.status_code}")
 
                 if response.status_code == 200:
                     data = response.json()

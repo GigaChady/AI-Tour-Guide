@@ -25,12 +25,13 @@ def _mock_pois(session_id: str, lat: float, lng: float) -> list[Poi]:
     return pois
 
 
-def _mock_narration(session_id: str, preferences: PreferencesEvent, lat: float, lng: float, pois: list[Poi]) -> NarrationMessage:
+def _mock_narration(session_id: str, preferences: PreferencesEvent, lat: float, lng: float, pois: list[Poi], narration=None) -> NarrationMessage:
     text = (
         f"Mock narration for session {session_id}. "
         f"User is near {lat:.5f}, {lng:.5f}. "
         f"Suggested stops: {', '.join(p.name for p in pois)}."
         f"User preferences: {preferences}."
+        f"Real narration: {narration}"
     )
     return NarrationMessage(text=text)
 
