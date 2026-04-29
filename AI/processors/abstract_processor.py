@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 
 
 class AbstractProcessor(ABC):
-    def __init__(self):
+    def __init__(self, narration_manager=None):
         self.is_mock = bool(os.getenv("AI_MOCK", True))
 
     @abstractmethod
@@ -11,7 +11,7 @@ class AbstractProcessor(ABC):
         pass
 
     @abstractmethod
-    def validate(self, entry_id, payload):
+    def validate(self, entry_id, payload, **kwargs):
         pass
 
     @abstractmethod
