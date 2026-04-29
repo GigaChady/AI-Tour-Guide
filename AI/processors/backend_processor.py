@@ -17,6 +17,15 @@ class BackendProcessor(AbstractProcessor):
         Starts the narration pipeline for the given location event and user preferences.
         """
 
+        # Validate Narration Settings
+        narration_settings = self.sub_processor.validate(event, preferences)
+
+        # Generate Narration
+        narration = self.sub_processor.process(event.session_id, narration_settings)
+
+        return narration
+
+
 
     def process(self, event: LocationEvent, preferences: PreferencesEvent) -> tuple[str, NarrationMessage, PoisMessage]:
         """
@@ -26,11 +35,17 @@ class BackendProcessor(AbstractProcessor):
             logger.warning("Invalid event or preferences type: %s, %s", type(event), type(preferences))
             raise ValueError("Expected LocationEvent and PreferencesEvent instances")
 
+        logger.debug(f"IS_MOCK: {self.is_mock}")
         if self.is_mock:
+            logger.info("Processing mock stream for session %s", event.session_id)
             pois = _mock_pois(event.session_id, event.lat, event.lng)
             narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois)
         else:
-            self._start_narration_pipeline(event, preferences)
+            logger.debug("Processing narration stream for session %s", event.session_id)
+            narration = self._start_narration_pipeline(event, preferences)
+            pois = _mock_pois(event.session_id, event.lat, event.lng)
+            narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois, narration)
+
             pass
 
         logger.info("Processed stream for session %s", event.session_id)
