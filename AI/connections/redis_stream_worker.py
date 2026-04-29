@@ -4,8 +4,8 @@ import time
 import redis
 import json
 from connections.configs.redis_config import RedisWorkerConfig
-from connections.processors.abstract_processor import AbstractProcessor
-from connections.processors.backend_processor import BackendProcessor
+from processors.abstract_processor import AbstractProcessor
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +14,11 @@ def _build_client(redis_url: str) -> redis.Redis:
 
 
 class RedisStreamWorker:
-    def __init__(self, config: RedisWorkerConfig, processor: AbstractProcessor, client: redis.Redis | None = None):
-        self.config = config
+    def __init__(self, processor: AbstractProcessor, client: redis.Redis | None = None):
+        self.config = RedisWorkerConfig()
         self.processor = processor
-        self.client = client or _build_client(config.redis_url)
-        self.last_id = config.start_id
+        self.client = client or _build_client(self.config.redis_url)
+        self.last_id = self.config.start_id
 
     def _read_batch(self):
         response = self.client.xread(
