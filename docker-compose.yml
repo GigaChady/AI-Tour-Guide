@@ -105,6 +105,9 @@ services:
       redis:
         condition: service_healthy
 
+
+# === AI ===
+
   minio:
     image: minio/minio:latest
     container_name: tourguide-minio
@@ -119,9 +122,6 @@ services:
       - minio_data:/data
     networks:
       - ai-network
-
-
-# === AI ===
 
   ollama:
     image: ollama/ollama:latest

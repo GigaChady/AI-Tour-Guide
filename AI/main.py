@@ -3,7 +3,7 @@ import os
 
 from narration.narration_manager import NarrationManager
 from utils.schemas import NarrationSettings, NarrationDetailLevel, NarrationLanguage
-from connections.redis_stream_worker import run_worker
+from connections.redis_stream_worker import RedisStreamWorker
 
 if __name__ == "__main__":
     # Logging config (debug)
@@ -14,7 +14,9 @@ if __name__ == "__main__":
     )
 
     if os.getenv("AI_RUN_STREAM_WORKER", "1") == "1":
-        
+
+
+        stream_worker = RedisStreamWorker()
         run_worker()
         
     else:
