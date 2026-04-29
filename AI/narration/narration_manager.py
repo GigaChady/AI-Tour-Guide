@@ -19,6 +19,9 @@ class NarrationManager:
 
         location_details = self.location_processor.get_location_details()
         poi = self.scraping_agent.select_best_poi(location_details["points_of_interest"])
+
+        if not poi:
+            return None
         self.scraping_agent.query = LangChainScrapingAgent.build_query(poi, location_details["location_address"])
 
         location_raw_information = self.scraping_agent.run_scraping()
