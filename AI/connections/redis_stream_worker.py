@@ -80,9 +80,5 @@ class RedisStreamWorker:
                 time.sleep(2)
 
 
-def run_worker() -> None:
-    config = RedisWorkerConfig()
-    worker = RedisStreamWorker(config=config, processor=BackendProcessor())
-    worker.run()
 
 
