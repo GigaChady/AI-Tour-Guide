@@ -2,7 +2,7 @@ import logging
 import json
 
 
-from connections.processors.abstract_processor import AbstractProcessor
+from processors.abstract_processor import AbstractProcessor
 from narration.mocks.mocks import _mock_pois, _mock_narration
 from pydantic import ValidationError
 from utils.schemas import LocationEvent, PoisMessage, NarrationMessage, PreferencesEvent
@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 class BackendProcessor(AbstractProcessor):
+
+    def _start_narration_pipeline(self, event: LocationEvent, preferences: PreferencesEvent):
+        """
+        Starts the narration pipeline for the given location event and user preferences.
+        """
+
 
     def process(self, event: LocationEvent, preferences: PreferencesEvent) -> tuple[str, NarrationMessage, PoisMessage]:
         """
@@ -24,13 +30,13 @@ class BackendProcessor(AbstractProcessor):
             pois = _mock_pois(event.session_id, event.lat, event.lng)
             narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois)
         else:
-            # TODO: Implement actual processinglogic here
+            self._start_narration_pipeline(event, preferences)
             pass
 
         logger.info("Processed stream for session %s", event.session_id)
         return event.session_id, narration.model_dump_json(), PoisMessage(data=pois).model_dump_json()
 
-    def validate(self, entry_id, payload):
+    def validate(self, entry_id, payload, **kwargs):
         """
         Validates and return session_id, LocationEvent
         """
