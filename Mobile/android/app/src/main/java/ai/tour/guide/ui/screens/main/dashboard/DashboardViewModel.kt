@@ -14,7 +14,9 @@ class DashboardViewModel(val routeService: RouteService) :
     }
 
     fun onDestroy() {
-        routeService.onDestroy()
+        viewModelScope.launch {
+            routeService.onDestroy()
+        }
     }
 
     fun onStart() {

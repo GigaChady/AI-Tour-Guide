@@ -40,7 +40,17 @@ fun TourAudioPlayerScreen(
     viewModel: TourRouteViewModel = koinInject()
 ) {
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
+    val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
+    val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
+    val hasPlayableChunks by viewModel.hasPlayableChunksFlow.collectAsStateWithLifecycle()
     var showBottomSheet by remember { mutableStateOf(false) }
+    val progressFraction = remember(playbackState.positionMs, playbackState.durationMs) {
+        if (playbackState.durationMs <= 0L) {
+            0f
+        } else {
+            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(0f, 1f)
+        }
+    }
 
     LifecycleStartEffect(Unit) {
         viewModel.onStart()
@@ -99,12 +109,30 @@ fun TourAudioPlayerScreen(
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-            AudioPlayerWidget(onEndClicked = {
-                backStack?.clear()
-                backStack?.add(Route.TripEndSummary)
-            }, onSpeakerClicked = {
-                showBottomSheet = true
-            })
+            AudioPlayerWidget(
+                onEndClicked = {
+                    backStack?.clear()
+                    backStack?.add(Route.TripEndSummary)
+                },
+                onSpeakerClicked = {
+                    showBottomSheet = true
+                },
+                onPreviousClicked = {
+                    viewModel.onSkipPreviousClicked()
+                },
+                onPlayClicked = {
+                    viewModel.onPlayClicked()
+                },
+                onPauseClicked = {
+                    viewModel.onPauseClicked()
+                },
+                onNextClicked = {
+                    viewModel.onSkipNextClicked()
+                },
+                isPlaying = isPlaying,
+                progressFraction = progressFraction,
+                controlsEnabled = hasPlayableChunks
+            )
         }
     }
 }
