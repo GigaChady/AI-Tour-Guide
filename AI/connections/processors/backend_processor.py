@@ -10,7 +10,7 @@ from utils.schemas import LocationEvent, PoisMessage, NarrationMessage, Preferen
 logger = logging.getLogger(__name__)
 
 
-class RedisBackendProcessor(AbstractProcessor):
+class BackendProcessor(AbstractProcessor):
 
     def process(self, event: LocationEvent, preferences: PreferencesEvent) -> tuple[str, NarrationMessage, PoisMessage]:
         """
@@ -20,8 +20,13 @@ class RedisBackendProcessor(AbstractProcessor):
             logger.warning("Invalid event or preferences type: %s, %s", type(event), type(preferences))
             raise ValueError("Expected LocationEvent and PreferencesEvent instances")
 
-        pois = _mock_pois(event.session_id, event.lat, event.lng)
-        narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois)
+        if self.is_mock:
+            pois = _mock_pois(event.session_id, event.lat, event.lng)
+            narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois)
+        else:
+            # TODO: Implement actual processinglogic here
+            pass
+
         logger.info("Processed stream for session %s", event.session_id)
         return event.session_id, narration.model_dump_json(), PoisMessage(data=pois).model_dump_json()
 
@@ -46,9 +51,7 @@ class RedisBackendProcessor(AbstractProcessor):
             logger.warning("No preferences found")
 
         try:
-            # skip validation for now
-            # TODO: Validate against a schema once we have a better idea of what preferences look like
-            prefs_event = PreferencesEvent(data=prefs)
+            prefs_event = PreferencesEvent.model_validate(prefs)
         except ValidationError as exc:
             logger.warning("Invalid preferences cache: %s", prefs)
             raise ValueError(f"Invalid preferences cache") from exc
