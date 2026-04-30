@@ -12,14 +12,15 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
-import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,7 +32,17 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Preview(showBackground = true)
 @Composable
-fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Unit = {}) {
+fun AudioPlayerWidget(
+    onEndClicked: () -> Unit = {},
+    onSpeakerClicked: () -> Unit = {},
+    onPreviousClicked: () -> Unit = {},
+    onPlayClicked: () -> Unit = {},
+    onPauseClicked: () -> Unit = {},
+    onNextClicked: () -> Unit = {},
+    isPlaying: Boolean = false,
+    progressFraction: Float = 0f,
+    controlsEnabled: Boolean = true
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth(),
@@ -49,6 +60,7 @@ fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Uni
         ) {
             FilledTonalIconButton(
                 onClick = onSpeakerClicked,
+                enabled = true,
                 shape = CircleShape,
                 modifier = Modifier.size(42.dp)
             ) {
@@ -58,7 +70,8 @@ fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Uni
                 )
             }
             FilledTonalIconButton(
-                onClick = {},
+                onClick = onPreviousClicked,
+                enabled = controlsEnabled,
                 shape = CircleShape,
                 modifier = Modifier.size(58.dp)
             ) {
@@ -68,17 +81,19 @@ fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Uni
                 )
             }
             FilledTonalIconButton(
-                onClick = {},
+                onClick = if (isPlaying) onPauseClicked else onPlayClicked,
+                enabled = controlsEnabled,
                 shape = CircleShape,
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.PlayArrow,
+                    imageVector = if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
                     contentDescription = null
                 )
             }
             FilledTonalIconButton(
-                onClick = {},
+                onClick = onNextClicked,
+                enabled = controlsEnabled,
                 shape = CircleShape,
                 modifier = Modifier.size(58.dp)
             ) {
@@ -89,6 +104,7 @@ fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Uni
             }
             FilledTonalIconButton(
                 onClick = onEndClicked,
+                enabled = true,
                 shape = CircleShape,
                 modifier = Modifier
                     .size(42.dp),
@@ -110,8 +126,9 @@ fun AudioPlayerWidget(onEndClicked: () -> Unit = {}, onSpeakerClicked: () -> Uni
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             LinearWavyProgressIndicator(
-                modifier = Modifier.fillMaxWidth(0.9f),
-                progress = { 0.5f }
+                modifier = Modifier.fillMaxWidth(0.95f),
+                progress = { progressFraction.coerceIn(0f, 1f) },
+                waveSpeed = 16.dp
             )
         }
     }
