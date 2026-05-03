@@ -52,6 +52,7 @@ fun OnboardingAnimatedSharedStepScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                     .padding(bottom = 32.dp)
             ) {
                 ExtendedFloatingActionButton(
