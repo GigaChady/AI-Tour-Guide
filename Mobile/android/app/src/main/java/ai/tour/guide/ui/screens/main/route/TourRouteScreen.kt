@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -44,12 +46,33 @@ fun TourAudioPlayerScreen(
     val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
     val hasPlayableChunks by viewModel.hasPlayableChunksFlow.collectAsStateWithLifecycle()
     var showBottomSheet by remember { mutableStateOf(false) }
+    val narrationScrollState = rememberScrollState()
+    var narrationTextLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val progressFraction = remember(playbackState.positionMs, playbackState.durationMs) {
         if (playbackState.durationMs <= 0L) {
             0f
         } else {
             (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(0f, 1f)
         }
+    }
+
+    LaunchedEffect(viewModelState.data.currentWordStartOffset, narrationTextLayoutResult) {
+        val currentWordStartOffset = viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
+        val layoutResult = narrationTextLayoutResult ?: return@LaunchedEffect
+        if (currentWordStartOffset !in 0 until layoutResult.layoutInput.text.length) {
+            return@LaunchedEffect
+        }
+
+        val wordTop = layoutResult
+            .getBoundingBox(currentWordStartOffset)
+            .top
+            .toInt()
+        narrationScrollState.animateScrollTo(
+            value = (wordTop - NARRATION_SCROLL_TOP_PADDING_PX).coerceIn(
+                minimumValue = 0,
+                maximumValue = narrationScrollState.maxValue
+            )
+        )
     }
 
     LifecycleStartEffect(Unit) {
@@ -101,12 +124,13 @@ fun TourAudioPlayerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(narrationScrollState)
             ) {
                 Text(
-                    text = viewModelState.data.text,
+                    text = viewModelState.data.styledText,
                     color = MaterialTheme.colorScheme.outline,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    onTextLayout = { narrationTextLayoutResult = it }
                 )
             }
             AudioPlayerWidget(
@@ -136,3 +160,5 @@ fun TourAudioPlayerScreen(
         }
     }
 }
+
+private const val NARRATION_SCROLL_TOP_PADDING_PX = 48
