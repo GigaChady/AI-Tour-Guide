@@ -7,25 +7,25 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 
 @Composable
-fun RadioOptionsList(modifier: Modifier = Modifier, options: List<String> = listOf()) {
-    var selectedItem by remember { mutableStateOf("") }
+fun RadioOptionsList(
+    modifier: Modifier = Modifier,
+    options: List<String> = listOf(),
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit
+) {
     Column(modifier = modifier) {
-        options.forEach { option ->
-            val isSelected = option == selectedItem
+        options.forEachIndexed { index, option ->
+            val isSelected = index == selectedIndex
             ListItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .selectable(
                         selected = isSelected,
-                        onClick = { selectedItem = option },
+                        onClick = { onOptionSelected(index) },
                         role = Role.RadioButton
                     ),
                 leadingContent = {
