@@ -21,9 +21,8 @@ class AppSettingsViewModel(
 
         viewModelScope.launch {
             withLoading {
-                appSettingsService.fetchSettingsIfEmpty()?.let { fetchedState ->
-                    updateData { fetchedState }
-                }
+                val loadedState = appSettingsService.fetchSettingsIfEmpty()
+                updateData { loadedState }
             }
         }
     }
@@ -37,23 +36,21 @@ class AppSettingsViewModel(
 
     fun onSaveSettingsClicked() {
         viewModelScope.launch {
-            saveSettings()
-        }
-    }
+            withLoading {
+                val response = appSettingsService.saveSettings(viewStateFlow.value.data)
 
-    private suspend fun saveSettings() {
-        withLoading {
-            val response = appSettingsService.saveSettings(viewStateFlow.value.data)
-
-            if (response.isSuccessful) {
-                updateState {
-                    copy(
-                        toastMessage = R.string.settings_saved_success,
-                        isSuccess = true
-                    )
+                if (response.isSuccessful) {
+                    updateState {
+                        copy(
+                            toastMessage = R.string.settings_saved_success,
+                            isSuccess = true
+                        )
+                    }
+                } else {
+                    updateState {
+                        copy(toastMessage = response.errorMessage)
+                    }
                 }
-            } else {
-                updateState { copy(toastMessage = response.errorMessage) }
             }
         }
     }
