@@ -1,23 +1,30 @@
 package ai.tour.guide.domain.route
 
 import ai.tour.guide.data.appData.AppDataRepository
+import ai.tour.guide.domain.location.LocationService
+import ai.tour.guide.network.schema.response.NarrationWordDto
 import ai.tour.guide.network.rest.ApiClient
 import ai.tour.guide.network.ws.ServerEvent
 import ai.tour.guide.network.ws.WSClient
 import ai.tour.guide.network.ws.WSClientRoute
 import ai.tour.guide.network.ws.WSEvent
 import android.content.Context
+import android.location.Location
 import android.net.Uri
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,17 +38,26 @@ data class RoutePlaybackState(
     val isPlaying: Boolean = false
 )
 
+private data class SentLocation(
+    val latitude: Double,
+    val longitude: Double
+)
+
 @Singleton
+@OptIn(FlowPreview::class)
 class RouteService(
     val appDataRepository: AppDataRepository,
     val apiClient: ApiClient,
     private val wsClient: WSClient,
     private val context: Context,
-    private val routeAudioRepository: RouteAudioRepository
+    private val routeAudioRepository: RouteAudioRepository,
+    private val locationService: LocationService
 ) {
     private var sessionID: String = ""
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
+    private var locationUpdatesJob: Job? = null
+    private var lastSentLocation: SentLocation? = null
     private var autoPlayEnabled: Boolean = true
     private val _isPlaying = MutableStateFlow(false)
     val isPlayingFlow: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -49,11 +65,18 @@ class RouteService(
     val hasPlayableChunksFlow: StateFlow<Boolean> = _hasPlayableChunks.asStateFlow()
     private val _playbackState = MutableStateFlow(RoutePlaybackState())
     val playbackStateFlow: StateFlow<RoutePlaybackState> = _playbackState.asStateFlow()
+    private val _narrationText = MutableStateFlow("")
+    val narrationTextFlow: StateFlow<String> = _narrationText.asStateFlow()
+    private val _narrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
+    val narrationWordsFlow: StateFlow<List<NarrationWordDto>> = _narrationWords.asStateFlow()
+    private val _narrationChunkId = MutableStateFlow<Int?>(null)
+    val narrationChunkIdFlow: StateFlow<Int?> = _narrationChunkId.asStateFlow()
 
     private suspend fun wsSessionEstablished(event: ServerEvent.SessionUpdated) {
         Log.i(TAG, "ws session established: ${event.sessionId}")
         this.sessionID = event.sessionId
         autoPlayEnabled = true
+        lastSentLocation = null
         routeAudioRepository.startSession(event.sessionId)
         val payload = JSONObject().apply {
             put("type", "start_tour")
@@ -73,13 +96,65 @@ class RouteService(
 
     private suspend fun wsRouteStarted(event: ServerEvent.TourStarted) {
         Log.i(TAG, "ws route started  ${event.sessionId}")
-        val payload1 = JSONObject().apply {
-            put("lat", 1)
-            put("lng", 1)
-        }
-        wsClient.send(payload1)
+        sendLastKnownLocation()
+        startLocationUpdatesBroadcast()
     }
 
+    private suspend fun sendLastKnownLocation() {
+        val location = try {
+            locationService.getLastKnownLocation()
+        } catch (exception: SecurityException) {
+            Log.w(TAG, "Cannot send last known location: ${exception.message}")
+            null
+        }
+
+        if (location == null) {
+            Log.w(TAG, "Last known location is unavailable")
+            return
+        }
+
+        sendLocation(location)
+    }
+
+    private fun startLocationUpdatesBroadcast() {
+        if (locationUpdatesJob?.isActive == true) {
+            return
+        }
+
+        locationUpdatesJob = kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+            try {
+                locationService.observeLocationUpdates(emitLastKnownLocation = false)
+                    .debounce(LOCATION_UPDATE_DEBOUNCE_MS)
+                    .collectLatest { location ->
+                        sendLocation(location)
+                    }
+            } catch (exception: SecurityException) {
+                Log.w(TAG, "Cannot observe location updates: ${exception.message}")
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Log.w(TAG, "Location updates stopped: ${exception.message}")
+            }
+        }
+    }
+
+    private suspend fun sendLocation(location: Location) {
+        val nextLocation = SentLocation(
+            latitude = location.latitude,
+            longitude = location.longitude
+        )
+        if (lastSentLocation == nextLocation) {
+            Log.d(TAG, "Skipping duplicate location update")
+            return
+        }
+
+        val payload = JSONObject().apply {
+            put("lat", nextLocation.latitude)
+            put("lng", nextLocation.longitude)
+        }
+        wsClient.send(payload)
+        lastSentLocation = nextLocation
+    }
 
     private suspend fun initWSClient() {
         wsClient.onConnected { event: WSEvent.Connected ->
@@ -90,6 +165,13 @@ class RouteService(
         }
         wsClient.onSessionUpdated(::wsSessionEstablished)
         wsClient.onTourStarted(::wsRouteStarted)
+        wsClient.onNarrationTranscript { data ->
+            _narrationText.value = data.transcript.firstOrNull()?.text.orEmpty()
+        }
+        wsClient.onNarrationWords { data ->
+            _narrationChunkId.value = data.chunkId
+            _narrationWords.value = data.words
+        }
         wsClient.onAudioChunkReceived(::wsAudioChunkReceived)
         wsClient.connect(WSClientRoute.ROUTE)
     }
@@ -181,24 +263,15 @@ class RouteService(
             val currentPlayer = player ?: return@withContext
             val mediaItem = MediaItem.fromUri(Uri.fromFile(chunkFile))
 
-            if (currentPlayer.mediaItemCount == 0) {
-                currentPlayer.setMediaItem(mediaItem)
-                currentPlayer.prepare()
-                if (autoPlayEnabled) {
-                    currentPlayer.play()
-                    _isPlaying.value = true
-                } else {
-                    _isPlaying.value = false
-                }
-                return@withContext
-            }
-
-            currentPlayer.addMediaItem(mediaItem)
+            currentPlayer.stop()
+            currentPlayer.clearMediaItems()
+            currentPlayer.setMediaItem(mediaItem)
+            currentPlayer.prepare()
+            currentPlayer.play()
+            autoPlayEnabled = true
+            _isPlaying.value = true
             _hasPlayableChunks.value = true
             publishPlaybackState()
-            if (autoPlayEnabled && !currentPlayer.isPlaying) {
-                currentPlayer.play()
-            }
         }
     }
 
@@ -248,12 +321,6 @@ class RouteService(
         }
     }
 
-    fun setNarrationChangedCallback(callback: (String) -> Unit) {
-        wsClient.onNarrationTranscript { (_, data) ->
-            callback(data[0].text)
-        }
-    }
-
     suspend fun onStart() {
         apiClient.fetchBearerTokenIfNeeded()
         initWSClient()
@@ -262,6 +329,9 @@ class RouteService(
 
     suspend fun onDestroy() {
         routeAudioRepository.clearSession()
+        locationUpdatesJob?.cancel()
+        locationUpdatesJob = null
+        lastSentLocation = null
         withContext(Dispatchers.Main.immediate) {
             progressJob?.cancel()
             progressJob = null
@@ -271,11 +341,15 @@ class RouteService(
             _isPlaying.value = false
             _hasPlayableChunks.value = false
             _playbackState.value = RoutePlaybackState()
+            _narrationText.value = ""
+            _narrationWords.value = emptyList()
+            _narrationChunkId.value = null
         }
         wsClient.onDestroy()
     }
 
     companion object {
         private const val TAG = "RouteService"
+        private const val LOCATION_UPDATE_DEBOUNCE_MS = 2_000L
     }
 }
