@@ -1,20 +1,24 @@
 package ai.tour.guide.data.appSettings
 
-import ai.tour.guide.ui.screens.main.appSettings.AppSettingsState
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppSettingsDto(
+//    @SerialName("app_theme")
+//    val appTheme: AppSettingsAppThemeType? = null, // TODO: Decide to store locally or remotely
 
-    @SerialName("app_theme")
-    val appTheme: AppSettingsAppThemeType? = null,
-
+    @SerialName("language")
     val language: String? = null,
 
+    @SerialName("pitch")
     val pitch: Int? = null,
 
+    @SerialName("speed")
     val speed: Int? = null,
+
+    @SerialName("volume") // Left for compatibility. TODO: Remove or implement
+    val volume: Int? = null,
 
     @SerialName("detail_level")
     val detailLevel: AppSettingsDetailLevelType? = null,
@@ -22,14 +26,3 @@ data class AppSettingsDto(
     @SerialName("auto_play")
     val autoPlay: Boolean? = null
 )
-
-fun AppSettingsDto.toState(): AppSettingsState {
-    return AppSettingsState(
-        appTheme = this.appTheme ?: AppSettingsAppThemeType.SYSTEM,
-        language = this.language ?: "en", // TODO: Get available narration languages (tags + names) from backend API
-        pitch = this.pitch?.toFloat() ?: 50f,
-        speed = this.speed?.toFloat() ?: 5f,
-        detailLevel = this.detailLevel ?: AppSettingsDetailLevelType.MEDIUM,
-        autoPlay = this.autoPlay ?: true
-    )
-}
