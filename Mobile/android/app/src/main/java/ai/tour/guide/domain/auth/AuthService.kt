@@ -2,13 +2,14 @@ package ai.tour.guide.domain.auth
 
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.data.appData.AppDataRepository
-import ai.tour.guide.network.ApiBaseResponseResult
-import ai.tour.guide.network.ApiClient
-import ai.tour.guide.network.ApiClientRoute
-import ai.tour.guide.network.ApiResponse
+import ai.tour.guide.network.rest.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiClient
+import ai.tour.guide.network.rest.ApiClientRoute
+import ai.tour.guide.network.rest.ApiResponse
 import ai.tour.guide.network.schema.request.GoogleTokenRequestDto
 import ai.tour.guide.network.schema.request.LoginRequestDto
 import ai.tour.guide.network.schema.request.RegisterRequestDto
+import ai.tour.guide.network.schema.response.MeParamsResponseDto
 import ai.tour.guide.network.schema.response.TokenResponseDto
 import android.content.Context
 import android.util.Log
@@ -26,8 +27,6 @@ class AuthService(
     private val apiClient: ApiClient,
     private val appDataRepository: AppDataRepository
 ) {
-    private val tag = "AuthService"
-
     suspend fun login(email: String, password: String): ApiBaseResponseResult {
         val response = apiClient.post<LoginRequestDto, TokenResponseDto>(
             ApiClientRoute.AUTH_LOGIN,
@@ -65,12 +64,12 @@ class AuthService(
         try {
             response = credentialManager.getCredential(context, request)
         } catch (e: NoCredentialException) {
-            Log.e(tag, e.stackTraceToString())
+            Log.e(TAG, e.stackTraceToString())
             return FailedAuthResult("No credentials found")
         }
 
         if (response.credential.type != TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            Log.w(tag, "Credential is not of type Google ID!")
+            Log.w(TAG, "Credential is not of type Google ID!")
             return FailedAuthResult("Credential is not of type Google ID!")
         }
 
@@ -89,6 +88,15 @@ class AuthService(
             appDataRepository.updateCredentialsWithAPIResponse(response.body)
         }
         return response
+    }
+
+    suspend fun loadCurrentUserData(): MeParamsResponseDto? {
+        val response = apiClient.get<MeParamsResponseDto>(ApiClientRoute.USER_ME_PARAMS)
+        return response.body
+    }
+
+    companion object {
+        private const val TAG = "AuthService"
     }
 }
 

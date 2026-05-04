@@ -22,7 +22,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -61,6 +61,9 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.datasource)
+    implementation(libs.androidx.media3.common)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
@@ -104,4 +107,9 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.auth)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.websockets)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.slf4j.android)
+    debugImplementation(libs.leakcanary.android)
 }
