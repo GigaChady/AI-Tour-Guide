@@ -1,7 +1,9 @@
 import logging
+import os
 
 from narration.narration_manager import NarrationManager
-from narration.common.narration_settings import NarrationSettings, NarrationDetailLevel, NarrationLanguage
+from utils.schemas import NarrationSettings, NarrationDetailLevel, NarrationLanguage
+from connections.redis_stream_worker import run_worker
 
 if __name__ == "__main__":
     # Logging config (debug)
@@ -11,18 +13,24 @@ if __name__ == "__main__":
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-    # Narration settings
-    narration_settings = NarrationSettings(
-        latitude=41.889799,
-        longitude=12.491015,
-        detail_level=NarrationDetailLevel.DETAILED,
-        search_radius=50,
-        language=NarrationLanguage(language_name="polski", language_tag="pl"),
-        user_preferences="history architecture"
-    )
+    if os.getenv("AI_RUN_STREAM_WORKER", "1") == "1":
+        
+        run_worker()
+        
+    else:
+        
+        # Narration settings
+        narration_settings = NarrationSettings(
+            latitude=41.889799,
+            longitude=12.491015,
+            detail_level=NarrationDetailLevel.DETAILED,
+            search_radius=50,
+            language=NarrationLanguage(language_name="polski", language_tag="pl"),
+            user_preferences="history architecture"
+        )
 
-    narration_manager = NarrationManager.build_narration_manager(narration_settings)
+        narration_manager = NarrationManager.build_narration_manager(narration_settings)
 
-    # Generate narration
-    #narration = narration_manager.get_narration()
-    print("Mock Narration - Colosseum in Rome, Italy: The Colosseum, also known as the Flavian Amphitheatre, is an iconic symbol of ancient Rome. Built between 70-80 AD, it was used for gladiatorial contests and public spectacles. With a capacity of around 50,000 spectators, it remains one of the greatest architectural and engineering feats of the Roman Empire.")
+        # Generate narration
+        #narration = narration_manager.get_narration()
+        print("Mock Narration - Colosseum in Rome, Italy: The Colosseum, also known as the Flavian Amphitheatre, is an iconic symbol of ancient Rome. Built between 70-80 AD, it was used for gladiatorial contests and public spectacles. With a capacity of around 50,000 spectators, it remains one of the greatest architectural and engineering feats of the Roman Empire.")

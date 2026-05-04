@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
 from narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 
 
 class FilteringAgent(AbstractFilteringAgent):

@@ -4,7 +4,7 @@ import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 from narration.narrative_generation.abstract_narrative_generation_agent import AbstractNarrativeGenerationAgent
 
 

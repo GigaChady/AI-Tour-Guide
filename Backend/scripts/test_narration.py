@@ -1,74 +1,93 @@
 import argparse
 import asyncio
-import base64
 import json
+import struct
 
-import redis.asyncio as aioredis
 import websockets
 
 '''Wywolujesz
-python scripts/test_narration.py --token <token> --text "Zamek pochodzi z XIV wieku. Byl siedziba krolow."
+python scripts/test_narration.py --token <token>
+python scripts/test_narration.py --token <token> --lat 50.0 --lng 20.0
+python scripts/test_narration.py --token <token> --lat 50.0 --lng 20.0 --start-tour
+python scripts/test_narration.py --token <token> --session-id <id>  # reconnect to existing tour
 '''
 
 WS_URL = "ws://localhost:8000/route/ws"
-REDIS_URL = "redis://localhost:6379"
 
 
-async def run(token: str, text: str) -> None:
+async def run(token: str, lat: float = None, lng: float = None, session_id: str = None, start_tour: bool = False) -> None:
+    connect_msg = {"token": token}
+    if session_id:
+        connect_msg["session_id"] = session_id
+
     async with websockets.connect(WS_URL) as ws:
+        await ws.send(json.dumps(connect_msg))
+        raw = json.loads(await ws.recv())
 
-        await ws.send(json.dumps({"token": token}))
-        msg = json.loads(await ws.recv())
-        assert msg["type"] == "ready", f"Expected ready, got: {msg}"
-        session_id = msg["session_id"]
-        route_id = msg["route_id"]
+        if "session_id" not in raw:
+            print(f"Unexpected initial message: {raw}")
+            return
 
-        r = await aioredis.from_url(REDIS_URL, decode_responses=True)
-        payload = json.dumps({"type": "narration", "text": text})
-        subscribers = await r.publish(f"tour:{session_id}", payload)
-        await r.aclose()
+        session_id = raw["session_id"]
+        route_id = raw.get("route_id")
+        mode = "tour" if route_id else "preview"
+        print(f"Connected: mode={mode}, session_id={session_id}, route_id={route_id}")
 
-        chunks: dict[int, bytes] = {}
+        if start_tour and mode == "preview":
+            await ws.send(json.dumps({"type": "start_tour"}))
+            tour_msg = json.loads(await ws.recv())
+            route_id = tour_msg.get("route_id")
+            mode = "tour"
+            print(f"Tour started: route_id={route_id}")
+
+        if lat is not None and lng is not None:
+            await ws.send(json.dumps({"lat": lat, "lng": lng}))
+            print(f"Sent lat/lng via WS: lat={lat}, lng={lng}")
+
+        print("Waiting for messages from backend...")
         while True:
-            raw = await asyncio.wait_for(ws.recv(), timeout=30)
-            msg = json.loads(raw)
+            try:
+                raw = await asyncio.wait_for(ws.recv(), timeout=30)
+            except asyncio.TimeoutError:
+                print("Timeout waiting for messages")
+                break
+
+            if isinstance(raw, bytes):
+                chunk_id = struct.unpack(">I", raw[:4])[0]
+                print(f"[AUDIO] chunk_id={chunk_id}, bytes={len(raw) - 4}")
+                continue
+
+            try:
+                msg = json.loads(raw)
+            except Exception:
+                print(f"Could not decode message: {raw!r}")
+                continue
+
             t = msg.get("type")
-
-            if t == "narration_transcript":
-                for entry in msg["transcript"]:
-                    print(f"Chunk {entry['chunk_id']}: {entry['text']}")
-
-            elif t == "narration_chunk":
-                cid = msg["chunk_id"]
-                audio = base64.b64decode(msg["audio"])
-                words = msg.get("words", [])
-                chunks[cid] = audio
-                print(f"\n {len(audio)} bytes | {len(words)} words")
-                for w in words:
-                    print(f"  {w['offset_ms']:7.1f}ms  +{w['duration_ms']:.1f}ms  \"{w['text']}\"")
-
+            if t == "pois":
+                print(f"[POIS] {msg.get('data')}")
+            elif t == "narration_transcript":
+                print(f"[NARRATION_TRANSCRIPT] {msg.get('transcript')}")
+            elif t == "narration_words":
+                print(f"[NARRATION_WORDS] chunk_id={msg.get('chunk_id')}, words={msg.get('words')}")
             elif t == "narration_done":
-                print(f"\n{len(chunks)} chunks received")
+                print("[NARRATION_DONE]")
+            elif t == "session_ended":
+                print(f"[SESSION_ENDED] reason={msg.get('reason')}")
                 break
-
-            elif t in ("error", "detail"):
-                print(f"{msg}")
+            elif "detail" in msg:
+                print(f"[ERROR] {msg}")
                 break
-
-        if chunks:
-            merged = b"".join(chunks[i] for i in sorted(chunks))
-            out = "test_narration_output.mp3"
-            with open(out, "wb") as f:
-                f.write(merged)
-            print(f"{out} ({len(merged)} bytes)")
+            else:
+                print(f"[OTHER] {msg}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", required=True)
-    parser.add_argument(
-        "--text",
-        default="Zamek pochodzi z XIV wieku. Byl siedziba krolow polskich. Zwiedzanie trwa okolo godziny.",
-    )
+    parser.add_argument("--lat", type=float, default=None)
+    parser.add_argument("--lng", type=float, default=None)
+    parser.add_argument("--session-id", default=None, help="Reconnect to an existing tour session")
+    parser.add_argument("--start-tour", action="store_true", help="Send start_tour after connecting in preview mode")
     args = parser.parse_args()
-    asyncio.run(run(args.token, args.text))
+    asyncio.run(run(args.token, args.lat, args.lng, args.session_id, args.start_tour))

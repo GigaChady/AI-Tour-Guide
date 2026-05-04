@@ -1,5 +1,6 @@
 import uuid
-import json
+
+from app.schemas.schemas import SessionMeta
 
 
 class SessionService:
@@ -10,10 +11,7 @@ class SessionService:
         session_id = str(uuid.uuid4())
         await self.redis.set(
             f"session:{session_id}:meta",
-            json.dumps({
-                "user_id": user_id,
-                "route_id": route_id,
-            })
+            SessionMeta(user_id=user_id, route_id=route_id).model_dump_json()
         )
         return session_id
 
@@ -24,14 +22,21 @@ class SessionService:
             f"session:{session_id}:visited",
         )
 
-    async def get_meta(self, session_id: str) -> dict | None:
+    async def get_meta(self, session_id: str) -> SessionMeta | None:
         meta = await self.redis.get(f"session:{session_id}:meta")
         if meta:
-            return json.loads(meta)
+            return SessionMeta.model_validate_json(meta)
         return None
+
+    async def update_route_id(self, session_id: str, route_id: str) -> None:
+        meta = await self.get_meta(session_id)
+        if meta:
+            meta.route_id = route_id
+            await self.redis.set(f"session:{session_id}:meta", meta.model_dump_json())
+    
 
     async def verify(self, session_id: str, user_id: str) -> bool:
         meta = await self.get_meta(session_id)
         if not meta:
             return False
-        return meta["user_id"] == user_id
+        return meta.user_id == user_id

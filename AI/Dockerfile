@@ -13,4 +13,4 @@ ENV PYTHONUNBUFFERED=1
 ENV OLLAMA_BASE_URL=http://ollama:11434
 
 # Run the AI application
-CMD ["celery", "-A", "celery.celery_app", "worker", "--loglevel=info"]
+CMD ["python", "main.py"]

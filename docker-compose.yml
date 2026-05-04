@@ -1,0 +1,194 @@
+services:
+  # === BACKEND ===
+
+  api:
+    build: ./Backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Backend:/app
+    env_file: ./Backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: tourcompanion
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d tourcompanion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test_db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+      - ai-network
+
+  osrm-foot:
+    image: ghcr.io/project-osrm/osrm-backend
+    volumes:
+      - ./Backend:/data
+    command: >
+      osrm-routed --algorithm mld /data/data/dolnoslaskie-260323.osrm
+    ports:
+      - "5000:5000"
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+
+  celery-worker:
+    build: ./Backend
+    command: celery -A app.core.celery_app worker -Q narrative -l info --concurrency 1
+    env_file: ./Backend/.env
+    volumes:
+      - ./Backend:/app
+      - tts_edge_cache:/root/.cache/edge-tts
+      - ./Backend/audio_files:/app/audio_files
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    runtime: nvidia
+
+  celery-beat:
+    build: ./Backend
+    command: celery -A app.core.celery_app beat -l info
+    env_file: ./Backend/.env
+    volumes:
+      - ./Backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  minio:
+    image: minio/minio:latest
+    container_name: tourguide-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+    volumes:
+      - minio_data:/data
+    networks:
+      - ai-network
+
+
+# === AI ===
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    healthcheck:
+      test: [ "CMD-SHELL", "ollama list || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: serve
+    profiles: ["llm"]
+    networks:
+      - ai-network
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ai-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_models:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=${OLLAMA_MODEL:-mistral-nemo}
+    command: >
+      sh -c "ollama list | awk 'NR>1 {print $1}' | grep -qx \"$$MODEL_NAME\" || ollama pull \"$$MODEL_NAME\""
+    restart: "no"
+    profiles: ["llm"]
+    networks:
+      - ai-network
+
+  ai:
+    build: ./AI
+    container_name: ai-narration
+    environment:
+      - AI_MOCK=${AI_MOCK:-true}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - PYTHONUNBUFFERED=1
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_PUBLIC_ENDPOINT=localhost:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin12345
+      - MINIO_BUCKET=poi-images
+      - MINIO_SECURE=false
+    volumes:
+      - ./AI:/app
+    networks:
+      - ai-network
+
+
+volumes:
+  pgdata:
+  pgdata_test:
+  tts_edge_cache:
+  ollama_models:
+    name: ollama_models
+  minio_data:
+
+networks:
+  ai-network:
+    name: ai-network

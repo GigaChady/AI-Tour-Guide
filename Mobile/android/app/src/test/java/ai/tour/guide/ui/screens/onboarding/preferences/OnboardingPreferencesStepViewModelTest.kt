@@ -1,7 +1,8 @@
 package ai.tour.guide.ui.screens.onboarding.preferences
 
 import ai.tour.guide.domain.preferences.OnboardingPreferencesService
-import ai.tour.guide.network.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiBaseResponseResult
+import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentState
 import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentViewModel
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -50,14 +51,27 @@ class OnboardingPreferencesStepViewModelTest {
     }
 
     @Test
-    fun `onStart fetches preferences once`() = runTest {
-        coEvery { service.fetchPreferencesIfEmpty() } returns Unit
+    fun `onOptionSelected does not autosave by default`() = runTest {
+        viewModel.onOptionSelected("q1", "a1")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { service.savePreferences(any()) }
+    }
+
+    @Test
+    fun `onStart fetches preferences once and applies fetched state`() = runTest {
+        val fetchedState = UserPreferenceFragmentState(
+            selectedSingleOptions = mapOf("gender" to "female"),
+            selectedMultipleOptions = mapOf("interests" to setOf("history"))
+        )
+        coEvery { service.fetchPreferencesIfEmpty() } returns fetchedState
 
         viewModel.onStart()
         viewModel.onStart()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { service.fetchPreferencesIfEmpty() }
+        assertEquals(fetchedState, viewModel.viewStateFlow.value.data)
     }
 
     @Test
@@ -84,6 +98,6 @@ class OnboardingPreferencesStepViewModelTest {
         viewModel.savePreferences()
         advanceUntilIdle()
 
-        assertEquals("Error Message", viewModel.viewStateFlow.value.errorMessage.toString())
+        assertEquals("Error Message", viewModel.viewStateFlow.value.toastMessage.toString())
     }
 }

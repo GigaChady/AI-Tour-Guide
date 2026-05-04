@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import UserPreferences
+from app.schemas.schemas import UserPreferencesCache
 from app.services.session_service import SessionService
 
 
@@ -22,7 +23,8 @@ async def setup_tour_session(
     )
     prefs = result.scalar_one_or_none()
     if prefs and prefs.interests:
-        await redis.set(f"preferences:{session_id}", json.dumps(prefs.interests))
+        cache = UserPreferencesCache(interests=prefs.interests)
+        await redis.set(f"preferences:{session_id}", cache.model_dump_json())
 
     pubsub = redis.pubsub()
     await pubsub.subscribe(f"tour:{session_id}")

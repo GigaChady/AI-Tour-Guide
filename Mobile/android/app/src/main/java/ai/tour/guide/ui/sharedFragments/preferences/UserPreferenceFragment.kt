@@ -71,9 +71,15 @@ fun UserPreferenceFragment(
                         onSelect = {
                             if (preference.key != null && item.key != null) {
                                 if (isSingleChoice) {
-                                    viewModel.onOptionSelected(preference.key, item.key)
+                                    viewModel.onOptionSelected(
+                                        preference.key,
+                                        item.key,
+                                    )
                                 } else {
-                                    viewModel.onMultipleOptionToggled(preference.key, item.key)
+                                    viewModel.onMultipleOptionToggled(
+                                        preference.key,
+                                        item.key,
+                                    )
                                 }
                             }
                         }

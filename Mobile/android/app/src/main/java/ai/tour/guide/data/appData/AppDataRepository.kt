@@ -29,8 +29,12 @@ class AppDataRepository(private val context: Context) {
     suspend fun updateCredentialsWithAPIResponse(response: TokenResponseDto?) {
         if (response == null) return
         _bearerToken.value = response.accessToken
+        updateRefreshToken(response.refreshToken)
+    }
+
+    suspend fun updateRefreshToken(token: String?) {
         context.PersistedAppDataStore.updateData {
-            it.copy(refreshToken = response.refreshToken)
+            it.copy(refreshToken = token)
         }
     }
 
@@ -40,11 +44,12 @@ class AppDataRepository(private val context: Context) {
         }
     }
 
-    fun updateBearerToken(authResponse: TokenResponseDto?) {
+    suspend fun updateBearerToken(authResponse: TokenResponseDto?) {
         if (authResponse == null) {
             return
         }
-        _bearerToken.value = authResponse.refreshToken
+        _bearerToken.value = authResponse.accessToken
+        updateRefreshToken(authResponse.refreshToken)
     }
 
     suspend fun shouldRefreshBearerToken(): Boolean {

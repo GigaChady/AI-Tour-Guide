@@ -2,7 +2,7 @@ package ai.tour.guide.ui.screens.onboarding.auth
 
 import ai.tour.guide.R
 import ai.tour.guide.domain.auth.AuthService
-import ai.tour.guide.network.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiBaseResponseResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -65,7 +65,7 @@ class OnboardingAuthStepViewModelTest {
 
         assertEquals(
             R.string.validation_error_password_mismatch,
-            viewModel.viewStateFlow.value.errorMessage
+            viewModel.viewStateFlow.value.toastMessage
         )
         coVerify(exactly = 0) { authService.register(any(), any(), any()) }
     }
