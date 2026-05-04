@@ -4,8 +4,8 @@ import time
 import redis
 import json
 from connections.configs.redis_config import RedisWorkerConfig
-from connections.processors.abstract_processor import AbstractProcessor
-from connections.processors.backend_processor import BackendProcessor
+from processors.abstract_processor import AbstractProcessor
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +14,11 @@ def _build_client(redis_url: str) -> redis.Redis:
 
 
 class RedisStreamWorker:
-    def __init__(self, config: RedisWorkerConfig, processor: AbstractProcessor, client: redis.Redis | None = None):
-        self.config = config
+    def __init__(self, processor: AbstractProcessor, client: redis.Redis | None = None):
+        self.config = RedisWorkerConfig()
         self.processor = processor
-        self.client = client or _build_client(config.redis_url)
-        self.last_id = config.start_id
+        self.client = client or _build_client(self.config.redis_url)
+        self.last_id = self.config.start_id
 
     def _read_batch(self):
         response = self.client.xread(
@@ -37,8 +37,13 @@ class RedisStreamWorker:
     def _publish(self, session_id, poi_message, narration_message) -> None:
         channel = f"{self.config.pubsub_prefix}{session_id}"
         self.client.publish(channel, poi_message)
-        self.client.publish(channel, narration_message)
+        if narration_message:
+            self.client.publish(channel, narration_message)
         logger.info("Published stream event for session %s", session_id)
+
+    def _publish_error(self, session_id):
+        channel = f"{self.config.pubsub_prefix}{session_id}"
+        logger.info("Error in generating narration and POI - None detected due to server failure or no POI detection %s", session_id)
 
 
     def run(self) -> None:
@@ -65,7 +70,10 @@ class RedisStreamWorker:
                         # Process into narration and pois messages
                         session_id, narration_msg, pois_msg = self.processor.process(event, prefs_event)
 
-                        self._publish(session_id, pois_msg, narration_msg)
+                        if pois_msg:
+                            self._publish(session_id, pois_msg, narration_msg)
+                        else:
+                            self._publish_error(session_id)
 
                     except Exception:
                         logger.exception("Failed to process stream event %s; skipping", entry_id)
@@ -80,9 +88,5 @@ class RedisStreamWorker:
                 time.sleep(2)
 
 
-def run_worker() -> None:
-    config = RedisWorkerConfig()
-    worker = RedisStreamWorker(config=config, processor=BackendProcessor())
-    worker.run()
 
 
