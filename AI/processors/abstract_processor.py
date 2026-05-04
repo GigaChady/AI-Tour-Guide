@@ -18,3 +18,7 @@ class AbstractProcessor(ABC):
     @abstractmethod
     def validate_prefs(self, prefs):
         pass
+
+    @abstractmethod
+    def generate(self, *args):
+        pass

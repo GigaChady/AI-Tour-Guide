@@ -1,14 +1,9 @@
-import logging
 from os import path
 
-from processors.abstract_processor import AbstractProcessor
+from narration.photos.abstract_photo_generator import AbstractPhotoGenerator
 
-logger = logging.getLogger(__name__)
 
-class PhotoProcessor(AbstractProcessor):
-    """
-    Class for handling photo generation and processing.
-    """
+class DefaultPhotoGenerator(AbstractPhotoGenerator):
     def __init__(self, storage, photo_path="utils/assets/default_photos"):
         super().__init__()
         self.photo_path = photo_path
@@ -23,11 +18,11 @@ class PhotoProcessor(AbstractProcessor):
             # Buildings and structures
             "museum": "building",
             "castle": "building",
-            "fort": "landscape",
-            "ruins": "landscape",
+            "fort": "building",
+            "ruins": "building",
             "monument": "building",
-            "memorial": "district",
-            "artwork": "default",
+            "memorial": "building",
+            "artwork": "building",
             # Natural/scenic
             "viewpoint": "landscape",
             # General attractions
@@ -35,15 +30,11 @@ class PhotoProcessor(AbstractProcessor):
         }
         self.storage = storage
 
-    def generate(self, image_type: str, count: int):
-        if not image_type in self.poi_category_to_image_type or count > 0:
+    def generate(self, image_type: str):
+        if not image_type in self.poi_category_to_image_type:
             image_type = "default"
-        else:
-            image_type = self.poi_category_to_image_type[image_type]
 
         image = self.mapping.get(image_type)
-
-        logger.info("Selected image %s for category %s", image, image_type)
 
         filepath = path.join(self.photo_path, image)
 
@@ -54,16 +45,4 @@ class PhotoProcessor(AbstractProcessor):
 
         result = self.storage.upload_bytes(storage_name, image_bytes)  # WARNING: swithc to poi_id in production to avoid duplicates
         return result["image_url"]
-
-
-    def process(self, event, preferences):
-        pass
-
-
-    def validate(self, entry_id, payload, **kwargs):
-        pass
-
-
-    def validate_prefs(self, prefs):
-        pass
 
