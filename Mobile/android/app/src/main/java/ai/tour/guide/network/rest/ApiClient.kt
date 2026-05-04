@@ -1,4 +1,4 @@
-package ai.tour.guide.network
+package ai.tour.guide.network.rest
 
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.data.appData.AppDataRepository
@@ -8,7 +8,7 @@ import ai.tour.guide.network.schema.response.TokenResponseDto
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -52,17 +52,21 @@ class ApiClient(
                 )
             }
         } catch (e: Exception) {
-            Log.e("ApiClient", "Error while making request", e)
+            Log.e(TAG, "Error while making request", e)
             authResponse = ApiResponse(e)
         }
 
         appDataRepository.updateBearerToken(authResponse.body)
     }
 
-    suspend inline fun <reified T : IAPIResponseDto> get(route: ApiClientRoute): ApiResponse<T> {
+    suspend inline fun fetchBearerTokenIfNeeded() {
         if (appDataRepository.shouldRefreshBearerToken()) {
             fetchBearerToken()
         }
+    }
+
+    suspend inline fun <reified T : IAPIResponseDto> get(route: ApiClientRoute): ApiResponse<T> {
+        fetchBearerTokenIfNeeded()
         return try {
             val response = httpClient.get {
                 url {
@@ -79,7 +83,7 @@ class ApiClient(
                 response.body()
             )
         } catch (e: Exception) {
-            Log.e("ApiClient", "Error while making request", e)
+            Log.e(TAG, "Error while making request", e)
             ApiResponse(e)
         }
     }
@@ -88,9 +92,7 @@ class ApiClient(
         route: ApiClientRoute,
         data: D
     ): ApiResponse<T> {
-        if (appDataRepository.shouldRefreshBearerToken()) {
-            fetchBearerToken()
-        }
+        fetchBearerTokenIfNeeded()
         return try {
             val response = httpClient.post {
                 url {
@@ -112,14 +114,18 @@ class ApiClient(
                 response.body()
             )
         } catch (e: Exception) {
-            Log.e("ApiClient", "Error while making request", e)
+            Log.e(TAG, "Error while making request", e)
             ApiResponse(e)
         }
+    }
+
+    companion object {
+        const val TAG = "ApiClient"
     }
 }
 
 @PublishedApi
-internal val defaultHttpClient = HttpClient(Android) {
+internal val defaultHttpClient = HttpClient(OkHttp) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }
@@ -130,8 +136,9 @@ enum class ApiClientRoute(val path: String) {
     AUTH_REGISTER("/auth/register"),
     AUTH_GOOGLE("/auth/google"),
     AUTH_REFRESH("/auth/refresh"),
-    ONBOARDING_QUESTIONS("/user/onboarding/questions"),
-    ONBOARDING_ANSWERS("/user/onboarding/answers")
+    USER_ONBOARDING_QUESTIONS("/user/onboarding/questions"),
+    USER_ONBOARDING_ANSWERS("/user/onboarding/answers"),
+    USER_ME_PARAMS("/user/me-params"),
 }
 
 class ApiResponse<T : IAPIResponseDto> : ApiBaseResponseResult {

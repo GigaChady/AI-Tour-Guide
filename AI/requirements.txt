@@ -9,3 +9,5 @@ geopy==2.4.0
 
 celery
 redis
+pydantic
+minio

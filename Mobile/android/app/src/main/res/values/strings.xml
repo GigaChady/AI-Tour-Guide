@@ -68,7 +68,7 @@
     <string name="dashboard_main_cta_button_text">Rozpocznij zwiedzanie</string>
 
     <string name="profile_preferences_account_settings_section_header">Ustawienia konta</string>
-    <string name="profile_preferences_account_settings_cta">Przejdź do ustawień konta</string>
+    <string name="profile_preferences_cta">Zapisz</string>
 
     <string name="account_settings_header">Twoje dane</string>
     <string name="account_settings_cta">Zapisz</string>
@@ -123,11 +123,23 @@
     <string name="app_settings_playback_interrupt_option_yes">Tak</string>
     <string name="app_settings_playback_interrupt_option_no">Nie</string>
 
+
+    <string name="app_settings_account_section_header">Konto</string>
+    <string name="app_settings_account_section_body">Ustawienia konta</string>
+    <string name="app_settings_account_section_cta">Przejdź do ustawień konta</string>
+
     <!-- Component-specific -->
     <string name="audio_player_widget_header_text">Odtwarzacz</string>
     <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
     <string name="tour_summary_bottom_sheet_places_section">Atrakcje</string>
+    <string name="location_permission_required_title">Wymagana dokładna lokalizacja</string>
+    <string name="location_permission_required_body">Aplikacja potrzebuje dostępu do dokładnej lokalizacji, aby pokazywać Twoje położenie i prowadzić zwiedzanie wokół Ciebie. Wybierz dokładną lokalizację podczas przyznawania uprawnienia.</string>
+    <string name="location_permission_grant_button">Przyznaj dokładną lokalizację</string>
+    <string name="location_permission_settings_button">Otwórz ustawienia aplikacji</string>
 
     <!-- Validation errors -->
     <string name="validation_error_password_mismatch">Hasła są różne</string>
+
+    <!-- Misc messages -->
+    <string name="settings_saved_success">Zapisano pomyślnie</string>
 </resources>

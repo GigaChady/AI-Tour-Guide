@@ -27,11 +27,11 @@ class OnboardingAuthStepViewModel(
             )
             if (!response.isSuccessful) {
                 updateState {
-                    copy(errorMessage = response.errorMessage)
+                    copy(toastMessage = response.errorMessage)
                 }
                 return@withLoading
             }
-            updateState { copy(errorMessage = null, isSuccess = true) }
+            updateState { copy(toastMessage = null, isSuccess = true) }
         }
     }
 
@@ -41,12 +41,12 @@ class OnboardingAuthStepViewModel(
         }
     }
 
-    suspend fun performRegisterRequest() {
+    private suspend fun performRegisterRequest() {
         val password = viewStateFlow.value.data.password
         val confirmPassword = viewStateFlow.value.data.confirmPassword
         if (password != confirmPassword) {
             updateState {
-                copy(errorMessage = R.string.validation_error_password_mismatch)
+                copy(toastMessage = R.string.validation_error_password_mismatch)
             }
             return
         }
@@ -58,11 +58,30 @@ class OnboardingAuthStepViewModel(
             )
             if (!response.isSuccessful) {
                 updateState {
-                    copy(errorMessage = response.errorMessage)
+                    copy(toastMessage = response.errorMessage)
                 }
                 return@withLoading
             }
-            updateState { copy(errorMessage = null, isSuccess = true) }
+            updateState { copy(toastMessage = null, isSuccess = true) }
+        }
+    }
+
+    private suspend fun loadCurrentUserData() {
+        val data = authService.loadCurrentUserData() ?: return
+        val newData = OnboardingAuthStepState(
+            name = data.name,
+            email = data.email,
+            password = state.value.data.password,
+            confirmPassword = state.value.data.confirmPassword,
+        )
+        updateState {
+            copy(data = newData)
+        }
+    }
+
+    fun onAccountSettingsViewLoaded() {
+        viewModelScope.launch {
+            loadCurrentUserData()
         }
     }
 
@@ -72,11 +91,11 @@ class OnboardingAuthStepViewModel(
                 val response = authService.signInWithGoogle(context)
                 if (!response.isSuccessful) {
                     updateState {
-                        copy(errorMessage = response.errorMessage)
+                        copy(toastMessage = response.errorMessage)
                     }
                     return@withLoading
                 }
-                updateState { copy(errorMessage = null, isSuccess = true) }
+                updateState { copy(toastMessage = null, isSuccess = true) }
             }
         }
     }

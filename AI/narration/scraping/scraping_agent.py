@@ -3,7 +3,7 @@ import logging
 from langchain_core.tools import BaseTool, ToolException
 from typing_extensions import override
 
-from narration.common.narration_settings import NarrationSettings
+from utils.schemas import NarrationSettings
 from narration.scraping.abstract_scraping_agent import AbstractScrapingAgent
 
 
