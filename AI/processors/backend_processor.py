@@ -21,9 +21,9 @@ class BackendProcessor(AbstractProcessor):
         narration_settings = self.sub_processor.validate(event, preferences)
 
         # Generate Narration
-        narration = self.sub_processor.process(event.session_id, narration_settings)
+        narration_msg, poi_msg = self.sub_processor.process(event.session_id, narration_settings)
 
-        return narration
+        return narration_msg, poi_msg
 
 
 
@@ -35,21 +35,20 @@ class BackendProcessor(AbstractProcessor):
             logger.warning("Invalid event or preferences type: %s, %s", type(event), type(preferences))
             raise ValueError("Expected LocationEvent and PreferencesEvent instances")
 
-        logger.debug(f"IS_MOCK: {self.is_mock}")
         if self.is_mock:
             logger.info("Processing mock stream for session %s", event.session_id)
-            pois = _mock_pois(event.session_id, event.lat, event.lng)
-            narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois)
+            poi = _mock_pois(event.session_id, event.lat, event.lng)
+            narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, poi)
+            return event.session_id, narration.model_dump_json(ensure_ascii=False), PoisMessage(data=poi).model_dump_json(ensure_ascii=False)
         else:
             logger.debug("Processing narration stream for session %s", event.session_id)
-            narration = self._start_narration_pipeline(event, preferences)
-            pois = _mock_pois(event.session_id, event.lat, event.lng)
-            narration = _mock_narration(event.session_id, preferences, event.lat, event.lng, pois, narration)
-
-            pass
-
-        logger.info("Processed stream for session %s", event.session_id)
-        return event.session_id, narration.model_dump_json(), PoisMessage(data=pois).model_dump_json()
+            narration, poi = self._start_narration_pipeline(event, preferences)
+            if not poi:
+                logger.warning("Failed to start narration pipeline for session %s", event.session_id)
+                return event.session_id, None, None
+            if not narration:
+                return event.session_id, None, poi.model_dump_json(ensure_ascii=False)
+            return event.session_id, narration.model_dump_json(ensure_ascii=False), poi.model_dump_json(ensure_ascii=False)
 
     def validate(self, entry_id, payload, **kwargs):
         """
@@ -78,3 +77,7 @@ class BackendProcessor(AbstractProcessor):
             raise ValueError(f"Invalid preferences cache") from exc
 
         return prefs_event
+
+
+    def generate(self, *args):
+        pass

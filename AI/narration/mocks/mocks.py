@@ -10,15 +10,7 @@ def _mock_pois(session_id: str, lat: float, lng: float) -> list[Poi]:
             lat=lat + 0.0005,
             lng=lng + 0.0005,
             desc="Mock point of interest generated from Redis Stream input.",
-            photos = [_mock_image_url("Mock Museum", "utils/assets/mock_images/museum_mock.jpg")]
-
-        ),
-        Poi(
-            name="Mock Viewpoint",
-            lat=lat - 0.0004,
-            lng=lng + 0.0003,
-            desc="Second mock POI for testing backend integration.",
-            photos=[_mock_image_url("Mock Viewpoint", "utils/assets/mock_images/viewpoint_mock.jpg")]
+            photos = [_mock_image_url("Mock Museum", "utils/assets//museum_mock.jpg")]
 
         )
         ]
