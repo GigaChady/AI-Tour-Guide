@@ -1,7 +1,7 @@
 package ai.tour.guide.ui.screens.onboarding.preferences
 
 import ai.tour.guide.domain.preferences.OnboardingPreferencesService
-import ai.tour.guide.network.ApiBaseResponseResult
+import ai.tour.guide.network.rest.ApiBaseResponseResult
 import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentState
 import ai.tour.guide.ui.sharedFragments.preferences.UserPreferenceFragmentViewModel
 import io.mockk.coEvery
@@ -13,8 +13,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals

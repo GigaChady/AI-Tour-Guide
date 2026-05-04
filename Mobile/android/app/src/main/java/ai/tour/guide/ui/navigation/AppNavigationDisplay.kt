@@ -6,11 +6,11 @@ import ai.tour.guide.ui.navigation.wrappers.WithOnlySafeDrawingPadding
 import ai.tour.guide.ui.navigation.wrappers.WithScreenTopBar
 import ai.tour.guide.ui.screens.main.AccountSettingsScreen
 import ai.tour.guide.ui.screens.main.AppSettingsScreen
-import ai.tour.guide.ui.screens.main.DashboardScreen
 import ai.tour.guide.ui.screens.main.MapUserPositionScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
-import ai.tour.guide.ui.screens.main.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
+import ai.tour.guide.ui.screens.main.dashboard.DashboardScreen
+import ai.tour.guide.ui.screens.main.route.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingWelcomeStepScreen
 import ai.tour.guide.ui.screens.onboarding.auth.OnboardingLoginStepScreen
