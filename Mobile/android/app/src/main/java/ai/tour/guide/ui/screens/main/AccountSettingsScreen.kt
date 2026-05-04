@@ -1,6 +1,7 @@
 package ai.tour.guide.ui.screens.main
 
 import ai.tour.guide.R
+import ai.tour.guide.ui.screens.onboarding.auth.OnboardingAuthStepViewModel
 import ai.tour.guide.ui.sharedFragments.UserRegistrationFragment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import org.koin.compose.viewmodel.koinViewModel
 
 @Preview(showBackground = true)
 @Composable
-fun AccountSettingsScreen(modifier: Modifier = Modifier) {
+fun AccountSettingsScreen(
+    modifier: Modifier = Modifier,
+    viewModel: OnboardingAuthStepViewModel = koinViewModel()
+) {
+    LifecycleStartEffect(Unit) {
+        viewModel.onAccountSettingsViewLoaded()
+        onStopOrDispose { }
+    }
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
