@@ -12,7 +12,7 @@ import androidx.navigation3.runtime.NavKey
 @Composable
 fun MapUserPositionScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Text(text = "map goes here")
