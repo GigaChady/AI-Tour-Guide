@@ -1,7 +1,7 @@
 package ai.tour.guide.domain.auth
 
 import ai.tour.guide.data.appData.AppDataRepository
-import ai.tour.guide.network.ApiClient
+import ai.tour.guide.network.rest.ApiClient
 import ai.tour.guide.network.schema.response.TokenResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine

@@ -41,7 +41,7 @@ class OnboardingAuthStepViewModel(
         }
     }
 
-    suspend fun performRegisterRequest() {
+    private suspend fun performRegisterRequest() {
         val password = viewStateFlow.value.data.password
         val confirmPassword = viewStateFlow.value.data.confirmPassword
         if (password != confirmPassword) {
@@ -63,6 +63,25 @@ class OnboardingAuthStepViewModel(
                 return@withLoading
             }
             updateState { copy(toastMessage = null, isSuccess = true) }
+        }
+    }
+
+    private suspend fun loadCurrentUserData() {
+        val data = authService.loadCurrentUserData() ?: return
+        val newData = OnboardingAuthStepState(
+            name = data.name,
+            email = data.email,
+            password = state.value.data.password,
+            confirmPassword = state.value.data.confirmPassword,
+        )
+        updateState {
+            copy(data = newData)
+        }
+    }
+
+    fun onAccountSettingsViewLoaded() {
+        viewModelScope.launch {
+            loadCurrentUserData()
         }
     }
 
