@@ -12,3 +12,4 @@ redis
 pydantic
 pydantic-settings
 minio
+unidecode

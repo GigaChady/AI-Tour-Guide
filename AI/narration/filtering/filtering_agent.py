@@ -4,17 +4,27 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
 from narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
+from narration.configs.narration_configs import FilteringOllamaSettings
 from utils.schemas import NarrationSettings
 
 
 class FilteringAgent(AbstractFilteringAgent):
-    def __init__(self, narration_settings: NarrationSettings, model_name="mistral-nemo"):
+    def __init__(self, narration_settings: NarrationSettings, filtering_config: FilteringOllamaSettings = None):
         super().__init__(narration_settings)
+        
+        # Use provided config or get from narration_settings
+        config = filtering_config or narration_settings.filtering_ollama if hasattr(narration_settings, 'filtering_ollama') else FilteringOllamaSettings()
+        
         self.model = ChatOllama(
-            model=model_name,
-            temperature=0.1,
+            model=config.model_name,
+            temperature=config.temperature,
+            top_k=config.top_k,
+            top_p=config.top_p,
+            num_predict=config.num_predict,
             base_url=narration_settings.ollama_base_url
         )
+        logging.info("FilteringAgent initialized with model: %s, temperature: %s, top_k: %s, top_p: %s, num_predict: %s", 
+                    config.model_name, config.temperature, config.top_k, config.top_p, config.num_predict)
 
     def filter_information(self, poi_name, raw_text):
         logging.info("Starting information filtering...")
