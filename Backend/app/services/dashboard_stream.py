@@ -314,6 +314,7 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
             if audio is None:
                 continue
             await websocket.send_bytes(struct.pack(">I", chunk_id) + audio) # binary frames instead of base64
+
             if words:
                 await websocket.send_text(NarrationWords(
                     type="narration_words", chunk_id=chunk_id, words=words,

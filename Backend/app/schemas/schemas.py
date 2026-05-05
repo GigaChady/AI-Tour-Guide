@@ -84,7 +84,7 @@ class NarrationSettingsRequest(BaseModel):
     language: str
     pitch: int = Field(..., ge=0, le=100)
     speed: int = Field(..., ge=0, le=10)
-    volume: int = Field(..., ge=0, le=100)
+    # volume: int = Field(..., ge=0, le=100)
     detail_level: str
     auto_play: bool
 
