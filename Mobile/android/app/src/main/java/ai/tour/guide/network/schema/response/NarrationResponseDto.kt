@@ -15,3 +15,21 @@ data class NarrationTranscriptChunkDto(
     val chunkId: Int,
     val text: String,
 )
+
+@Serializable
+data class NarrationWordsResponseDto(
+    val type: String,
+    @SerialName("chunk_id")
+    val chunkId: Int,
+    val words: List<NarrationWordDto>
+)
+
+@Serializable
+data class NarrationWordDto(
+    val text: String,
+    @SerialName("offset_ms")
+    val offsetMs: Double,
+    @SerialName("duration_ms")
+    val durationMs: Double
+) {
+}

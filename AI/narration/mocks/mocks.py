@@ -10,27 +10,20 @@ def _mock_pois(session_id: str, lat: float, lng: float) -> list[Poi]:
             lat=lat + 0.0005,
             lng=lng + 0.0005,
             desc="Mock point of interest generated from Redis Stream input.",
-            photos = [_mock_image_url("Mock Museum", "utils/assets/mock_images/museum_mock.jpg")]
-
-        ),
-        Poi(
-            name="Mock Viewpoint",
-            lat=lat - 0.0004,
-            lng=lng + 0.0003,
-            desc="Second mock POI for testing backend integration.",
-            photos=[_mock_image_url("Mock Viewpoint", "utils/assets/mock_images/viewpoint_mock.jpg")]
+            photos = [_mock_image_url("Mock Museum", "utils/assets//museum_mock.jpg")]
 
         )
         ]
     return pois
 
 
-def _mock_narration(session_id: str, preferences: PreferencesEvent, lat: float, lng: float, pois: list[Poi]) -> NarrationMessage:
+def _mock_narration(session_id: str, preferences: PreferencesEvent, lat: float, lng: float, pois: list[Poi], narration=None) -> NarrationMessage:
     text = (
         f"Mock narration for session {session_id}. "
         f"User is near {lat:.5f}, {lng:.5f}. "
         f"Suggested stops: {', '.join(p.name for p in pois)}."
         f"User preferences: {preferences}."
+        f"Real narration: {narration}"
     )
     return NarrationMessage(text=text)
 

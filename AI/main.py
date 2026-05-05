@@ -2,8 +2,13 @@ import logging
 import os
 
 from narration.narration_manager import NarrationManager
+from narration.photos.default_photo_generator import DefaultPhotoGenerator
+from processors.narration_processor import NarrationProcessor
+from processors.photo_processor import PhotoProcessor
+from storage.minio_image_storage import MinioImageStorage
 from utils.schemas import NarrationSettings, NarrationDetailLevel, NarrationLanguage
-from connections.redis_stream_worker import run_worker
+from connections.redis_stream_worker import RedisStreamWorker
+from processors.backend_processor import BackendProcessor
 
 if __name__ == "__main__":
     # Logging config (debug)
@@ -14,8 +19,10 @@ if __name__ == "__main__":
     )
 
     if os.getenv("AI_RUN_STREAM_WORKER", "1") == "1":
-        
-        run_worker()
+
+        backend_processor = BackendProcessor(sub_processor=NarrationProcessor(sub_processor=PhotoProcessor(MinioImageStorage())))
+        stream_worker = RedisStreamWorker(backend_processor)
+        stream_worker.run()
         
     else:
         

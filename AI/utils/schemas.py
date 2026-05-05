@@ -55,26 +55,6 @@ class NarrationMessage(BaseModel):
     type: str = "narration"
     text: str
 
-    # @classmethod
-    # def from_text(
-    #     cls,
-    #     text: str,
-    #     *,
-    #     language: str | None = None,
-    #     title: str | None = None,
-    #     poi_ids: list[str] | None = None,
-    #     metadata: dict[str, Any] | None = None,
-    # ) -> "NarrationMessage":
-    #     return cls(
-    #         data=NarrationData(
-    #             text=text,
-    #             language=language,
-    #             title=title,
-    #             poi_ids=poi_ids or [],
-    #             metadata=metadata or {},
-    #         )
-    #     )
-
 class Poi(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -84,15 +64,6 @@ class Poi(BaseModel):
     lat: float
     lng: float
 
-
-class NarrationData(BaseModel): # Deprecated
-    model_config = ConfigDict(extra="ignore")
-
-    text: str = ""
-    language: str | None = None
-    title: str | None = None
-    poi_ids: list[str] = Field(default_factory=list)
-    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # ====== INTERNAL MODELS =====
@@ -123,8 +94,11 @@ class NarrationSettings(BaseModel):
     language: NarrationLanguage
     user_preferences: str
     ollama_base_url: str = Field(
-        default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     )
+    include_narration: bool = True
+    photo_count:int = 1
+
 
 
 

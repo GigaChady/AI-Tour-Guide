@@ -1,6 +1,7 @@
 package ai.tour.guide.network.ws
 
 import ai.tour.guide.network.schema.response.NarrationResponseDto
+import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -11,6 +12,8 @@ class WebSocketListeners {
     private var sessionUpdatedListener: (suspend (ServerEvent.SessionUpdated) -> Unit)? = null
     private var tourStartedListener: (suspend (ServerEvent.TourStarted) -> Unit)? = null
     private var narrationTranscriptListener: (suspend (data: NarrationResponseDto) -> Unit)? =
+        null
+    private var narrationWordsListener: (suspend (data: NarrationWordsResponseDto) -> Unit)? =
         null
     private var audioChunkReceivedListener: (suspend (data: ByteArray) -> Unit)? = null
 
@@ -32,6 +35,10 @@ class WebSocketListeners {
 
     fun onNarrationTranscript(listener: suspend (data: NarrationResponseDto) -> Unit) {
         narrationTranscriptListener = listener
+    }
+
+    fun onNarrationWords(listener: suspend (data: NarrationWordsResponseDto) -> Unit) {
+        narrationWordsListener = listener
     }
 
     fun onAudioChunkReceived(listener: suspend (data: ByteArray) -> Unit) {
@@ -72,6 +79,14 @@ class WebSocketListeners {
                     ),
                 )
             }
+
+            "narration_words" -> {
+                handleServerEvent(
+                    ServerEvent.NarrationWords(
+                        Json.decodeFromString<NarrationWordsResponseDto>(event)
+                    ),
+                )
+            }
         }
     }
 
@@ -91,11 +106,16 @@ class WebSocketListeners {
         narrationTranscriptListener?.invoke(event.data)
     }
 
+    private suspend fun handleServerEvent(event: ServerEvent.NarrationWords) {
+        narrationWordsListener?.invoke(event.data)
+    }
+
     fun clearListeners() {
         connectedListener = null
         disconnectedListener = null
         sessionUpdatedListener = null
         tourStartedListener = null
         narrationTranscriptListener = null
+        narrationWordsListener = null
     }
 }

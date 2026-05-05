@@ -1,12 +1,16 @@
+import logging
+
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from narration.filtering.filtering_agent import FilteringAgent
 from narration.location.location_processor import LocationProcessor
+from narration.photos.abstract_photo_generator import AbstractPhotoGenerator
+from narration.photos.default_photo_generator import DefaultPhotoGenerator
 from utils.schemas import NarrationSettings
 from narration.narrative_generation.narrative_generation_agent import OllamaNarrativeGenerationAgent
 from narration.scraping.scraping_agent import LangChainScrapingAgent
 
-
+logger = logging.getLogger(__name__)
 class NarrationManager:
     def __init__(self, narration_settings: NarrationSettings, location_processor: LocationProcessor, scraping_agent: LangChainScrapingAgent, filtering_agent: FilteringAgent, narrative_generation_agent: OllamaNarrativeGenerationAgent):
         self.narration_settings = narration_settings
@@ -19,14 +23,23 @@ class NarrationManager:
 
         location_details = self.location_processor.get_location_details()
         poi = self.scraping_agent.select_best_poi(location_details["points_of_interest"])
+
+        if not poi:
+            return None
+        logger.debug("Narration found at poi: %s", poi)
         self.scraping_agent.query = LangChainScrapingAgent.build_query(poi, location_details["location_address"])
 
         location_raw_information = self.scraping_agent.run_scraping()
 
+        logger.info("Raw location information for POI '%s': %s", poi["name"], location_raw_information)
+
+        if not self.narration_settings.include_narration:
+            return None, poi, location_raw_information
+
         location_filtered_information = self.filtering_agent.filter_information(poi["name"], location_raw_information)
 
         narration = self.narrative_generation_agent.generate_narration(location_name=poi["name"], location_info=location_filtered_information)
-        return narration
+        return narration, poi, location_filtered_information
 
     @staticmethod
     def build_narration_manager(narration_settings: NarrationSettings):
@@ -35,6 +48,6 @@ class NarrationManager:
             location_processor=LocationProcessor(narration_settings=narration_settings, user_agent="my-user-agent"),
             scraping_agent=LangChainScrapingAgent(narration_settings=narration_settings, search_tool=DuckDuckGoSearchRun()),
             filtering_agent=FilteringAgent(narration_settings=narration_settings),
-            narrative_generation_agent=OllamaNarrativeGenerationAgent(narration_settings=narration_settings)
+            narrative_generation_agent=OllamaNarrativeGenerationAgent(narration_settings=narration_settings),
         )
         return narration_manager

@@ -2,6 +2,7 @@ package ai.tour.guide.ui.screens.main.dashboard
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.display.ImageCarousel
+import ai.tour.guide.ui.components.permissions.LocationPermissionGate
 import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.theme.AiTourGuideTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -34,78 +35,80 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     backStack: NavBackStack<NavKey>? = null
 ) {
-    val part1 = stringResource(R.string.dashboard_header_text_content_part1)
-    val part2 = stringResource(R.string.dashboard_header_text_content_part2)
-    val headerText = remember(part1, part2) {
-        buildAnnotatedString {
-            append(part1)
-            append("\n")
-            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(part2)
+    LocationPermissionGate(modifier = modifier) {
+        val part1 = stringResource(R.string.dashboard_header_text_content_part1)
+        val part2 = stringResource(R.string.dashboard_header_text_content_part2)
+        val headerText = remember(part1, part2) {
+            buildAnnotatedString {
+                append(part1)
+                append("\n")
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(part2)
+                }
             }
         }
-    }
 
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
             Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = headerText,
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
-                        text = stringResource(R.string.dashboard_main_section_header),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_main_section_header_subtext_example),
-                        style = MaterialTheme.typography.headlineLarge,
+                        text = headerText,
+                        style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = stringResource(R.string.dashboard_main_section_header),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = stringResource(R.string.dashboard_main_section_header_subtext_example),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
+
+                ImageCarousel(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        backStack?.clear()
+                        backStack?.add(Route.TourAudioPlayer)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = stringResource(R.string.dashboard_main_cta_button_text),
+                            style = MaterialTheme.typography.titleMediumEmphasized
+                        )
+                    }
+                )
             }
-
-            ImageCarousel(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            )
-
-            ExtendedFloatingActionButton(
-                onClick = {
-                    backStack?.clear()
-                    backStack?.add(Route.TourAudioPlayer)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                icon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(R.string.dashboard_main_cta_button_text),
-                        style = MaterialTheme.typography.titleMediumEmphasized
-                    )
-                }
-            )
         }
     }
 }

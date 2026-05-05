@@ -10,4 +10,6 @@ geopy==2.4.0
 celery
 redis
 pydantic
+pydantic-settings
 minio
+unidecode
