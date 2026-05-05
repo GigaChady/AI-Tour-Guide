@@ -11,6 +11,7 @@ Other dependencies:
 - Lottie (animations on onboarding screens)
 
 ## Development
+> Before running the app ensure that the backend API is running on your computer
 - Install Android Studio together with all components such as `platform-tools` and `sdk`
 - Open the `android/` folder in Android Studio
 - Wait for Gradle sync to finish
@@ -46,6 +47,7 @@ Static config is defined here, such as API host, Google Auth Client ID, etc.
 
 #### `data/` Core data layer handling business logic and state.
 - `appData/` Data handlers for general app state (auth tokens, preferences, etc). App credentials/settings storage is based on Jetpack DataStore.
+- `appSettings/` Data handlers for app settings (also known as user settings).
 - `onboardingPreferences/` Manages user preferences and flow during onboarding. Data is fetched from the server and cached inside repo.
 - `shared/` Generic logic shared between different features
 
