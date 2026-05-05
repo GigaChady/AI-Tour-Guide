@@ -10,6 +10,8 @@ import ai.tour.guide.ui.components.settings.RadioOptionsList
 import ai.tour.guide.ui.components.settings.SettingGroupHeader
 import ai.tour.guide.ui.components.settings.SettingItemWithTitle
 import ai.tour.guide.ui.navigation.Route
+import ai.tour.guide.ui.components.onboarding.LoadingOverlay
+import ai.tour.guide.ui.components.shared.ToastOnRequestError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,13 +37,13 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
 import org.koin.compose.viewmodel.koinViewModel
 
-// TODO: Add default loading animation
 @Composable
 fun AppSettingsScreen(
     modifier: Modifier = Modifier,
-    backStack: NavBackStack<NavKey>? = null,
+    backStack: NavBackStack<NavKey>? = rememberNavBackStack(),
     viewModel: AppSettingsViewModel = koinViewModel()
 ) {
     val viewState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
@@ -51,6 +53,8 @@ fun AppSettingsScreen(
         viewModel.onStart()
         onStopOrDispose { }
     }
+
+    ToastOnRequestError(viewModel = viewModel)
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -74,8 +78,10 @@ fun AppSettingsScreen(
                 AccountSettingsSection(backStack = backStack)
 
                 TTSSettingsSection(
+                    language = state.language,
                     pitch = state.pitch,
                     speed = state.speed,
+                    onLanguageChanged = { viewModel.updateLanguage(it) },
                     onPitchChanged = { viewModel.updatePitch(it) },
                     onSpeedChanged = { viewModel.updateSpeed(it) }
                 )
@@ -94,6 +100,8 @@ fun AppSettingsScreen(
             )
         }
     }
+
+    LoadingOverlay(isVisible = viewState.isLoading)
 }
 
 @Composable
@@ -110,28 +118,20 @@ fun GeneralAppSettingsSection(
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_general_color_scheme_header)
         ) {
-            val themeOptions = listOf(
-                stringResource(R.string.app_settings_general_color_scheme_option_auto),
-                stringResource(R.string.app_settings_general_color_scheme_option_dark),
-                stringResource(R.string.app_settings_general_color_scheme_option_light)
-            )
-            // TODO: Optimize
-            val selectedIndex = when(currentTheme) {
-                AppSettingsAppThemeType.SYSTEM -> 0
-                AppSettingsAppThemeType.DARK -> 1
-                AppSettingsAppThemeType.LIGHT -> 2
+            val themeOptions = AppSettingsAppThemeType.entries.map { theme ->
+                when (theme) {
+                    AppSettingsAppThemeType.SYSTEM -> stringResource(R.string.app_settings_general_color_scheme_option_auto)
+                    AppSettingsAppThemeType.DARK -> stringResource(R.string.app_settings_general_color_scheme_option_dark)
+                    AppSettingsAppThemeType.LIGHT -> stringResource(R.string.app_settings_general_color_scheme_option_light)
+                }
             }
 
             RadioOptionsList(
                 options = themeOptions,
-                selectedIndex = selectedIndex,
+                selectedIndex = currentTheme.ordinal,
                 onOptionSelected = { index ->
-                    val newTheme = when(index) {
-                        0 -> AppSettingsAppThemeType.SYSTEM
-                        1 -> AppSettingsAppThemeType.DARK
-                        else -> AppSettingsAppThemeType.LIGHT
-                    }
-                    onThemeChanged(newTheme)
+                    // Get theme type based on index of enum's item
+                    onThemeChanged(AppSettingsAppThemeType.entries[index])
                 }
             )
         }
@@ -140,8 +140,10 @@ fun GeneralAppSettingsSection(
 
 @Composable
 fun TTSSettingsSection(
+    language: String,
     pitch: Float,
     speed: Float,
+    onLanguageChanged: (String) -> Unit,
     onPitchChanged: (Float) -> Unit,
     onSpeedChanged: (Float) -> Unit,
     modifier: Modifier = Modifier
@@ -154,15 +156,32 @@ fun TTSSettingsSection(
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_narration_language_header)
         ) {
+            // --------------------------------------------------------
+            // TODO: Get available narration languages (tags + names) from backend API
+            // There is no need for translation (languages should be retrieved from backend API anyways)
+            val languageCodes = listOf("pl", "en")
+            val languageLabels = listOf("Polski", "Angielski")
+            // --------------------------------------------------------
+
+            val selectedIndex = languageCodes.indexOf(language).takeIf { it >= 0 } ?: 0
+
             PickerSetting(
-                title = stringResource(R.string.app_settings_narration_language_sample_selection),
+                title = languageLabels[selectedIndex],
                 promptTitle = stringResource(R.string.app_settings_narration_language_picker_header),
+
+                options = languageLabels,
+                selectedIndex = selectedIndex,
+                onOptionSelected = { index ->
+                    onLanguageChanged(languageCodes[index])
+                },
+
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Language,
                         contentDescription = null
                     )
-                })
+                }
+            )
         }
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_narration_pitch_header)
@@ -196,50 +215,44 @@ fun PlaybackSettingsSection(
             title = stringResource(R.string.app_settings_playback_section_header),
             subtitle = stringResource(R.string.app_settings_playback_section_body),
         )
+
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_playback_details_count_header)
         ) {
-            val detailOptions = listOf(
-                stringResource(R.string.app_settings_playback_details_count_option_low),
-                stringResource(R.string.app_settings_playback_details_count_option_mid),
-                stringResource(R.string.app_settings_playback_details_count_option_high)
-            )
-
-            val currentDetailIndex = when (detailLevel) {
-                AppSettingsDetailLevelType.LOW -> 0
-                AppSettingsDetailLevelType.MEDIUM -> 1
-                AppSettingsDetailLevelType.HIGH -> 2
+            val detailOptions = AppSettingsDetailLevelType.entries.map { level ->
+                when (level) {
+                    AppSettingsDetailLevelType.LOW -> stringResource(R.string.app_settings_playback_details_count_option_low)
+                    AppSettingsDetailLevelType.MEDIUM -> stringResource(R.string.app_settings_playback_details_count_option_mid)
+                    AppSettingsDetailLevelType.HIGH -> stringResource(R.string.app_settings_playback_details_count_option_high)
+                }
             }
 
             SegmentedButton(
                 options = detailOptions,
-                selectedIndex = currentDetailIndex,
+                selectedIndex = detailLevel.ordinal,
                 onOptionSelected = { newIndex ->
-                    val newLevel = when (newIndex) {
-                        0 -> AppSettingsDetailLevelType.LOW
-                        1 -> AppSettingsDetailLevelType.MEDIUM
-                        else -> AppSettingsDetailLevelType.HIGH
-                    }
-                    onDetailLevelChanged(newLevel)
+                    onDetailLevelChanged(AppSettingsDetailLevelType.entries[newIndex])
                 }
             )
         }
+
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_playback_interrupt_header)
         ) {
-            val autoPlayOptions = listOf(
-                stringResource(R.string.app_settings_playback_interrupt_option_yes),
-                stringResource(R.string.app_settings_playback_interrupt_option_no)
-            )
-
-            val currentAutoPlayIndex = if (autoPlay) 0 else 1
+            val autoPlayValues = listOf(true, false)
+            val autoPlayOptions = autoPlayValues.map { isAutoPlay ->
+                if (isAutoPlay) {
+                    stringResource(R.string.app_settings_playback_interrupt_option_yes)
+                } else {
+                    stringResource(R.string.app_settings_playback_interrupt_option_no)
+                }
+            }
 
             SegmentedButton(
                 options = autoPlayOptions,
-                selectedIndex = currentAutoPlayIndex,
+                selectedIndex = autoPlayValues.indexOf(autoPlay),
                 onOptionSelected = { newIndex ->
-                    val newAutoPlay = newIndex == 0
-                    onAutoPlayChanged(newAutoPlay)
+                    onAutoPlayChanged(autoPlayValues[newIndex])
                 }
             )
         }
