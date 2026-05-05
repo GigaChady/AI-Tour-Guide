@@ -8,9 +8,9 @@ enum class AppSettingsAppThemeType {
     @SerialName("system")
     SYSTEM,
 
-    @SerialName("light")
-    LIGHT,
-
     @SerialName("dark")
-    DARK
+    DARK,
+
+    @SerialName("light")
+    LIGHT
 }
