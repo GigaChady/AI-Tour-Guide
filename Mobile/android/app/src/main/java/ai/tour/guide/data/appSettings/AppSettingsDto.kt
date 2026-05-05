@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppSettingsDto(
-//    @SerialName("app_theme")
-//    val appTheme: AppSettingsAppThemeType? = null, // TODO: Decide to store locally or remotely
+    @SerialName("app_theme")
+    val appTheme: AppSettingsAppThemeType? = null,
 
     @SerialName("language")
     val language: String? = null,
@@ -16,9 +16,6 @@ data class AppSettingsDto(
 
     @SerialName("speed")
     val speed: Int? = null,
-
-    @SerialName("volume") // Left for compatibility. TODO: Remove or implement
-    val volume: Int? = null,
 
     @SerialName("detail_level")
     val detailLevel: AppSettingsDetailLevelType? = null,
