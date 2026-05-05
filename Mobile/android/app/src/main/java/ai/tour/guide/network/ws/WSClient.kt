@@ -2,6 +2,7 @@ package ai.tour.guide.network.ws
 
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.network.schema.response.NarrationResponseDto
+import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -79,6 +80,10 @@ class WSClient {
 
     fun onNarrationTranscript(listener: suspend (data: NarrationResponseDto) -> Unit) {
         webSocketListeners.onNarrationTranscript(listener)
+    }
+
+    fun onNarrationWords(listener: suspend (data: NarrationWordsResponseDto) -> Unit) {
+        webSocketListeners.onNarrationWords(listener)
     }
 
     fun onAudioChunkReceived(listener: suspend (data: ByteArray) -> Unit) {
