@@ -4,6 +4,7 @@ package ai.tour.guide.domain.appSettings
 import ai.tour.guide.data.appData.AppDataRepository
 import ai.tour.guide.data.appSettings.AppSettingsAppThemeType
 import ai.tour.guide.data.appSettings.AppSettingsDetailLevelType
+import ai.tour.guide.data.appSettings.AppSettingsDto
 import ai.tour.guide.data.appSettings.AppSettingsRepository
 import ai.tour.guide.network.rest.ApiBaseResponseResult
 import ai.tour.guide.network.rest.ApiClient
@@ -12,7 +13,6 @@ import ai.tour.guide.network.schema.request.SaveAppSettingsRequestDto
 import ai.tour.guide.network.schema.response.AppSettingsResponseDto
 import ai.tour.guide.network.schema.response.EmptyAPIResponse
 import ai.tour.guide.ui.screens.main.appSettings.AppSettingsState
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import org.koin.core.annotation.Single
 
@@ -22,15 +22,10 @@ class AppSettingsService(
     private val appDataRepository: AppDataRepository,
     private val apiClient: ApiClient
 ) {
-    val settingsFlow: StateFlow<AppSettingsResponseDto?>
-        get() = appSettingsRepository.settings
 
-    suspend fun fetchSettingsIfEmpty(): AppSettingsState {
+    suspend fun fetchSettingsIfEmpty(): AppSettingsState? {
         val localTheme = appDataRepository.appThemeFlow.first()
-        val apiSettings = appSettingsRepository.settings.value ?: appSettingsRepository.fetchSettingsIfEmpty()
-        // Merge local and API settings
-        return apiSettings?.toState(currentTheme = localTheme)
-            ?: AppSettingsState(appTheme = localTheme)
+        return appSettingsRepository.fetchSettingsIfEmpty()?.toDto(localTheme)?.toState()
     }
 
     suspend fun saveSettings(state: AppSettingsState): ApiBaseResponseResult {
@@ -45,13 +40,24 @@ class AppSettingsService(
         )
     }
 
-    private fun AppSettingsResponseDto.toState(currentTheme: AppSettingsAppThemeType): AppSettingsState {
+    // AppSettingsResponseDto needs conversion to AppSettingsDto before further usage
+    private fun AppSettingsResponseDto.toDto(currentTheme: AppSettingsAppThemeType? = null): AppSettingsDto {
+        return AppSettingsDto(
+            appTheme = currentTheme, // Added from local storage
+            language = this.language,
+            pitch = this.pitch,
+            speed = this.speed,
+            detailLevel = this.detailLevel,
+            autoPlay = this.autoPlay
+        )
+    }
+
+    private fun AppSettingsDto.toState(): AppSettingsState {
         return AppSettingsState(
-            appTheme = currentTheme,
-            language = this.language ?: "pl", // TODO: Get available narration languages from backend API
+            appTheme = this.appTheme ?: AppSettingsAppThemeType.SYSTEM,
+            language = this.language ?: "en", // TODO: Get available narration languages (tags + names) from backend API
             pitch = this.pitch?.toFloat() ?: 50f,
             speed = this.speed?.toFloat() ?: 5f,
-            volume = this.volume?.toFloat() ?: 5f,
             detailLevel = this.detailLevel ?: AppSettingsDetailLevelType.MEDIUM,
             autoPlay = this.autoPlay ?: true
         )
@@ -62,7 +68,6 @@ class AppSettingsService(
             language = this.language,
             pitch = this.pitch.toInt(),
             speed = this.speed.toInt(),
-            volume = this.volume.toInt(),
             detailLevel = this.detailLevel,
             autoPlay = this.autoPlay
         )
