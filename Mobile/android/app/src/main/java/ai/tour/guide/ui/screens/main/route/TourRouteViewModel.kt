@@ -8,24 +8,34 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class TourRouteViewModel(val routeService: RouteService) :
     BaseViewModel<TourRouteState>(TourRouteState.default()) {
+    private var pendingNarrationText: String = ""
+    private var pendingNarrationChunkId: Int? = null
+    private var pendingNarrationWords: List<NarrationWordDto> = emptyList()
+    private val currentNarrationText = MutableStateFlow("")
+    private val currentNarrationChunkId = MutableStateFlow<Int?>(null)
+    private val currentNarrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
+
     val isPlayingFlow: StateFlow<Boolean> = routeService.isPlayingFlow
     val playbackStateFlow = routeService.playbackStateFlow
     val hasPlayableChunksFlow: StateFlow<Boolean> = routeService.hasPlayableChunksFlow
+    val currentNarrationTextFlow: StateFlow<String> = currentNarrationText.asStateFlow()
 
     private suspend fun onTourStart() {
         viewModelScope.launch {
             combine(
-                routeService.narrationTextFlow,
-                routeService.narrationChunkIdFlow,
-                routeService.narrationWordsFlow,
+                currentNarrationText,
+                currentNarrationChunkId,
+                currentNarrationWords,
                 routeService.playbackStateFlow
             ) { text, chunkId, words, playbackState ->
                 val narrationText = buildNarrationText(
@@ -47,11 +57,41 @@ class TourRouteViewModel(val routeService: RouteService) :
                 }
             }
         }
+
+        viewModelScope.launch {
+            combine(
+                routeService.incomingNarrationTextFlow,
+                routeService.incomingNarrationChunkIdFlow,
+                routeService.incomingNarrationWordsFlow
+            ) { text, chunkId, words ->
+                Triple(text, chunkId, words)
+            }.collect { (text, chunkId, words) ->
+                pendingNarrationText = text
+                pendingNarrationChunkId = chunkId
+                pendingNarrationWords = words
+
+                if (
+                    currentNarrationText.value.isEmpty() &&
+                    pendingNarrationText.isNotEmpty() &&
+                    pendingNarrationWords.isNotEmpty()
+                ) {
+                    promotePendingNarration()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            routeService.narrationPromotionTickFlow.collect {
+                promotePendingNarration()
+            }
+        }
+
         routeService.onStart()
     }
 
     fun onDestroy() {
         viewModelScope.launch {
+            resetNarrationState()
             routeService.onDestroy()
         }
     }
@@ -96,6 +136,21 @@ class TourRouteViewModel(val routeService: RouteService) :
         viewModelScope.launch {
             onTourStart()
         }
+    }
+
+    private fun promotePendingNarration() {
+        currentNarrationText.value = pendingNarrationText
+        currentNarrationChunkId.value = pendingNarrationChunkId
+        currentNarrationWords.value = pendingNarrationWords
+    }
+
+    private fun resetNarrationState() {
+        pendingNarrationText = ""
+        pendingNarrationChunkId = null
+        pendingNarrationWords = emptyList()
+        currentNarrationText.value = ""
+        currentNarrationChunkId.value = null
+        currentNarrationWords.value = emptyList()
     }
 
     private fun buildNarrationText(
