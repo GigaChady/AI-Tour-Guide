@@ -4,7 +4,6 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.koin.core.annotation.Single
-import java.io.File
 
 @Single
 class AppEventBus {
@@ -22,8 +21,21 @@ class AppEventBus {
 }
 
 sealed class AppEventBusEvent {
-    data class AudioChunkReceived(val file: File) : AppEventBusEvent()
+    data class AudioChunkReceived(val data: ByteArray) : AppEventBusEvent() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as AudioChunkReceived
+
+            return data.contentEquals(other.data)
+        }
+
+        override fun hashCode(): Int {
+            return data.contentHashCode()
+        }
+    }
+
     data class AudioChunkNearlyFinished(val position: Long) : AppEventBusEvent()
     data class RouteSessionStarted(val sessionId: String) : AppEventBusEvent()
-    data class RouteTimeout(val reason: String?) : AppEventBusEvent()
 }

@@ -18,14 +18,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Singleton
-import java.io.File
 
 data class RoutePlaybackState(
     val positionMs: Long = 0L,
     val bufferedPositionMs: Long = 0L,
     val durationMs: Long = 0L,
-    val isPlaying: Boolean = false,
-    val isEnded: Boolean = false
+    val isPlaying: Boolean = false
 )
 
 @Singleton
@@ -34,14 +32,17 @@ class RouteNarrationPlaybackService(
     private val routeAudioRepository: RouteAudioRepository,
     private val eventBus: AppEventBus
 ) {
+    private val scope = CoroutineScope(Dispatchers.Default)
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
     private var hasBroadcastLocationNearCurrentNarrationEnd: Boolean = false
     private var autoPlayEnabled: Boolean = true
     private val _isPlaying = MutableStateFlow(false)
+    private val _hasPlayableChunks = MutableStateFlow(false)
     private val _playbackState = MutableStateFlow(RoutePlaybackState())
 
     val isPlayingFlow: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    val hasPlayableChunksFlow: StateFlow<Boolean> = _hasPlayableChunks.asStateFlow()
     val playbackStateFlow: StateFlow<RoutePlaybackState> = _playbackState.asStateFlow()
 
     private suspend fun ensurePlayer() {
@@ -81,8 +82,7 @@ class RouteNarrationPlaybackService(
             positionMs = currentPlayer.currentPosition.coerceAtLeast(0L),
             bufferedPositionMs = currentPlayer.bufferedPosition.coerceAtLeast(0L),
             durationMs = duration,
-            isPlaying = currentPlayer.isPlaying,
-            isEnded = currentPlayer.playbackState == Player.STATE_ENDED
+            isPlaying = currentPlayer.isPlaying
         )
         maybeBroadcastLocationNearNarrationEnd(currentPlayer.currentPosition, duration)
     }
@@ -107,20 +107,51 @@ class RouteNarrationPlaybackService(
         }
     }
 
-    suspend fun playAudioFile(filePath: String) {
+    private suspend fun preparePlayer() {
+        withContext(Dispatchers.Main.immediate) {
+            val currentPlayer = player ?: return@withContext
+            val chunkFiles = routeAudioRepository.getChunkFiles()
+            if (chunkFiles.isEmpty()) {
+                return@withContext
+            }
+
+            currentPlayer.apply {
+                stop()
+                clearMediaItems()
+                setMediaItems(chunkFiles.map { file ->
+                    MediaItem.fromUri(Uri.fromFile(file))
+                })
+                prepare()
+                playWhenReady = true
+            }
+            _isPlaying.value = true
+        }
+    }
+
+    private suspend fun enqueueChunk(chunkFile: java.io.File) {
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
             val currentPlayer = player ?: return@withContext
+            val mediaItem = MediaItem.fromUri(Uri.fromFile(chunkFile))
 
-            currentPlayer.stop()
-            currentPlayer.clearMediaItems()
-            currentPlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(File(filePath))))
-            currentPlayer.prepare()
+            if (currentPlayer.mediaItemCount == 0 || currentPlayer.playbackState == Player.STATE_ENDED) {
+                currentPlayer.stop()
+                currentPlayer.clearMediaItems()
+                currentPlayer.setMediaItem(mediaItem)
+                currentPlayer.prepare()
+                if (autoPlayEnabled) {
+                    currentPlayer.play()
+                }
+                hasBroadcastLocationNearCurrentNarrationEnd = false
+            } else {
+                currentPlayer.addMediaItem(mediaItem)
+                currentPlayer.prepare()
+                currentPlayer.playWhenReady = autoPlayEnabled
+            }
 
-            hasBroadcastLocationNearCurrentNarrationEnd = false
             autoPlayEnabled = true
-            currentPlayer.play()
             _isPlaying.value = true
+            _hasPlayableChunks.value = true
             publishPlaybackState()
         }
     }
@@ -129,6 +160,9 @@ class RouteNarrationPlaybackService(
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
             autoPlayEnabled = true
+            if (player?.mediaItemCount == 0) {
+                preparePlayer()
+            }
             player?.play()
             _isPlaying.value = player?.isPlaying == true
         }
@@ -143,22 +177,50 @@ class RouteNarrationPlaybackService(
     }
 
     suspend fun onDestroy() {
+        routeAudioRepository.clearSession()
         hasBroadcastLocationNearCurrentNarrationEnd = false
         withContext(Dispatchers.Main.immediate) {
             progressJob?.cancel()
             progressJob = null
-            player?.stop()
             player?.release()
             player = null
             autoPlayEnabled = true
             _isPlaying.value = false
+            _hasPlayableChunks.value = false
             _playbackState.value = RoutePlaybackState()
         }
-        routeAudioRepository.clearSession()
+    }
+
+    private suspend fun wsAudioChunkReceived(data: ByteArray) {
+        val chunkFile = routeAudioRepository.appendChunk(data) ?: return
+        _hasPlayableChunks.value = true
+        enqueueChunk(chunkFile)
+    }
+
+    private suspend fun wsSessionBegin(sessionId: String) {
+        routeAudioRepository.startSession(sessionId)
+    }
+
+    suspend fun startEventBusListeners() {
+        eventBus.eventsFlow.collect { event ->
+            when (event) {
+                is AppEventBusEvent.AudioChunkReceived -> {
+                    wsAudioChunkReceived(event.data)
+                }
+
+                is AppEventBusEvent.RouteSessionStarted -> {
+                    wsSessionBegin(event.sessionId)
+                }
+
+                else -> {}
+            }
+        }
     }
 
     fun onStart() {
-
+        scope.launch {
+            startEventBusListeners()
+        }
     }
 
     val playerListener = object : Player.Listener {

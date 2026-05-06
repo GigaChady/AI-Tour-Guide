@@ -31,10 +31,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.json.JSONObject
-import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Singleton
 import java.util.concurrent.TimeUnit
 
-@Factory
+@Singleton
 class WSClient {
     private val webSocketListeners = WebSocketListeners()
     private var job: Job? = null
