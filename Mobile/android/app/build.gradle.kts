@@ -3,14 +3,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.koin.compiler)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "ai.tour.guide"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {
@@ -112,4 +111,7 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.slf4j.android)
     debugImplementation(libs.leakcanary.android)
+
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 }

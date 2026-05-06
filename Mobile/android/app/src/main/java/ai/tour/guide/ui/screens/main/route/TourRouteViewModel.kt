@@ -1,6 +1,7 @@
 package ai.tour.guide.ui.screens.main.route
 
 import ai.tour.guide.data.shared.BaseViewModel
+import ai.tour.guide.domain.route.RouteNarrationPlaybackService
 import ai.tour.guide.domain.route.RouteService
 import ai.tour.guide.network.schema.response.NarrationWordDto
 import androidx.compose.ui.text.AnnotatedString
@@ -9,34 +10,32 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
-class TourRouteViewModel(val routeService: RouteService) :
+class TourRouteViewModel(
+    val routeAudioService: RouteNarrationPlaybackService,
+    val routeService: RouteService
+) :
     BaseViewModel<TourRouteState>(TourRouteState.default()) {
-    private var pendingNarrationText: String = ""
-    private var pendingNarrationChunkId: Int? = null
-    private var pendingNarrationWords: List<NarrationWordDto> = emptyList()
-    private val currentNarrationText = MutableStateFlow("")
-    private val currentNarrationChunkId = MutableStateFlow<Int?>(null)
-    private val currentNarrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
+    private var narrationText = MutableStateFlow("")
+    private var narrationChunkId = MutableStateFlow<Int?>(null)
+    private var narrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
 
-    val isPlayingFlow: StateFlow<Boolean> = routeService.isPlayingFlow
-    val playbackStateFlow = routeService.playbackStateFlow
-    val hasPlayableChunksFlow: StateFlow<Boolean> = routeService.hasPlayableChunksFlow
-    val currentNarrationTextFlow: StateFlow<String> = currentNarrationText.asStateFlow()
+    val isPlayingFlow: StateFlow<Boolean> = routeAudioService.isPlayingFlow
+    val playbackStateFlow = routeAudioService.playbackStateFlow
+    val hasPlayableChunksFlow: StateFlow<Boolean> = routeAudioService.hasPlayableChunksFlow
 
-    private suspend fun onTourStart() {
+    private fun startPlaybackStateListeners() {
         viewModelScope.launch {
             combine(
-                currentNarrationText,
-                currentNarrationChunkId,
-                currentNarrationWords,
-                routeService.playbackStateFlow
+                narrationText,
+                narrationChunkId,
+                narrationWords,
+                routeAudioService.playbackStateFlow
             ) { text, chunkId, words, playbackState ->
                 val narrationText = buildNarrationText(
                     text = text,
@@ -57,100 +56,51 @@ class TourRouteViewModel(val routeService: RouteService) :
                 }
             }
         }
-
         viewModelScope.launch {
             combine(
-                routeService.incomingNarrationTextFlow,
-                routeService.incomingNarrationChunkIdFlow,
-                routeService.incomingNarrationWordsFlow
+                routeService.narrationTextFlow,
+                routeService.narrationChunkIdFlow,
+                routeService.narrationWordsFlow
             ) { text, chunkId, words ->
                 Triple(text, chunkId, words)
             }.collect { (text, chunkId, words) ->
-                pendingNarrationText = text
-                pendingNarrationChunkId = chunkId
-                pendingNarrationWords = words
-
-                if (
-                    currentNarrationText.value.isEmpty() &&
-                    pendingNarrationText.isNotEmpty() &&
-                    pendingNarrationWords.isNotEmpty()
-                ) {
-                    promotePendingNarration()
-                }
+                narrationText.value = text
+                narrationChunkId.value = chunkId
+                narrationWords.value = words
             }
         }
+    }
 
-        viewModelScope.launch {
-            routeService.narrationPromotionTickFlow.collect {
-                promotePendingNarration()
-            }
-        }
-
+    private suspend fun onTourStart() {
+        startPlaybackStateListeners()
         routeService.onStart()
+        routeAudioService.onStart()
     }
 
     fun onDestroy() {
         viewModelScope.launch {
-            resetNarrationState()
+            routeAudioService.onDestroy()
             routeService.onDestroy()
         }
     }
 
     fun onPlayClicked() {
         viewModelScope.launch {
-            routeService.playNarration()
+            routeAudioService.playNarration()
         }
     }
 
     fun onPauseClicked() {
         viewModelScope.launch {
-            routeService.pauseNarration()
+            routeAudioService.pauseNarration()
         }
     }
 
-    fun onSkipPreviousClicked() {
-        viewModelScope.launch {
-            routeService.skipPreviousNarration()
-        }
-    }
-
-    fun onSkipNextClicked() {
-        viewModelScope.launch {
-            routeService.skipNextNarration()
-        }
-    }
-
-    fun onScrubTo(progressFraction: Float) {
-        viewModelScope.launch {
-            val playbackState = playbackStateFlow.value
-            val duration = playbackState.durationMs
-            if (duration <= 0L) {
-                return@launch
-            }
-            val targetPosition = (duration * progressFraction.coerceIn(0f, 1f)).toLong()
-            routeService.seekTo(targetPosition)
-        }
-    }
 
     fun onStart() {
         viewModelScope.launch {
             onTourStart()
         }
-    }
-
-    private fun promotePendingNarration() {
-        currentNarrationText.value = pendingNarrationText
-        currentNarrationChunkId.value = pendingNarrationChunkId
-        currentNarrationWords.value = pendingNarrationWords
-    }
-
-    private fun resetNarrationState() {
-        pendingNarrationText = ""
-        pendingNarrationChunkId = null
-        pendingNarrationWords = emptyList()
-        currentNarrationText.value = ""
-        currentNarrationChunkId.value = null
-        currentNarrationWords.value = emptyList()
     }
 
     private fun buildNarrationText(
@@ -209,10 +159,9 @@ class TourRouteViewModel(val routeService: RouteService) :
 
         return playbackPositionMs.coerceAtMost(playbackDurationMs).toDouble() >= word.offsetMs
     }
-
-    private data class NarrationTextPresentation(
-        val text: AnnotatedString,
-        val currentWordStartOffset: Int?
-    )
-
 }
+
+data class NarrationTextPresentation(
+    val text: AnnotatedString,
+    val currentWordStartOffset: Int?
+)
