@@ -52,12 +52,16 @@ fun TourAudioPlayerScreen(
         if (playbackState.durationMs <= 0L) {
             0f
         } else {
-            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(0f, 1f)
+            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(
+                0f,
+                1f
+            )
         }
     }
 
     LaunchedEffect(viewModelState.data.currentWordStartOffset, narrationTextLayoutResult) {
-        val currentWordStartOffset = viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
+        val currentWordStartOffset =
+            viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
         val layoutResult = narrationTextLayoutResult ?: return@LaunchedEffect
         if (currentWordStartOffset !in 0 until layoutResult.layoutInput.text.length) {
             return@LaunchedEffect
@@ -142,7 +146,6 @@ fun TourAudioPlayerScreen(
                     showBottomSheet = true
                 },
                 onPreviousClicked = {
-                    viewModel.onSkipPreviousClicked()
                 },
                 onPlayClicked = {
                     viewModel.onPlayClicked()
@@ -151,7 +154,6 @@ fun TourAudioPlayerScreen(
                     viewModel.onPauseClicked()
                 },
                 onNextClicked = {
-                    viewModel.onSkipNextClicked()
                 },
                 isPlaying = isPlaying,
                 progressFraction = progressFraction,

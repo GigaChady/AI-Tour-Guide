@@ -1,27 +1,19 @@
 package ai.tour.guide.ui.screens.main.dashboard
 
 import ai.tour.guide.data.shared.BaseViewModel
-import ai.tour.guide.domain.route.RouteService
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
-class DashboardViewModel(val routeService: RouteService) :
+class DashboardViewModel :
     BaseViewModel<DashboardState>(DashboardState.default()) {
-    private suspend fun onViewMounted() {
-        routeService.onStart()
+    private fun onViewMounted() {
+
     }
 
     fun onDestroy() {
-        viewModelScope.launch {
-            routeService.onDestroy()
-        }
     }
 
     fun onStart() {
-        viewModelScope.launch {
-            onViewMounted()
-        }
+
     }
 }
