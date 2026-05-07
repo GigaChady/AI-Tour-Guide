@@ -9,6 +9,7 @@ import ai.tour.guide.domain.AppEventBus
 import ai.tour.guide.domain.AppEventBusEvent
 import ai.tour.guide.domain.location.LocationService
 import ai.tour.guide.network.rest.ApiClient
+import ai.tour.guide.network.schema.response.AudioChunkReceivedResponseDto
 import ai.tour.guide.network.schema.response.NarrationResponseDto
 import ai.tour.guide.network.schema.response.NarrationWordDto
 import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
@@ -17,10 +18,15 @@ import ai.tour.guide.network.ws.ServerEvent
 import ai.tour.guide.network.ws.WSClient
 import ai.tour.guide.network.ws.WSClientRoute
 import ai.tour.guide.network.ws.WSEvent
+import android.Manifest
 import android.location.Location
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -39,7 +45,11 @@ class RouteService(
 ) {
     private var routeSession: RouteSession? = null
     private val eventBusScope = CoroutineScope(Dispatchers.Default)
+    private var eventBusJob: kotlinx.coroutines.Job? = null
     private var lastRouteStopRowId: Int? = null
+
+    private val _currentSessionId = MutableStateFlow<String?>(null)
+    val currentSessionIdFlow: StateFlow<String?> = _currentSessionId.asStateFlow()
 
     private suspend fun setupLocalTourSession(sessionId: String) {
         val session = RouteSession(
@@ -47,6 +57,7 @@ class RouteService(
         )
         val sessionDbId = appDatabase.routeSessionDao().insert(session)
         this.routeSession = session.copy(id = sessionDbId.toInt())
+        _currentSessionId.value = sessionId
         eventBus.publish(AppEventBusEvent.RouteSessionStarted(sessionId))
         routeAudioRepository.startSession(sessionId)
     }
@@ -78,10 +89,10 @@ class RouteService(
             .updateNarrationWordsMapForStop(lastRouteStop, words)
     }
 
-    private suspend fun wsAudioChunkReceived(data: ByteArray) {
-        val chunkFile = routeAudioRepository.appendChunk(data) ?: return
+    private suspend fun wsAudioChunkReceived(data: AudioChunkReceivedResponseDto) {
+        val chunkFile = routeAudioRepository.appendChunk(data.audioData) ?: return
         appDatabase.routeStopDao()
-            .updateNarrationFilePathForStop(this.lastRouteStopRowId, chunkFile.path)
+            .updateNarrationFilePathForNarrationId(data.narrationId, chunkFile.path)
         eventBus.publish(AppEventBusEvent.AudioChunkReceived(chunkFile))
     }
 
@@ -160,27 +171,34 @@ class RouteService(
         wsClient.send(payload)
     }
 
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     suspend fun onStart() {
         apiClient.fetchBearerTokenIfNeeded()
+        if (locationService.hasLocationPermission()) {
+            locationService.startTracking()
+        }
         initWSClient()
         wsBeginSession()
-        eventBusScope.launch {
-            startEventBusListeners()
-        }
+        startEventBusListeners()
     }
 
     fun onDestroy() {
         wsClient.onDestroy()
+        locationService.stopTracking()
+        eventBusJob?.cancel()
     }
 
-    suspend fun startEventBusListeners() {
-        eventBus.eventsFlow.collect { event ->
-            when (event) {
-                is AppEventBusEvent.AudioChunkNearlyFinished -> {
-                    sendLastKnownLocation()
-                }
+    fun startEventBusListeners() {
+        eventBusJob?.cancel()
+        eventBusJob = eventBusScope.launch {
+            eventBus.eventsFlow.collect { event ->
+                when (event) {
+                    is AppEventBusEvent.AudioChunkNearlyFinished -> {
+                        sendLastKnownLocation()
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
         }
     }

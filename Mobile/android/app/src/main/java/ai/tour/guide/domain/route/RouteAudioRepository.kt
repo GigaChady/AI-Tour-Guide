@@ -33,13 +33,8 @@ class RouteAudioRepository(private val context: Context) {
             synchronized(lock) {
                 val directory = sessionDir ?: return@withContext null
                 val chunkFile = File(directory, chunkFileName(nextChunkIndex++))
-                if (chunk.size <= 4) {
-                    return@withContext null
-                }
-                // The first 4 bytes are the chunk id; only persist the MP3 payload.
-                val audioBytes = chunk.copyOfRange(4, chunk.size)
                 FileOutputStream(chunkFile).use { output ->
-                    output.write(audioBytes)
+                    output.write(chunk)
                     output.flush()
                 }
                 chunkFiles.add(chunkFile)
@@ -47,11 +42,7 @@ class RouteAudioRepository(private val context: Context) {
             }
         }
     }
-
-    fun getChunkFiles(): List<File> {
-        return synchronized(lock) { chunkFiles.toList() }
-    }
-
+    
     suspend fun clearSession() {
         withContext(Dispatchers.IO) {
             synchronized(lock) {

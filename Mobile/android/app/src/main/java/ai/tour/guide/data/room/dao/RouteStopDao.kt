@@ -28,8 +28,8 @@ interface RouteStopDao {
     @Query("UPDATE stops SET narration_words_map = :wordsMap WHERE id = :stopId")
     suspend fun updateNarrationWordsMapForStop(stopId: Int?, wordsMap: List<NarrationWordDto>?)
 
-    @Query("UPDATE stops SET narration_audio_file_path = :filePath WHERE id = :stopId")
-    suspend fun updateNarrationFilePathForStop(stopId: Int?, filePath: String)
+    @Query("UPDATE stops SET narration_audio_file_path = :filePath WHERE :narrationId IS NOT NULL AND narration_id = :narrationId")
+    suspend fun updateNarrationFilePathForNarrationId(narrationId: String?, filePath: String)
 
     @Query("SELECT id FROM stops WHERE narration_id = :serverNarrationId")
     suspend fun getStopIdByNarration(serverNarrationId: String): Long
@@ -63,7 +63,7 @@ interface RouteStopDao {
 
     @Query("SELECT * FROM stops WHERE id = :stopId")
     fun getStopById(stopId: Int?): Flow<RouteStop?>
-    
-    @Query("SELECT 1 FROM stops WHERE narration_id IS NOT NULL AND narration_id = :serverNarrationId LIMIT 1")
-    fun narrationFilesExistsForCurrentSession(serverNarrationId: String?): Flow<Boolean>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM stops JOIN sessions ON stops.session_id = sessions.id WHERE sessions.server_session_id = :serverSessionId AND stops.narration_audio_file_path IS NOT NULL LIMIT 1)")
+    fun narrationFilesExistsForCurrentSession(serverSessionId: String?): Flow<Boolean>
 }
