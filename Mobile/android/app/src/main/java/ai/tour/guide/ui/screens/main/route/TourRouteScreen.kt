@@ -44,7 +44,7 @@ fun TourAudioPlayerScreen(
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
-    val hasPlayableChunks by viewModel.hasPlayableChunksFlow.collectAsStateWithLifecycle()
+
     var showBottomSheet by remember { mutableStateOf(false) }
     val narrationScrollState = rememberScrollState()
     var narrationTextLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -157,7 +157,7 @@ fun TourAudioPlayerScreen(
                 },
                 isPlaying = isPlaying,
                 progressFraction = progressFraction,
-                controlsEnabled = hasPlayableChunks
+                controlsEnabled = true
             )
         }
     }
