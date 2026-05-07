@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, User
-from app.schemas.schemas import ErrorResponse, RoutePoiResponse, RouteStatsResponse
+from app.schemas.schemas import ErrorResponse, Location, RoutePoiResponse, RouteStatsResponse, RoutePoints
 router = APIRouter(prefix="/route", tags=["route"])
 
 
@@ -66,3 +66,24 @@ async def route_stats(
             for p in pois
         ],
     )
+
+
+@router.post("{route_id}/location_points", response_model=RoutePoints, responses={404: {"model": ErrorResponse}})
+async def add_location_to_route(
+    route_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        rid = uuid.UUID(route_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Route not found.")
+
+    route = await db.get(Route, rid)
+    if not route or route.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Route not found.")
+
+    points = []
+    
+
+    return RoutePoints(route_id=route_id, points=points)
