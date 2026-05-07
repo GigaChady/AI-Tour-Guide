@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis import get_redis
 from app.models.models import Route, RoutePoi, User
-from app.schemas.schemas import ErrorResponse, Location, RoutePoiResponse, RouteStatsResponse, RoutePoints
+from app.schemas.schemas import ErrorResponse, Location, RoutePoiResponse, RouteStatsResponse, RoutePoints, RouteMapResponse
 router = APIRouter(prefix="/route", tags=["route"])
 
 
@@ -68,8 +68,8 @@ async def route_stats(
     )
 
 
-@router.post("{route_id}/location_points", response_model=RoutePoints, responses={404: {"model": ErrorResponse}})
-async def add_location_to_route(
+@router.get("/{route_id}/map", response_model=RouteMapResponse, responses={404: {"model": ErrorResponse}})
+async def route_map(
     route_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -83,7 +83,20 @@ async def add_location_to_route(
     if not route or route.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Route not found.")
 
-    points = []
-    
+    result = await db.execute(
+        text("SELECT ST_AsGeoJSON(path) FROM routes WHERE id = :id::uuid")
+        .bindparams(id=route_id)
+    )
+    geojson_str = result.scalar()
+    geojson = json.loads(geojson_str) if geojson_str else None
 
-    return RoutePoints(route_id=route_id, points=points)
+    result = await db.execute(
+        select(RoutePoi).where(RoutePoi.route_id == rid)
+    )
+    pois = result.scalars().all()
+
+    return RouteMapResponse(
+        geojson=geojson,
+    )
+
+
