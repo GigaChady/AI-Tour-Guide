@@ -6,9 +6,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SaveAppSettingsRequestDto(
-    @SerialName("language") val language: String? = null,
-    @SerialName("pitch") val pitch: Int? = null,
-    @SerialName("speed") val speed: Int? = null,
-    @SerialName("detail_level") val detailLevel: AppSettingsDetailLevelType? = null,
-    @SerialName("auto_play") val autoPlay: Boolean? = null
+
+    val language: String? = null,
+
+    val pitch: Int? = null,
+
+   val speed: Int? = null,
+
+    @SerialName("detail_level")
+    val detailLevel: AppSettingsDetailLevelType? = null,
+
+    @SerialName("auto_play")
+    val autoPlay: Boolean? = null
 )
