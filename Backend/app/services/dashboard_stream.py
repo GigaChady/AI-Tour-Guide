@@ -213,12 +213,14 @@ async def _handle_client(
         else:
             try:
                 loc = Location(**data)
-                include_photos = 1 if state["mode"] == "tour" else 2
-                is_narration = True if state["mode"] == "tour" else False
                 if state["mode"] == "tour" and state["route_id"]:
                     await _save_location(db, state["route_id"], lat=loc.lat, lng=loc.lng)
-                event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=include_photos, is_narration=is_narration)
-                await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump(exclude_none=True).items()})
+                    if loc.ai:
+                        event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=1, is_narration=True)
+                        await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump(exclude_none=True).items()})
+                else:
+                    event = LocationEvent(session_id=session_id, lat=loc.lat, lng=loc.lng, include_photos=2, is_narration=False)
+                    await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump(exclude_none=True).items()})
             except (KeyError, TypeError, ValueError):
                 pass
 
