@@ -17,14 +17,12 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,13 +36,7 @@ data class RoutePlaybackState(
     val isPlaying: Boolean = false
 )
 
-private data class SentLocation(
-    val latitude: Double,
-    val longitude: Double
-)
-
 @Singleton
-@OptIn(FlowPreview::class)
 class RouteService(
     val appDataRepository: AppDataRepository,
     val apiClient: ApiClient,
@@ -57,7 +49,9 @@ class RouteService(
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
     private var locationUpdatesJob: Job? = null
-    private var lastSentLocation: SentLocation? = null
+    private var cachedLocation: Location? = null
+    private var isWaitingForForcedSkip: Boolean = false
+    private var hasBroadcastLocationNearCurrentNarrationEnd: Boolean = false
     private var autoPlayEnabled: Boolean = true
     private val _isPlaying = MutableStateFlow(false)
     val isPlayingFlow: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -65,18 +59,23 @@ class RouteService(
     val hasPlayableChunksFlow: StateFlow<Boolean> = _hasPlayableChunks.asStateFlow()
     private val _playbackState = MutableStateFlow(RoutePlaybackState())
     val playbackStateFlow: StateFlow<RoutePlaybackState> = _playbackState.asStateFlow()
-    private val _narrationText = MutableStateFlow("")
-    val narrationTextFlow: StateFlow<String> = _narrationText.asStateFlow()
-    private val _narrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
-    val narrationWordsFlow: StateFlow<List<NarrationWordDto>> = _narrationWords.asStateFlow()
-    private val _narrationChunkId = MutableStateFlow<Int?>(null)
-    val narrationChunkIdFlow: StateFlow<Int?> = _narrationChunkId.asStateFlow()
+    private val _incomingNarrationText = MutableStateFlow("")
+    val incomingNarrationTextFlow: StateFlow<String> = _incomingNarrationText.asStateFlow()
+    private val _incomingNarrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
+    val incomingNarrationWordsFlow: StateFlow<List<NarrationWordDto>> = _incomingNarrationWords.asStateFlow()
+    private val _incomingNarrationChunkId = MutableStateFlow<Int?>(null)
+    val incomingNarrationChunkIdFlow: StateFlow<Int?> = _incomingNarrationChunkId.asStateFlow()
+    private val _narrationPromotionTick = MutableStateFlow(0L)
+    val narrationPromotionTickFlow: StateFlow<Long> = _narrationPromotionTick.asStateFlow()
 
     private suspend fun wsSessionEstablished(event: ServerEvent.SessionUpdated) {
         Log.i(TAG, "ws session established: ${event.sessionId}")
         this.sessionID = event.sessionId
         autoPlayEnabled = true
-        lastSentLocation = null
+        cachedLocation = null
+        isWaitingForForcedSkip = false
+        hasBroadcastLocationNearCurrentNarrationEnd = false
+        clearIncomingNarrationState()
         routeAudioRepository.startSession(event.sessionId)
         val payload = JSONObject().apply {
             put("type", "start_tour")
@@ -113,6 +112,7 @@ class RouteService(
             return
         }
 
+        cachedLocation = location
         sendLocation(location)
     }
 
@@ -124,9 +124,8 @@ class RouteService(
         locationUpdatesJob = kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
             try {
                 locationService.observeLocationUpdates(emitLastKnownLocation = false)
-                    .debounce(LOCATION_UPDATE_DEBOUNCE_MS)
                     .collectLatest { location ->
-                        sendLocation(location)
+                        cachedLocation = location
                     }
             } catch (exception: SecurityException) {
                 Log.w(TAG, "Cannot observe location updates: ${exception.message}")
@@ -138,22 +137,29 @@ class RouteService(
         }
     }
 
-    private suspend fun sendLocation(location: Location) {
-        val nextLocation = SentLocation(
-            latitude = location.latitude,
-            longitude = location.longitude
-        )
-        if (lastSentLocation == nextLocation) {
-            Log.d(TAG, "Skipping duplicate location update")
+    private suspend fun sendCachedLocation() {
+        val location = cachedLocation ?: try {
+            locationService.getLastKnownLocation()
+        } catch (exception: SecurityException) {
+            Log.w(TAG, "Cannot send cached location: ${exception.message}")
+            null
+        }
+
+        if (location == null) {
+            Log.w(TAG, "Cached location is unavailable")
             return
         }
 
+        cachedLocation = location
+        sendLocation(location)
+    }
+
+    private suspend fun sendLocation(location: Location) {
         val payload = JSONObject().apply {
-            put("lat", nextLocation.latitude)
-            put("lng", nextLocation.longitude)
+            put("lat", location.latitude)
+            put("lng", location.longitude)
         }
         wsClient.send(payload)
-        lastSentLocation = nextLocation
     }
 
     private suspend fun initWSClient() {
@@ -166,11 +172,11 @@ class RouteService(
         wsClient.onSessionUpdated(::wsSessionEstablished)
         wsClient.onTourStarted(::wsRouteStarted)
         wsClient.onNarrationTranscript { data ->
-            _narrationText.value = data.transcript.firstOrNull()?.text.orEmpty()
+            _incomingNarrationText.value = data.transcript.firstOrNull()?.text.orEmpty()
         }
         wsClient.onNarrationWords { data ->
-            _narrationChunkId.value = data.chunkId
-            _narrationWords.value = data.words
+            _incomingNarrationChunkId.value = data.chunkId
+            _incomingNarrationWords.value = data.words
         }
         wsClient.onAudioChunkReceived(::wsAudioChunkReceived)
         wsClient.connect(WSClientRoute.ROUTE)
@@ -196,9 +202,22 @@ class RouteService(
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     publishPlaybackState()
+                    if (playbackState == Player.STATE_ENDED) {
+                        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                            sendCachedLocation()
+                        }
+                        requestNarrationPromotion()
+                    }
                 }
 
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+                        hasBroadcastLocationNearCurrentNarrationEnd = false
+                        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                            sendCachedLocation()
+                        }
+                        requestNarrationPromotion()
+                    }
                     publishPlaybackState()
                 }
             })
@@ -234,6 +253,26 @@ class RouteService(
             durationMs = duration,
             isPlaying = currentPlayer.isPlaying
         )
+        maybeBroadcastLocationNearNarrationEnd(currentPlayer.currentPosition, duration)
+    }
+
+    private fun maybeBroadcastLocationNearNarrationEnd(positionMs: Long, durationMs: Long) {
+        if (durationMs <= 0L || hasBroadcastLocationNearCurrentNarrationEnd) {
+            return
+        }
+
+        val minPositionForNearEndBroadcast = when {
+            durationMs <= NARRATION_END_LOCATION_BROADCAST_THRESHOLD_MS ->
+                (durationMs * SHORT_NARRATION_END_BROADCAST_FRACTION).toLong()
+            else -> durationMs - NARRATION_END_LOCATION_BROADCAST_THRESHOLD_MS
+        }
+
+        if (positionMs >= minPositionForNearEndBroadcast && positionMs < durationMs) {
+            hasBroadcastLocationNearCurrentNarrationEnd = true
+            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                sendCachedLocation()
+            }
+        }
     }
 
     private suspend fun preparePlayer() {
@@ -263,11 +302,23 @@ class RouteService(
             val currentPlayer = player ?: return@withContext
             val mediaItem = MediaItem.fromUri(Uri.fromFile(chunkFile))
 
-            currentPlayer.stop()
-            currentPlayer.clearMediaItems()
-            currentPlayer.setMediaItem(mediaItem)
-            currentPlayer.prepare()
-            currentPlayer.play()
+            if (currentPlayer.mediaItemCount == 0 || currentPlayer.playbackState == Player.STATE_ENDED || isWaitingForForcedSkip) {
+                isWaitingForForcedSkip = false
+                requestNarrationPromotion()
+                currentPlayer.stop()
+                currentPlayer.clearMediaItems()
+                currentPlayer.setMediaItem(mediaItem)
+                currentPlayer.prepare()
+                if (autoPlayEnabled) {
+                    currentPlayer.play()
+                }
+                hasBroadcastLocationNearCurrentNarrationEnd = false
+            } else {
+                currentPlayer.addMediaItem(mediaItem)
+                currentPlayer.prepare()
+                currentPlayer.playWhenReady = autoPlayEnabled
+            }
+
             autoPlayEnabled = true
             _isPlaying.value = true
             _hasPlayableChunks.value = true
@@ -309,8 +360,16 @@ class RouteService(
     }
 
     suspend fun skipNextNarration() {
+        sendCachedLocation()
         withContext(Dispatchers.Main.immediate) {
-            player?.seekToNextMediaItem()
+            val currentPlayer = player ?: return@withContext
+            if (currentPlayer.hasNextMediaItem()) {
+                requestNarrationPromotion()
+                currentPlayer.seekToNextMediaItem()
+            } else {
+                isWaitingForForcedSkip = true
+                currentPlayer.stop()
+            }
         }
     }
 
@@ -331,7 +390,9 @@ class RouteService(
         routeAudioRepository.clearSession()
         locationUpdatesJob?.cancel()
         locationUpdatesJob = null
-        lastSentLocation = null
+        cachedLocation = null
+        isWaitingForForcedSkip = false
+        hasBroadcastLocationNearCurrentNarrationEnd = false
         withContext(Dispatchers.Main.immediate) {
             progressJob?.cancel()
             progressJob = null
@@ -341,15 +402,25 @@ class RouteService(
             _isPlaying.value = false
             _hasPlayableChunks.value = false
             _playbackState.value = RoutePlaybackState()
-            _narrationText.value = ""
-            _narrationWords.value = emptyList()
-            _narrationChunkId.value = null
+            clearIncomingNarrationState()
         }
         wsClient.onDestroy()
     }
 
+    private fun requestNarrationPromotion() {
+        _narrationPromotionTick.value += 1L
+    }
+
+    private fun clearIncomingNarrationState() {
+        _incomingNarrationText.value = ""
+        _incomingNarrationWords.value = emptyList()
+        _incomingNarrationChunkId.value = null
+        _narrationPromotionTick.value = 0L
+    }
+
     companion object {
         private const val TAG = "RouteService"
-        private const val LOCATION_UPDATE_DEBOUNCE_MS = 2_000L
+        private const val NARRATION_END_LOCATION_BROADCAST_THRESHOLD_MS = 5_000L
+        private const val SHORT_NARRATION_END_BROADCAST_FRACTION = 0.8
     }
 }
