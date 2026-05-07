@@ -6,7 +6,6 @@ import ai.tour.guide.data.appSettings.AppSettingsDetailLevelType
 import ai.tour.guide.data.shared.BaseViewModel
 import ai.tour.guide.domain.appSettings.AppSettingsService
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
@@ -42,26 +41,20 @@ class AppSettingsViewModel(
         }
     }
 
-    suspend fun saveSettings(
-    ) {
-        try {
-            val saveBlock: suspend () -> Unit = {
-                val response =
-                    appSettingsService.saveSettings(viewStateFlow.value.data)
+    private suspend fun saveSettings() {
+        withLoading {
+            val response = appSettingsService.saveSettings(viewStateFlow.value.data)
 
-                if (response.isSuccessful) {
-                    updateState {
-                        copy(
-                            toastMessage = R.string.settings_saved_success,
-                            isSuccess = true
-                        )
-                    }
-                } else {
-                    updateState { copy(toastMessage = response.errorMessage) }
+            if (response.isSuccessful) {
+                updateState {
+                    copy(
+                        toastMessage = R.string.settings_saved_success,
+                        isSuccess = true
+                    )
                 }
+            } else {
+                updateState { copy(toastMessage = response.errorMessage) }
             }
-
-            withLoading { saveBlock() }
-        } catch (_: CancellationException) { }
+        }
     }
 }
