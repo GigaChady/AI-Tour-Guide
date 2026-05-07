@@ -2,6 +2,7 @@ package ai.tour.guide.domain.route
 
 import ai.tour.guide.data.appData.AppDataRepository
 import ai.tour.guide.data.room.AppDatabase
+import ai.tour.guide.data.room.entity.RoutePOI
 import ai.tour.guide.data.room.entity.RouteSession
 import ai.tour.guide.data.room.entity.RouteStop
 import ai.tour.guide.domain.AppEventBus
@@ -10,6 +11,8 @@ import ai.tour.guide.domain.location.LocationService
 import ai.tour.guide.network.rest.ApiClient
 import ai.tour.guide.network.schema.response.NarrationResponseDto
 import ai.tour.guide.network.schema.response.NarrationWordDto
+import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
+import ai.tour.guide.network.schema.response.RoutePOIDto
 import ai.tour.guide.network.ws.ServerEvent
 import ai.tour.guide.network.ws.WSClient
 import ai.tour.guide.network.ws.WSClientRoute
@@ -22,6 +25,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.json.JSONObject
 import org.koin.core.annotation.Single
 
@@ -32,7 +37,8 @@ class RouteService(
     private val wsClient: WSClient,
     private val eventBus: AppEventBus,
     private val locationService: LocationService,
-    private val appDatabase: AppDatabase
+    private val appDatabase: AppDatabase,
+    private val routeAudioRepository: RouteAudioRepository,
 ) {
     private var cachedLocation: Location? = null
     private var routeSession: RouteSession? = null
@@ -43,18 +49,22 @@ class RouteService(
         _narrationWords.asStateFlow()
     private val _narrationChunkId = MutableStateFlow<Int?>(null)
     val narrationChunkIdFlow: StateFlow<Int?> = _narrationChunkId.asStateFlow()
+    private var lastRouteStopRowId: Int? = null
     private val scope = CoroutineScope(Dispatchers.Default)
+
+    private suspend fun setupLocalTourSession(sessionId: String) {
+        val session = RouteSession(
+            serverSessionId = sessionId,
+        )
+        val sessionDbId = appDatabase.routeSessionDao().insert(session)
+        this.routeSession = session.copy(id = sessionDbId.toInt())
+        eventBus.publish(AppEventBusEvent.RouteSessionStarted(sessionId))
+        routeAudioRepository.startSession(sessionId)
+    }
 
     private suspend fun wsSessionEstablished(event: ServerEvent.SessionUpdated) {
         Log.i(TAG, "ws session established: ${event.sessionId}")
-
-        val session = RouteSession(
-            serverSessionId = event.sessionId,
-        )
-        appDatabase.routeSessionDao().insert(session)
-        this.routeSession = session
-        eventBus.publish(AppEventBusEvent.RouteSessionStarted(event.sessionId))
-
+        setupLocalTourSession(event.sessionId)
         val payload = JSONObject().apply {
             put("type", "start_tour")
             put("session_id", event.sessionId)
@@ -62,8 +72,30 @@ class RouteService(
         wsClient.send(payload)
     }
 
+    private suspend fun wsWordsMapReceived(data: NarrationWordsResponseDto) {
+        _narrationChunkId.value = data.chunkId
+        _narrationWords.value = Json.decodeFromJsonElement<List<NarrationWordDto>>(data.words)
+        if (this.lastRouteStopRowId == null) {
+            return
+        }
+        appDatabase.routeStopDao()
+            .updateNarrationWordsMapForStop(this.lastRouteStopRowId, data.words.toString())
+    }
+
     private suspend fun wsAudioChunkReceived(data: ByteArray) {
-        eventBus.publish(AppEventBusEvent.AudioChunkReceived(data))
+        val chunkFile = routeAudioRepository.appendChunk(data) ?: return
+        appDatabase.routeStopDao()
+            .updateNarrationFilePathForStop(this.lastRouteStopRowId, chunkFile.path)
+        eventBus.publish(AppEventBusEvent.AudioChunkReceived(chunkFile))
+    }
+
+    private suspend fun wsRoutePOISReceived(data: RoutePOIDto) {
+        val sessionId = this.routeSession?.id ?: return
+        val lastStopId = this.lastRouteStopRowId ?: return
+        val POIs = data.data.map { poi ->
+            RoutePOI.fromReceivedPoi(poi, sessionId, lastStopId)
+        }
+        appDatabase.routePOIDao().insertAll(POIs)
     }
 
     private suspend fun wsNarrationTranscriptReceived(data: NarrationResponseDto) {
@@ -72,7 +104,8 @@ class RouteService(
             sessionId = this.routeSession?.id ?: return,
             narrationString = text
         )
-        appDatabase.routeStopDao().insert(stop)
+        val stopId = appDatabase.routeStopDao().insert(stop)
+        this.lastRouteStopRowId = stopId.toInt()
         _narrationText.value = text
     }
 
@@ -86,11 +119,9 @@ class RouteService(
         wsClient.onSessionUpdated(::wsSessionEstablished)
         wsClient.onTourStarted(::wsRouteStarted)
         wsClient.onNarrationTranscript(::wsNarrationTranscriptReceived)
-        wsClient.onNarrationWords { data ->
-            _narrationChunkId.value = data.chunkId
-            _narrationWords.value = data.words
-        }
+        wsClient.onNarrationWords(::wsWordsMapReceived)
         wsClient.onAudioChunkReceived(::wsAudioChunkReceived)
+        wsClient.onRoutePOIsReceived(::wsRoutePOISReceived)
         wsClient.connect(WSClientRoute.ROUTE)
     }
 

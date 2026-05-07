@@ -2,6 +2,7 @@ package ai.tour.guide.network.schema.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class NarrationResponseDto(
@@ -21,7 +22,7 @@ data class NarrationWordsResponseDto(
     val type: String,
     @SerialName("chunk_id")
     val chunkId: Int,
-    val words: List<NarrationWordDto>
+    val words: JsonElement
 )
 
 @Serializable
