@@ -7,6 +7,8 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 data class NarrationResponseDto(
     val type: String,
+    @SerialName("narration_id")
+    val narrationId: String? = null,
     val transcript: List<NarrationTranscriptChunkDto>
 )
 
@@ -20,6 +22,8 @@ data class NarrationTranscriptChunkDto(
 @Serializable
 data class NarrationWordsResponseDto(
     val type: String,
+    @SerialName("narration_id")
+    val narrationId: String? = null,
     @SerialName("chunk_id")
     val chunkId: Int,
     val words: JsonElement
