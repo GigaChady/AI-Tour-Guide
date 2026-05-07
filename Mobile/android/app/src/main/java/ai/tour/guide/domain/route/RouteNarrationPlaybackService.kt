@@ -33,17 +33,15 @@ class RouteNarrationPlaybackService(
     private val routeAudioRepository: RouteAudioRepository,
     private val eventBus: AppEventBus
 ) {
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val eventBusScope = CoroutineScope(Dispatchers.Default)
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
     private var hasBroadcastLocationNearCurrentNarrationEnd: Boolean = false
     private var autoPlayEnabled: Boolean = true
     private val _isPlaying = MutableStateFlow(false)
-    private val _hasPlayableChunks = MutableStateFlow(false)
     private val _playbackState = MutableStateFlow(RoutePlaybackState())
 
     val isPlayingFlow: StateFlow<Boolean> = _isPlaying.asStateFlow()
-    val hasPlayableChunksFlow: StateFlow<Boolean> = _hasPlayableChunks.asStateFlow()
     val playbackStateFlow: StateFlow<RoutePlaybackState> = _playbackState.asStateFlow()
 
     private suspend fun ensurePlayer() {
@@ -152,7 +150,6 @@ class RouteNarrationPlaybackService(
 
             autoPlayEnabled = true
             _isPlaying.value = true
-            _hasPlayableChunks.value = true
             publishPlaybackState()
         }
     }
@@ -187,13 +184,11 @@ class RouteNarrationPlaybackService(
             player = null
             autoPlayEnabled = true
             _isPlaying.value = false
-            _hasPlayableChunks.value = false
             _playbackState.value = RoutePlaybackState()
         }
     }
 
     private suspend fun wsAudioChunkReceived(file: File) {
-        _hasPlayableChunks.value = true
         enqueueChunk(file)
     }
 
@@ -210,7 +205,7 @@ class RouteNarrationPlaybackService(
     }
 
     fun onStart() {
-        scope.launch {
+        eventBusScope.launch {
             startEventBusListeners()
         }
     }
