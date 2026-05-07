@@ -9,6 +9,7 @@ class WorkerMessage(BaseModel):
     type: str
     data: Optional[Any] = None
     text: Optional[str] = None
+    narration_id: Optional[str] = None
 
 # ----------------ERROR RESPONSE SCHEMA----------------
 class ErrorResponse(BaseModel):
@@ -163,6 +164,7 @@ class NarrationMessage(BaseModel):
 
 class PoisMessage(BaseModel):
     type: Literal["pois"]
+    narration_id: Optional[str] = None
     data: list[PoiData]
 
 # ----------------WS CONNECT SCHEMA----------------
@@ -177,16 +179,19 @@ class NarrationTranscriptChunk(BaseModel):
 
 class NarrationTranscript(BaseModel):
     type: Literal["narration_transcript"]
+    narration_id: str
     transcript: list[NarrationTranscriptChunk]
 
 
 class NarrationWords(BaseModel):
     type: Literal["narration_words"]
+    narration_id: str
     chunk_id: int
     words: list
 
 class NarrationDone(BaseModel):
     type: Literal["narration_done"]
+    narration_id: str
 
 
 # ----------------REDIS LOCATION EVENT SCHEMA----------------
