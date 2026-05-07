@@ -5,16 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppSettingsDto(
+
     @SerialName("app_theme")
     val appTheme: AppSettingsAppThemeType? = null,
 
-    @SerialName("language")
     val language: String? = null,
 
-    @SerialName("pitch")
     val pitch: Int? = null,
 
-    @SerialName("speed")
     val speed: Int? = null,
 
     @SerialName("detail_level")
