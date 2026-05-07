@@ -44,6 +44,7 @@ fun TourAudioPlayerScreen(
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
+    val playerEnabled by viewModel.playerEnabledFlow.collectAsStateWithLifecycle(false)
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val narrationScrollState = rememberScrollState()
@@ -138,6 +139,7 @@ fun TourAudioPlayerScreen(
                 )
             }
             AudioPlayerWidget(
+                controlsEnabled = playerEnabled,
                 onEndClicked = {
                     backStack?.clear()
                     backStack?.add(Route.TripEndSummary)
@@ -157,7 +159,6 @@ fun TourAudioPlayerScreen(
                 },
                 isPlaying = isPlaying,
                 progressFraction = progressFraction,
-                controlsEnabled = true
             )
         }
     }
