@@ -126,6 +126,10 @@ class RoutePoiResponse(BaseModel):
     lng: float
     description: str | None
 
+
+class RouteMapResponse(BaseModel):
+    geojson: dict | None
+
 class RouteStatsResponse(BaseModel):
     distance_m: float
     duration_s: int
