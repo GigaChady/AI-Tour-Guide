@@ -18,6 +18,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Singleton
+import java.io.File
 
 data class RoutePlaybackState(
     val positionMs: Long = 0L,
@@ -128,7 +129,7 @@ class RouteNarrationPlaybackService(
         }
     }
 
-    private suspend fun enqueueChunk(chunkFile: java.io.File) {
+    private suspend fun enqueueChunk(chunkFile: File) {
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
             val currentPlayer = player ?: return@withContext
@@ -191,25 +192,16 @@ class RouteNarrationPlaybackService(
         }
     }
 
-    private suspend fun wsAudioChunkReceived(data: ByteArray) {
-        val chunkFile = routeAudioRepository.appendChunk(data) ?: return
+    private suspend fun wsAudioChunkReceived(file: File) {
         _hasPlayableChunks.value = true
-        enqueueChunk(chunkFile)
-    }
-
-    private suspend fun wsSessionBegin(sessionId: String) {
-        routeAudioRepository.startSession(sessionId)
+        enqueueChunk(file)
     }
 
     suspend fun startEventBusListeners() {
         eventBus.eventsFlow.collect { event ->
             when (event) {
                 is AppEventBusEvent.AudioChunkReceived -> {
-                    wsAudioChunkReceived(event.data)
-                }
-
-                is AppEventBusEvent.RouteSessionStarted -> {
-                    wsSessionBegin(event.sessionId)
+                    wsAudioChunkReceived(event.file)
                 }
 
                 else -> {}
