@@ -321,9 +321,9 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
             chunk_id, audio, words = await coro
             if audio is None:
                 continue
-            if session_id:
-                session_bytes = uuid.UUID(session_id).bytes
-            await websocket.send_bytes(struct.pack(">16s4s", session_bytes, chunk_id.to_bytes(4, 'big')) + audio) 
+            if narration_id:
+                narration_bytes = uuid.UUID(narration_id).bytes
+            await websocket.send_bytes(struct.pack(">16s4s", narration_bytes, chunk_id.to_bytes(4, 'big')) + audio) 
 
             if words:
                 print(f"[BACKEND] Wysyłane do frontu (narration_words): narration_id={narration_id}, chunk_id={chunk_id}, words={[w['text'] if isinstance(w, dict) and 'text' in w else w for w in words]}")
