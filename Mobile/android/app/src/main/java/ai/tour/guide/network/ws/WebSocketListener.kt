@@ -2,6 +2,7 @@ package ai.tour.guide.network.ws
 
 import ai.tour.guide.network.schema.response.NarrationResponseDto
 import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
+import ai.tour.guide.network.schema.response.RoutePOIDto
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -16,6 +17,8 @@ class WebSocketListeners {
     private var narrationWordsListener: (suspend (data: NarrationWordsResponseDto) -> Unit)? =
         null
     private var audioChunkReceivedListener: (suspend (data: ByteArray) -> Unit)? = null
+
+    private var narrationPOIsListener: (suspend (data: RoutePOIDto) -> Unit)? = null
 
     fun onConnected(listener: suspend (WSEvent.Connected) -> Unit) {
         connectedListener = listener
@@ -43,6 +46,10 @@ class WebSocketListeners {
 
     fun onAudioChunkReceived(listener: suspend (data: ByteArray) -> Unit) {
         audioChunkReceivedListener = listener
+    }
+
+    fun onRoutePOIsReceived(listener: suspend (data: RoutePOIDto) -> Unit) {
+        narrationPOIsListener = listener
     }
 
     suspend fun handleWSEvent(event: WSEvent.Connected) {
@@ -87,6 +94,14 @@ class WebSocketListeners {
                     ),
                 )
             }
+
+            "pois" -> {
+                handleServerEvent(
+                    ServerEvent.RoutePOIs(
+                        Json.decodeFromString<RoutePOIDto>(event)
+                    )
+                )
+            }
         }
     }
 
@@ -108,6 +123,10 @@ class WebSocketListeners {
 
     private suspend fun handleServerEvent(event: ServerEvent.NarrationWords) {
         narrationWordsListener?.invoke(event.data)
+    }
+
+    private suspend fun handleServerEvent(event: ServerEvent.RoutePOIs) {
+        narrationPOIsListener?.invoke(event.data)
     }
 
     fun clearListeners() {
