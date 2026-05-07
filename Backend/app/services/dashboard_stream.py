@@ -233,6 +233,7 @@ async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cf
             data = WorkerMessage(**json.loads(message["data"]))
             if data.type == "pois":
                 poi_list = data.data or []
+                print(f"[BACKEND] Wysyłane do frontu (POI): {json.dumps([poi for poi in poi_list], ensure_ascii=False)[:200]}")
                 msg = PoisMessage(
                     type="pois",
                     data=[PoiData(**poi) for poi in poi_list],
@@ -242,6 +243,7 @@ async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cf
                 if state["mode"] == "tour" and state["route_id"]:
                     await _save_pois(state["route_id"], poi_list)
             elif data.type == "narration" and state["mode"] == "tour":
+                print(f"[BACKEND] Wysyłane do frontu (narracja): {data.text[:200] if data.text else ''}")
                 await _stream_narration(websocket, data.text or "", narration_cfg, data.narration_id or "", session_id)
         except WebSocketDisconnect:
             raise
