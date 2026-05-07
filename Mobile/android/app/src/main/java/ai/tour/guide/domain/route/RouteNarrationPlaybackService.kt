@@ -24,7 +24,8 @@ data class RoutePlaybackState(
     val positionMs: Long = 0L,
     val bufferedPositionMs: Long = 0L,
     val durationMs: Long = 0L,
-    val isPlaying: Boolean = false
+    val isPlaying: Boolean = false,
+    val isEnded: Boolean = false
 )
 
 @Singleton
@@ -33,7 +34,6 @@ class RouteNarrationPlaybackService(
     private val routeAudioRepository: RouteAudioRepository,
     private val eventBus: AppEventBus
 ) {
-    private val eventBusScope = CoroutineScope(Dispatchers.Default)
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
     private var hasBroadcastLocationNearCurrentNarrationEnd: Boolean = false
@@ -81,7 +81,8 @@ class RouteNarrationPlaybackService(
             positionMs = currentPlayer.currentPosition.coerceAtLeast(0L),
             bufferedPositionMs = currentPlayer.bufferedPosition.coerceAtLeast(0L),
             durationMs = duration,
-            isPlaying = currentPlayer.isPlaying
+            isPlaying = currentPlayer.isPlaying,
+            isEnded = currentPlayer.playbackState == Player.STATE_ENDED
         )
         maybeBroadcastLocationNearNarrationEnd(currentPlayer.currentPosition, duration)
     }
@@ -106,49 +107,19 @@ class RouteNarrationPlaybackService(
         }
     }
 
-    private suspend fun preparePlayer() {
-        withContext(Dispatchers.Main.immediate) {
-            val currentPlayer = player ?: return@withContext
-            val chunkFiles = routeAudioRepository.getChunkFiles()
-            if (chunkFiles.isEmpty()) {
-                return@withContext
-            }
-
-            currentPlayer.apply {
-                stop()
-                clearMediaItems()
-                setMediaItems(chunkFiles.map { file ->
-                    MediaItem.fromUri(Uri.fromFile(file))
-                })
-                prepare()
-                playWhenReady = true
-            }
-            _isPlaying.value = true
-        }
-    }
-
-    private suspend fun enqueueChunk(chunkFile: File) {
+    suspend fun playAudioFile(filePath: String) {
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
             val currentPlayer = player ?: return@withContext
-            val mediaItem = MediaItem.fromUri(Uri.fromFile(chunkFile))
 
-            if (currentPlayer.mediaItemCount == 0 || currentPlayer.playbackState == Player.STATE_ENDED) {
-                currentPlayer.stop()
-                currentPlayer.clearMediaItems()
-                currentPlayer.setMediaItem(mediaItem)
-                currentPlayer.prepare()
-                if (autoPlayEnabled) {
-                    currentPlayer.play()
-                }
-                hasBroadcastLocationNearCurrentNarrationEnd = false
-            } else {
-                currentPlayer.addMediaItem(mediaItem)
-                currentPlayer.prepare()
-                currentPlayer.playWhenReady = autoPlayEnabled
-            }
+            currentPlayer.stop()
+            currentPlayer.clearMediaItems()
+            currentPlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(File(filePath))))
+            currentPlayer.prepare()
 
+            hasBroadcastLocationNearCurrentNarrationEnd = false
             autoPlayEnabled = true
+            currentPlayer.play()
             _isPlaying.value = true
             publishPlaybackState()
         }
@@ -158,9 +129,6 @@ class RouteNarrationPlaybackService(
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
             autoPlayEnabled = true
-            if (player?.mediaItemCount == 0) {
-                preparePlayer()
-            }
             player?.play()
             _isPlaying.value = player?.isPlaying == true
         }
@@ -188,26 +156,8 @@ class RouteNarrationPlaybackService(
         }
     }
 
-    private suspend fun wsAudioChunkReceived(file: File) {
-        enqueueChunk(file)
-    }
-
-    suspend fun startEventBusListeners() {
-        eventBus.eventsFlow.collect { event ->
-            when (event) {
-                is AppEventBusEvent.AudioChunkReceived -> {
-                    wsAudioChunkReceived(event.file)
-                }
-
-                else -> {}
-            }
-        }
-    }
-
     fun onStart() {
-        eventBusScope.launch {
-            startEventBusListeners()
-        }
+
     }
 
     val playerListener = object : Player.Listener {

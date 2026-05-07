@@ -3,11 +3,12 @@ package ai.tour.guide.ui.screens.main.route
 import ai.tour.guide.data.room.AppDatabase
 import ai.tour.guide.data.shared.BaseViewModel
 import ai.tour.guide.domain.AppEventBus
-import ai.tour.guide.domain.AppEventBusEvent
 import ai.tour.guide.domain.route.RouteNarrationPlaybackService
 import ai.tour.guide.domain.route.RouteService
 import ai.tour.guide.network.schema.response.NarrationWordDto
+import android.Manifest
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -34,11 +35,13 @@ class TourRouteViewModel(
     val isPlayingFlow: StateFlow<Boolean> = routeAudioService.isPlayingFlow
     val playbackStateFlow = routeAudioService.playbackStateFlow
 
-    private val sessionId = MutableStateFlow<String?>(null)
+    private val sessionId: StateFlow<String?> = routeService.currentSessionIdFlow
     private val currentStopId = MutableStateFlow<Int?>(null)
+    private var lastPlayedStopId: Int? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _stopFlow = currentStopId.flatMapLatest { stopId ->
+        Log.i(TAG, "Getting stop $stopId")
         appDatabase.routeStopDao().getStopById(stopId)
     }
 
@@ -47,16 +50,30 @@ class TourRouteViewModel(
         appDatabase.routeStopDao().getLatestStopIdForServerSession(id)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val playerEnabledFlow = sessionId.flatMapLatest { id ->
+        appDatabase.routeStopDao().narrationFilesExistsForCurrentSession(id)
+    }
+
     private val eventBusScope = CoroutineScope(Dispatchers.Default)
 
     private fun startStopStateListeners() {
         viewModelScope.launch {
-            _latestStopId.collect { stopId ->
-                if (currentStopId.value == null) {
-                    currentStopId.value = stopId
+            combine(_latestStopId, playbackStateFlow) { latestStopId, playback ->
+                Pair(latestStopId, playback)
+            }.collect { (latestStopId, playback) ->
+                val current = currentStopId.value
+                if (current == null) {
+                    currentStopId.value = latestStopId
+                } else if (latestStopId != null && current != latestStopId) {
+                    if (playback.isEnded) {
+                        Log.i(TAG, "Changing current stop to $latestStopId")
+                        currentStopId.value = latestStopId
+                    }
                 }
             }
         }
+
         viewModelScope.launch {
             combine(_stopFlow, playbackStateFlow) { stop, playback ->
                 Pair(stop, playback)
@@ -80,21 +97,27 @@ class TourRouteViewModel(
                 }
             }
         }
+
+        viewModelScope.launch {
+            _stopFlow.collect { stop ->
+                val filePath = stop?.narrationAudioFilePath
+                if (stop != null && filePath != null && stop.id != lastPlayedStopId) {
+                    lastPlayedStopId = stop.id
+                    routeAudioService.playAudioFile(filePath)
+                }
+            }
+        }
     }
 
     private suspend fun initEventListeners() {
         appEventBus.eventsFlow.collect { event ->
             when (event) {
-                is AppEventBusEvent.RouteSessionStarted -> {
-                    Log.i("TourRouteViewModel", "Route session started: ${event.sessionId}")
-                    sessionId.value = event.sessionId
-                }
-
                 else -> {}
             }
         }
     }
 
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     private suspend fun onTourStart() {
         routeService.onStart()
         routeAudioService.onStart()
@@ -185,6 +208,10 @@ class TourRouteViewModel(
         }
 
         return playbackPositionMs.coerceAtMost(playbackDurationMs).toDouble() >= word.offsetMs
+    }
+
+    private companion object {
+        const val TAG = "TourRouteViewModel"
     }
 }
 
