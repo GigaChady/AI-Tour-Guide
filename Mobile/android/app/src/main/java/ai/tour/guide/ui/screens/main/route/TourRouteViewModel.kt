@@ -1,78 +1,101 @@
 package ai.tour.guide.ui.screens.main.route
 
+import ai.tour.guide.data.room.AppDatabase
 import ai.tour.guide.data.shared.BaseViewModel
+import ai.tour.guide.domain.AppEventBus
+import ai.tour.guide.domain.AppEventBusEvent
 import ai.tour.guide.domain.route.RouteNarrationPlaybackService
 import ai.tour.guide.domain.route.RouteService
 import ai.tour.guide.network.schema.response.NarrationWordDto
+import android.util.Log
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class TourRouteViewModel(
     val routeAudioService: RouteNarrationPlaybackService,
-    val routeService: RouteService
+    val routeService: RouteService,
+    val appEventBus: AppEventBus,
+    val appDatabase: AppDatabase
 ) :
     BaseViewModel<TourRouteState>(TourRouteState.default()) {
-    private var narrationText = MutableStateFlow("")
-    private var narrationChunkId = MutableStateFlow<Int?>(null)
-    private var narrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
-
     val isPlayingFlow: StateFlow<Boolean> = routeAudioService.isPlayingFlow
     val playbackStateFlow = routeAudioService.playbackStateFlow
-    val hasPlayableChunksFlow: StateFlow<Boolean> = routeAudioService.hasPlayableChunksFlow
 
-    private fun startPlaybackStateListeners() {
+    private val sessionId = MutableStateFlow<String?>(null)
+    private val currentStopId = MutableStateFlow<Int?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _stopFlow = currentStopId.flatMapLatest { stopId ->
+        appDatabase.routeStopDao().getStopById(stopId)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _latestStopId = sessionId.flatMapLatest { id ->
+        appDatabase.routeStopDao().getLatestStopIdForServerSession(id)
+    }
+
+    private val eventBusScope = CoroutineScope(Dispatchers.Default)
+
+    private fun startStopStateListeners() {
         viewModelScope.launch {
-            combine(
-                narrationText,
-                narrationChunkId,
-                narrationWords,
-                routeAudioService.playbackStateFlow
-            ) { text, chunkId, words, playbackState ->
-                val narrationText = buildNarrationText(
-                    text = text,
-                    words = words,
-                    playbackPositionMs = playbackState.positionMs,
-                    playbackDurationMs = playbackState.durationMs
-                )
-                TourRouteState(
-                    text = text,
-                    styledText = narrationText.text,
-                    currentWordStartOffset = narrationText.currentWordStartOffset,
-                    narrationChunkId = chunkId,
-                    words = words
-                )
-            }.collect { routeState ->
-                updateData {
-                    routeState
+            _latestStopId.collect { stopId ->
+                if (currentStopId.value == null) {
+                    currentStopId.value = stopId
                 }
             }
         }
         viewModelScope.launch {
-            combine(
-                routeService.narrationTextFlow,
-                routeService.narrationChunkIdFlow,
-                routeService.narrationWordsFlow
-            ) { text, chunkId, words ->
-                Triple(text, chunkId, words)
-            }.collect { (text, chunkId, words) ->
-                narrationText.value = text
-                narrationChunkId.value = chunkId
-                narrationWords.value = words
+            combine(_stopFlow, playbackStateFlow) { stop, playback ->
+                Pair(stop, playback)
+            }.collect { (stop, playback) ->
+                val text = stop?.narrationString ?: ""
+                val words = stop?.narrationWordsMap ?: emptyList()
+
+                val narrationText = buildNarrationText(
+                    text = text,
+                    words = words,
+                    playbackPositionMs = playback.positionMs,
+                    playbackDurationMs = playback.durationMs
+                )
+                updateData {
+                    TourRouteState(
+                        text = text,
+                        styledText = narrationText.text,
+                        currentWordStartOffset = narrationText.currentWordStartOffset,
+                        words = words
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun initEventListeners() {
+        appEventBus.eventsFlow.collect { event ->
+            when (event) {
+                is AppEventBusEvent.RouteSessionStarted -> {
+                    Log.i("TourRouteViewModel", "Route session started: ${event.sessionId}")
+                    sessionId.value = event.sessionId
+                }
+
+                else -> {}
             }
         }
     }
 
     private suspend fun onTourStart() {
-        startPlaybackStateListeners()
         routeService.onStart()
         routeAudioService.onStart()
     }
@@ -98,6 +121,10 @@ class TourRouteViewModel(
 
 
     fun onStart() {
+        startStopStateListeners()
+        eventBusScope.launch {
+            initEventListeners()
+        }
         viewModelScope.launch {
             onTourStart()
         }
