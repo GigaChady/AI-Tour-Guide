@@ -3,6 +3,7 @@ package ai.tour.guide.network.ws
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.network.schema.response.NarrationResponseDto
 import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
+import ai.tour.guide.network.schema.response.RoutePOIDto
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -88,6 +89,10 @@ class WSClient {
 
     fun onAudioChunkReceived(listener: suspend (data: ByteArray) -> Unit) {
         webSocketListeners.onAudioChunkReceived(listener)
+    }
+
+    fun onRoutePOIsReceived(listener: suspend (data: RoutePOIDto) -> Unit) {
+        webSocketListeners.onRoutePOIsReceived(listener)
     }
 
     fun onDestroy() {
