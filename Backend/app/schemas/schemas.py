@@ -199,3 +199,7 @@ class LocationEvent(BaseModel):
     is_narration: bool | None = None
 
 
+class RoutePoints(BaseModel):
+    route_id: str
+    points: list[Location]
+
