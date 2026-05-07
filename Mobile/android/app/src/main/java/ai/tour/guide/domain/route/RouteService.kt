@@ -21,9 +21,6 @@ import android.location.Location
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -40,16 +37,8 @@ class RouteService(
     private val appDatabase: AppDatabase,
     private val routeAudioRepository: RouteAudioRepository,
 ) {
-    private var cachedLocation: Location? = null
     private var routeSession: RouteSession? = null
-    private val _narrationText = MutableStateFlow("")
-    val narrationTextFlow: StateFlow<String> = _narrationText.asStateFlow()
-    private val _narrationWords = MutableStateFlow<List<NarrationWordDto>>(emptyList())
-    val narrationWordsFlow: StateFlow<List<NarrationWordDto>> =
-        _narrationWords.asStateFlow()
-    private val _narrationChunkId = MutableStateFlow<Int?>(null)
-    val narrationChunkIdFlow: StateFlow<Int?> = _narrationChunkId.asStateFlow()
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val eventBusScope = CoroutineScope(Dispatchers.Default)
     private var lastRouteStopRowId: Int? = null
 
     private suspend fun setupLocalTourSession(sessionId: String) {
@@ -84,10 +73,9 @@ class RouteService(
 
     private suspend fun wsWordsMapReceived(data: NarrationWordsResponseDto) {
         val lastRouteStop = getLastStopId(data.narrationId)
-        _narrationChunkId.value = data.chunkId
-        _narrationWords.value = Json.decodeFromJsonElement<List<NarrationWordDto>>(data.words)
+        val words = Json.decodeFromJsonElement<List<NarrationWordDto>>(data.words)
         appDatabase.routeStopDao()
-            .updateNarrationWordsMapForStop(lastRouteStop, data.words.toString())
+            .updateNarrationWordsMapForStop(lastRouteStop, words)
     }
 
     private suspend fun wsAudioChunkReceived(data: ByteArray) {
@@ -116,7 +104,6 @@ class RouteService(
             narrationString = text
         )
         appDatabase.routeStopDao().upsert(stop)
-        _narrationText.value = text
     }
 
     private suspend fun initWSClient() {
@@ -162,7 +149,6 @@ class RouteService(
             return
         }
 
-        cachedLocation = location
         sendLocation(location)
     }
 
@@ -178,13 +164,12 @@ class RouteService(
         apiClient.fetchBearerTokenIfNeeded()
         initWSClient()
         wsBeginSession()
-        scope.launch {
+        eventBusScope.launch {
             startEventBusListeners()
         }
     }
 
     fun onDestroy() {
-        cachedLocation = null
         wsClient.onDestroy()
     }
 

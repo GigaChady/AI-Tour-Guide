@@ -31,8 +31,6 @@ data class RouteStop(
     val serverNarrationId: String? = null,
     @ColumnInfo(name = "location_title")
     val locationTitle: String? = null,
-    @ColumnInfo(name = "location_image")
-    val locationImage: String? = null,
     @ColumnInfo(name = "narration_string")
     val narrationString: String? = null,
     @ColumnInfo(name = "narration_words_map")

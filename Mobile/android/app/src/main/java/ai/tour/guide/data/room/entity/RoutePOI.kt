@@ -7,7 +7,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
 
 @Entity(
     tableName = "pois",
@@ -58,8 +57,4 @@ data class RoutePOI(
                 lng = data.lng
             )
     }
-
-    fun photosList(): List<String> =
-        runCatching { Json.decodeFromString<List<String>>(photos) }
-            .getOrDefault(emptyList())
 }
