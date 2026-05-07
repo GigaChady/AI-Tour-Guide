@@ -2,6 +2,7 @@ package ai.tour.guide.ui.screens.main.appSettings
 
 import ai.tour.guide.data.appSettings.AppSettingsAppThemeType
 import ai.tour.guide.data.appSettings.AppSettingsDetailLevelType
+import ai.tour.guide.network.schema.request.SaveAppSettingsRequestDto
 
 
 data class AppSettingsState(
@@ -15,4 +16,14 @@ data class AppSettingsState(
     companion object {
         fun default() = AppSettingsState()
     }
+}
+
+fun AppSettingsState.toRequestDto(): SaveAppSettingsRequestDto {
+    return SaveAppSettingsRequestDto(
+        language = this.language,
+        pitch = this.pitch.toInt(),
+        speed = this.speed.toInt(),
+        detailLevel = this.detailLevel,
+        autoPlay = this.autoPlay
+    )
 }
