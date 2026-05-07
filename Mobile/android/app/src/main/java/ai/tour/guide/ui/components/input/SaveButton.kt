@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SaveButton(
     modifier: Modifier = Modifier,
-    label: String = stringResource(R.string.profile_preferences_cta),
     onClick: () -> Unit
 ) {
     Button(
@@ -37,6 +36,6 @@ fun SaveButton(
             imageVector = Icons.Default.Save,
             contentDescription = null
         )
-        Text(label)
+        Text(stringResource(R.string.profile_preferences_cta))
     }
 }
