@@ -99,4 +99,3 @@ async def route_map(
         geojson=geojson,
     )
 
-
