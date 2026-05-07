@@ -26,7 +26,6 @@ from app.services.tts.factory import TTSFactory
 
 _tts_semaphore = asyncio.Semaphore(20)
 
-
 async def handle_dashboard_ws(websocket: WebSocket, db: AsyncSession, redis) -> None:
     await websocket.accept()
 
@@ -232,16 +231,18 @@ async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cf
             data = WorkerMessage(**json.loads(message["data"]))
             if data.type == "pois":
                 poi_list = data.data or []
+                print(f"[BACKEND] Wysyłane do frontu (POI): {json.dumps([poi for poi in poi_list], ensure_ascii=False)[:200]}")
                 msg = PoisMessage(
                     type="pois",
-                    narration_id=data.narration_id,
                     data=[PoiData(**poi) for poi in poi_list],
+                    narration_id=data.narration_id,
                 )
                 await websocket.send_text(msg.model_dump_json())
                 if state["mode"] == "tour" and state["route_id"]:
                     await _save_pois(state["route_id"], poi_list)
             elif data.type == "narration" and state["mode"] == "tour":
-                await _stream_narration(websocket, data.text or "", narration_cfg, data.narration_id or "")
+                print(f"[BACKEND] Wysyłane do frontu (narracja): {data.text[:200] if data.text else ''}")
+                await _stream_narration(websocket, data.text or "", narration_cfg, data.narration_id or "", session_id)
         except WebSocketDisconnect:
             raise
         except Exception:
@@ -279,7 +280,7 @@ async def _save_pois(route_id: str, poi_list: list) -> None:
 
 
 #same as before
-async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict, narration_id: str) -> None:
+async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict, narration_id: str, session_id: str = "") -> None:
     chunks = chunk_text(text)
     if not chunks:
         return
@@ -292,6 +293,7 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
 
     cfg = DEFAULT_NARRATION | narration_cfg
 
+    print(f"[BACKEND] Wysyłane do frontu (narration_transcript): {[sentence for _, sentence in chunks]}")
     await websocket.send_text(NarrationTranscript(
         type="narration_transcript",
         narration_id=narration_id,
@@ -319,13 +321,17 @@ async def _stream_narration(websocket: WebSocket, text: str, narration_cfg: dict
             chunk_id, audio, words = await coro
             if audio is None:
                 continue
-            await websocket.send_bytes(struct.pack(">I", chunk_id) + audio) # binary frames instead of base64
+            if session_id:
+                session_bytes = uuid.UUID(session_id).bytes
+            await websocket.send_bytes(struct.pack(">16s4s", session_bytes, chunk_id.to_bytes(4, 'big')) + audio) 
 
             if words:
+                print(f"(narration_words): {[w['text'] if isinstance(w, dict) and 'text' in w else w for w in words]}")
                 await websocket.send_text(NarrationWords(
-                    type="narration_words", narration_id=narration_id, chunk_id=chunk_id, words=words,
+                    
+                    type="narration_words", chunk_id=chunk_id, words=words,
                 ).model_dump_json())
-        await websocket.send_text(NarrationDone(type="narration_done", narration_id=narration_id).model_dump_json())
+        await websocket.send_text(NarrationDone(type="narration_done").model_dump_json())
     finally:
         for t in tasks:
             t.cancel()
