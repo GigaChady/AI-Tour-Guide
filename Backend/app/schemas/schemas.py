@@ -35,15 +35,19 @@ class GoogleAuthRequest(BaseModel):
 class RefreshRequest(BaseModel): 
     refresh_token: str
 
-class TokenResponse(BaseModel): 
+class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+
+class KeycloakLoginResponse(BaseModel):
+    login_url: str
 
 
 # ----------------ROUTE SCHEMAS----------------
 class Location(BaseModel):
     lat: float
     lng: float
+    ai: bool = False
 
 
 # ----------------ONBOARDING SCHEMAS----------------
@@ -121,6 +125,10 @@ class RoutePoiResponse(BaseModel):
     lat: float
     lng: float
     description: str | None
+
+
+class RouteMapResponse(BaseModel):
+    geojson: dict | None
 
 class RouteStatsResponse(BaseModel):
     distance_m: float
