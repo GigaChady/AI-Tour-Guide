@@ -17,27 +17,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImageCarousel(modifier: Modifier = Modifier) {
+fun ImageCarousel(
+    modifier: Modifier = Modifier,
+    imageUrls: List<String> = emptyList()
+) {
     data class CarouselItem(
         val id: Int,
-        @param:DrawableRes val imageResId: Int,
+        val imageUrl: String? = null,
+        @param:DrawableRes val imageResId: Int? = null,
         val contentDescription: String
     )
 
-    val items = remember {
-        listOf(
-            CarouselItem(0, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(1, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem( 2,R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(3, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(4, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(5, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(6, R.drawable.dashboard_example_img_2, "test1"),
-            CarouselItem(7, R.drawable.dashboard_example_img_2, "test1"),
-        )
+    val fallbackResIds = remember {
+        listOf(R.drawable.dashboard_example_img_2)
+    }
+
+    val sanitizedUrls = remember(imageUrls) {
+        imageUrls.map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    val items = remember(sanitizedUrls) {
+        val targetItemCount = 8
+        val urlItems = repeatToSize(sanitizedUrls, targetItemCount)
+        if (urlItems.isNotEmpty()) {
+            urlItems.mapIndexed { index, url ->
+                CarouselItem(index, imageUrl = url, contentDescription = "poi_image_$index")
+            }
+        } else {
+            repeatToSize(fallbackResIds, targetItemCount).mapIndexed { index, resId ->
+                CarouselItem(index, imageResId = resId, contentDescription = "fallback_image_$index")
+            }
+        }
     }
 
     BoxWithConstraints(modifier = modifier) {
@@ -53,14 +67,34 @@ fun ImageCarousel(modifier: Modifier = Modifier) {
             contentPadding = PaddingValues(horizontal = 16.dp)
         ) { i ->
             val item = items[i]
-            Image(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .maskClip(MaterialTheme.shapes.extraLarge),
-                painter = painterResource(id = item.imageResId),
-                contentDescription = item.contentDescription,
-                contentScale = ContentScale.Crop
-            )
+            if (item.imageUrl.isNullOrBlank()) {
+                Image(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge),
+                    painter = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
+                    contentDescription = item.contentDescription,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge),
+                    model = item.imageUrl,
+                    contentDescription = item.contentDescription,
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
+                    error = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2)
+                )
+            }
         }
     }
+}
+
+private fun <T> repeatToSize(source: List<T>, size: Int): List<T> {
+    if (source.isEmpty() || size <= 0) {
+        return emptyList()
+    }
+    return List(size) { index -> source[index % source.size] }
 }
