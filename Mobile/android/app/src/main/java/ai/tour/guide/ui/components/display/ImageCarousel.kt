@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,39 +28,33 @@ fun ImageCarousel(
     modifier: Modifier = Modifier,
     imageUrls: List<String> = emptyList()
 ) {
-    val validImageUrls = remember(imageUrls) {
-        imageUrls.filter { it.isNotBlank() }
-    }
-    val imageContentDescription = stringResource(R.string.dashboard_poi_image_content_description)
-    val imageLoadErrorText = stringResource(R.string.dashboard_image_load_error_text)
+    data class CarouselItem(
+        val id: Int,
+        val imageUrl: String? = null,
+        @param:DrawableRes val imageResId: Int? = null,
+        val contentDescription: String
+    )
 
-    if (validImageUrls.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_empty_carousel_text),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.outline
-            )
+    val fallbackResIds = remember {
+        listOf(R.drawable.dashboard_example_img_2)
+    }
+
+    val sanitizedUrls = remember(imageUrls) {
+        imageUrls.map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    val items = remember(sanitizedUrls) {
+        val targetItemCount = 8
+        val urlItems = repeatToSize(sanitizedUrls, targetItemCount)
+        if (urlItems.isNotEmpty()) {
+            urlItems.mapIndexed { index, url ->
+                CarouselItem(index, imageUrl = url, contentDescription = "poi_image_$index")
+            }
+        } else {
+            repeatToSize(fallbackResIds, targetItemCount).mapIndexed { index, resId ->
+                CarouselItem(index, imageResId = resId, contentDescription = "fallback_image_$index")
+            }
         }
-        return
-    }
-
-    if (validImageUrls.size == 1) {
-        CarouselImage(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(top = 16.dp, bottom = 16.dp)
-                .clip(MaterialTheme.shapes.extraLarge),
-            imageUrl = validImageUrls.first(),
-            contentDescription = imageContentDescription,
-            errorText = imageLoadErrorText
-        )
-        return
     }
 
     BoxWithConstraints(modifier = modifier) {
@@ -75,51 +69,35 @@ fun ImageCarousel(
             itemSpacing = 8.dp,
             contentPadding = PaddingValues(horizontal = 16.dp)
         ) { i ->
-            CarouselImage(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .maskClip(MaterialTheme.shapes.extraLarge),
-                imageUrl = validImageUrls[i],
-                contentDescription = imageContentDescription,
-                errorText = imageLoadErrorText
-            )
+            val item = items[i]
+            if (item.imageUrl.isNullOrBlank()) {
+                Image(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge),
+                    painter = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
+                    contentDescription = item.contentDescription,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge),
+                    model = item.imageUrl,
+                    contentDescription = item.contentDescription,
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
+                    error = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2)
+                )
+            }
         }
     }
 }
 
-@Composable
-private fun CarouselImage(
-    modifier: Modifier = Modifier,
-    imageUrl: String,
-    contentDescription: String,
-    errorText: String
-) {
-    SubcomposeAsyncImage(
-        modifier = modifier,
-        model = imageUrl,
-        contentDescription = contentDescription,
-        contentScale = ContentScale.Crop,
-        loading = {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        },
-        error = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = errorText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-        }
-    )
+private fun <T> repeatToSize(source: List<T>, size: Int): List<T> {
+    if (source.isEmpty() || size <= 0) {
+        return emptyList()
+    }
+    return List(size) { index -> source[index % source.size] }
 }
