@@ -167,6 +167,7 @@ class RouteService(
         val payload = JSONObject().apply {
             put("lat", location.latitude)
             put("lng", location.longitude)
+            put("ai", true)
         }
         wsClient.send(payload)
     }
