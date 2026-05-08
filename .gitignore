@@ -138,7 +138,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 /data/
-data/
+/Backend/data/
 
 # Flask stuff:
 instance/
@@ -290,7 +290,6 @@ __marimo__/
 __MACOSX/
 .AppleDouble
 .LSOverride
-Icon[]
 
 # Thumbnails
 ._*

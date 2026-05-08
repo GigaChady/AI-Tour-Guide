@@ -44,7 +44,8 @@ fun TourAudioPlayerScreen(
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
-    val hasPlayableChunks by viewModel.hasPlayableChunksFlow.collectAsStateWithLifecycle()
+    val playerEnabled by viewModel.playerEnabledFlow.collectAsStateWithLifecycle(false)
+
     var showBottomSheet by remember { mutableStateOf(false) }
     val narrationScrollState = rememberScrollState()
     var narrationTextLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -52,12 +53,16 @@ fun TourAudioPlayerScreen(
         if (playbackState.durationMs <= 0L) {
             0f
         } else {
-            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(0f, 1f)
+            (playbackState.positionMs.toFloat() / playbackState.durationMs.toFloat()).coerceIn(
+                0f,
+                1f
+            )
         }
     }
 
     LaunchedEffect(viewModelState.data.currentWordStartOffset, narrationTextLayoutResult) {
-        val currentWordStartOffset = viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
+        val currentWordStartOffset =
+            viewModelState.data.currentWordStartOffset ?: return@LaunchedEffect
         val layoutResult = narrationTextLayoutResult ?: return@LaunchedEffect
         if (currentWordStartOffset !in 0 until layoutResult.layoutInput.text.length) {
             return@LaunchedEffect
@@ -134,6 +139,7 @@ fun TourAudioPlayerScreen(
                 )
             }
             AudioPlayerWidget(
+                controlsEnabled = playerEnabled,
                 onEndClicked = {
                     backStack?.clear()
                     backStack?.add(Route.TripEndSummary)
@@ -142,7 +148,6 @@ fun TourAudioPlayerScreen(
                     showBottomSheet = true
                 },
                 onPreviousClicked = {
-                    viewModel.onSkipPreviousClicked()
                 },
                 onPlayClicked = {
                     viewModel.onPlayClicked()
@@ -151,11 +156,9 @@ fun TourAudioPlayerScreen(
                     viewModel.onPauseClicked()
                 },
                 onNextClicked = {
-                    viewModel.onSkipNextClicked()
                 },
                 isPlaying = isPlaying,
                 progressFraction = progressFraction,
-                controlsEnabled = hasPlayableChunks
             )
         }
     }

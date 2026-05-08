@@ -7,7 +7,6 @@ data class TourRouteState(
     val text: String,
     val styledText: AnnotatedString,
     val currentWordStartOffset: Int?,
-    val narrationChunkId: Int?,
     val words: List<NarrationWordDto>
 ) {
     companion object {
@@ -15,7 +14,6 @@ data class TourRouteState(
             text = "",
             styledText = AnnotatedString(""),
             currentWordStartOffset = null,
-            narrationChunkId = null,
             words = emptyList()
         )
     }
