@@ -64,7 +64,7 @@
     <string name="dashboard_header_text_content_part1">Jakie miejsca</string>
     <string name="dashboard_header_text_content_part2">odwiedzimy dzisiaj?</string>
     <string name="dashboard_main_section_header">Twoja lokalizacja</string>
-    <string name="dashboard_main_section_header_subtext_example">Warszawa Stare Miasto</string>
+    <string name="dashboard_main_section_header_subtext_example">Nieznana</string>
     <string name="dashboard_main_cta_button_text">Rozpocznij zwiedzanie</string>
 
     <string name="profile_preferences_account_settings_section_header">Ustawienia konta</string>
@@ -74,8 +74,7 @@
     <string name="account_settings_cta">Zapisz</string>
 
     <string name="tour_audio_player_location_header">Twoja lokalizacja</string>
-    <string name="tour_audio_player_session_timeout">Przekroczono limit czasu sesji</string>
-    <string name="tour_audio_player_example_location">Zamek Królewski</string>
+    <string name="tour_audio_player_example_location">Wyszukiwanie...</string>
 
     <string name="tour_audio_player_narration_header_title">Opis</string>
     <string name="tour_audio_player_narration_header_example_content_before">Przed Tobą stoi majestatyczny Zamek Królewski. To tutaj, w tym wspaniałym budynku, królowie Polski podejmowali najważniejsze decyzje dla kraju.</string>
@@ -137,9 +136,7 @@
     <string name="location_permission_required_body">Aplikacja potrzebuje dostępu do dokładnej lokalizacji, aby pokazywać Twoje położenie i prowadzić zwiedzanie wokół Ciebie. Wybierz dokładną lokalizację podczas przyznawania uprawnienia.</string>
     <string name="location_permission_grant_button">Przyznaj dokładną lokalizację</string>
     <string name="location_permission_settings_button">Otwórz ustawienia aplikacji</string>
-    <string name="location_services_disabled_title">Usługi lokalizacji są wyłączone</string>
-    <string name="location_services_disabled_body">Proszę włączyć usługi lokalizacji w ustawieniach urządzenia, aby korzystać z tej funkcji.</string>
-    <string name="location_services_enable_button">Włącz usługi lokalizacji</string>
+
     <!-- Validation errors -->
     <string name="validation_error_password_mismatch">Hasła są różne</string>
 
