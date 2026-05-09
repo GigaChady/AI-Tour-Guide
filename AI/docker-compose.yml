@@ -75,6 +75,7 @@ services:
       - MINIO_SECRET_KEY=admin12345
       - MINIO_BUCKET=poi-images
       - MINIO_SECURE=false
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
     volumes:
       - .:/app
     networks:
