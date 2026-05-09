@@ -1,6 +1,7 @@
 package ai.tour.guide.domain.route
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
@@ -16,6 +17,7 @@ class RouteAudioRepository(private val context: Context) {
     private val chunkFiles = mutableListOf<File>()
 
     suspend fun startSession(sessionId: String) {
+        Log.i(TAG, "starting session with $sessionId")
         withContext(Dispatchers.IO) {
             synchronized(lock) {
                 val directory = File(context.cacheDir, "route_audio_$sessionId")
@@ -42,8 +44,9 @@ class RouteAudioRepository(private val context: Context) {
             }
         }
     }
-    
+
     suspend fun clearSession() {
+        Log.i(TAG, "clearing session")
         withContext(Dispatchers.IO) {
             synchronized(lock) {
                 sessionDir?.deleteRecursively()
@@ -56,5 +59,9 @@ class RouteAudioRepository(private val context: Context) {
 
     private fun chunkFileName(index: Int): String {
         return "chunk_%05d.mp3".format(index)
+    }
+
+    private companion object {
+        const val TAG = "RouteAudioRepository"
     }
 }
