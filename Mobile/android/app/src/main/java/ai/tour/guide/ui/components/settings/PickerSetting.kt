@@ -29,14 +29,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-@Preview(showBackground = true)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PickerSetting(
     modifier: Modifier = Modifier,
+    options: List<String> = emptyList(),
+    selectedIndex: Int = 0,
+    onOptionSelected: (Int) -> Unit = {},
     leadingIcon: @Composable (() -> Unit)? = null,
     title: String = "",
     promptTitle: String = "",
@@ -66,9 +67,9 @@ fun PickerSetting(
     if (showSheet) {
         StyledSettingsBottomSheet(
             title = promptTitle,
-            options = listOf("Opcja 1", "Opcja 2", "Opcja 3"),
-            selectedOption = "Opcja 1",
-            onOptionSelected = {},
+            options = options,
+            selectedIndex = selectedIndex,
+            onOptionSelected = onOptionSelected,
             onDismiss = { showSheet = false }
         )
     }
@@ -79,8 +80,8 @@ fun PickerSetting(
 fun StyledSettingsBottomSheet(
     title: String,
     options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit,
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -111,12 +112,12 @@ fun StyledSettingsBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            options.forEach { option ->
-                val isSelected = option == selectedOption
+            options.forEachIndexed { index, option ->
+                val isSelected = index == selectedIndex
 
                 ListItem(
                     modifier = Modifier.clickable {
-                        onOptionSelected(option)
+                        onOptionSelected(index)
                         onDismiss()
                     },
                     headlineContent = {

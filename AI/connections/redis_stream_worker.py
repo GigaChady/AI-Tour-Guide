@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 import time
+import uuid
 import redis
 import json
 from connections.configs.redis_config import RedisWorkerConfig
@@ -36,9 +37,21 @@ class RedisStreamWorker:
 
     def _publish(self, session_id, poi_message, narration_message) -> None:
         channel = f"{self.config.pubsub_prefix}{session_id}"
-        self.client.publish(channel, poi_message)
-        self.client.publish(channel, narration_message)
+        narration_id = str(uuid.uuid4())
+
+        poi_data = json.loads(poi_message)
+        poi_data["narration_id"] = narration_id
+        self.client.publish(channel, json.dumps(poi_data))
+
+        if narration_message:
+            nar_data = json.loads(narration_message)
+            nar_data["narration_id"] = narration_id
+            self.client.publish(channel, json.dumps(nar_data))
         logger.info("Published stream event for session %s", session_id)
+
+    def _publish_error(self, session_id):
+        channel = f"{self.config.pubsub_prefix}{session_id}"
+        logger.info("Error in generating narration and POI - None detected due to server failure or no POI detection %s", session_id)
 
 
     def run(self) -> None:
@@ -65,7 +78,10 @@ class RedisStreamWorker:
                         # Process into narration and pois messages
                         session_id, narration_msg, pois_msg = self.processor.process(event, prefs_event)
 
-                        self._publish(session_id, pois_msg, narration_msg)
+                        if pois_msg:
+                            self._publish(session_id, pois_msg, narration_msg)
+                        else:
+                            self._publish_error(session_id)
 
                     except Exception:
                         logger.exception("Failed to process stream event %s; skipping", entry_id)

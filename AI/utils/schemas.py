@@ -96,6 +96,9 @@ class NarrationSettings(BaseModel):
     ollama_base_url: str = Field(
         default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     )
+    include_narration: bool = True
+    photo_count:int = 1
+
 
 
 
