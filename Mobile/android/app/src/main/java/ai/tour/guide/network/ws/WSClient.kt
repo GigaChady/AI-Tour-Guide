@@ -1,8 +1,10 @@
 package ai.tour.guide.network.ws
 
 import ai.tour.guide.config.AppConfig
+import ai.tour.guide.network.schema.response.AudioChunkReceivedResponseDto
 import ai.tour.guide.network.schema.response.NarrationResponseDto
 import ai.tour.guide.network.schema.response.NarrationWordsResponseDto
+import ai.tour.guide.network.schema.response.RoutePOIDto
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -31,10 +33,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.json.JSONObject
-import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Singleton
 import java.util.concurrent.TimeUnit
 
-@Factory
+@Singleton
 class WSClient {
     private val webSocketListeners = WebSocketListeners()
     private var job: Job? = null
@@ -86,8 +88,16 @@ class WSClient {
         webSocketListeners.onNarrationWords(listener)
     }
 
-    fun onAudioChunkReceived(listener: suspend (data: ByteArray) -> Unit) {
+    fun onAudioChunkReceived(listener: suspend (data: AudioChunkReceivedResponseDto) -> Unit) {
         webSocketListeners.onAudioChunkReceived(listener)
+    }
+
+    fun onRoutePOIsReceived(listener: suspend (data: RoutePOIDto) -> Unit) {
+        webSocketListeners.onRoutePOIsReceived(listener)
+    }
+
+    fun onEndOfStream(listener: suspend (ServerEvent.EndOfStream) -> Unit) {
+        webSocketListeners.onEndOfStream(listener)
     }
 
     fun onDestroy() {
@@ -129,22 +139,22 @@ class WSClient {
                         when (data) {
                             is Frame.Text -> {
                                 val text = data.readText()
-                                scope.launch {
-                                    webSocketListeners.handleRawEvent(text)
-                                }
                                 Log.i(
                                     TAG,
                                     "Received message: $text"
                                 )
+                                scope.launch {
+                                    webSocketListeners.handleRawEvent(text)
+                                }
                             }
 
                             is Frame.Binary -> {
                                 val data = data.readBytes()
-                                webSocketListeners.handleAudioChunkReceived(data)
                                 Log.i(
                                     TAG,
                                     "Received binary audio data of length ${data.size}"
                                 )
+                                webSocketListeners.handleAudioChunkReceived(data)
                             }
 
                             else -> {

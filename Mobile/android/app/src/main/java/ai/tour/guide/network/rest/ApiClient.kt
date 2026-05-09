@@ -30,6 +30,10 @@ class ApiClient(
 ) {
     suspend fun fetchBearerToken() {
         val refreshToken = appDataRepository.getRefreshToken()
+        if (refreshToken.isEmpty()) {
+            Log.w(TAG, "Refresh token is empty, skipping refresh request.")
+            return
+        }
         val payload = AuthRefreshRequestDto(refreshToken)
         var authResponse: ApiResponse<TokenResponseDto>?
 

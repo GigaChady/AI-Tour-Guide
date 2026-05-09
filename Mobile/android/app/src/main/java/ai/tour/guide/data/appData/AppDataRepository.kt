@@ -3,6 +3,7 @@ package ai.tour.guide.data.appData
 import ai.tour.guide.data.appSettings.AppSettingsAppThemeType
 import ai.tour.guide.network.schema.response.TokenResponseDto
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
@@ -67,8 +68,23 @@ class AppDataRepository(private val context: Context) {
     suspend fun getRefreshToken(): String {
         val preferencesSnapshot = context.PersistedAppDataStore.data.first()
         val refreshToken = preferencesSnapshot.refreshToken
-            ?: throw Exception("Trying to refresh bearer token with a null refresh")
+
+        if (refreshToken.isNullOrEmpty()) {
+            clearSessionData()
+            Log.e("AppDataRepository", "Trying to refresh bearer token with a null or empty refresh token")
+            return ""
+        }
         return refreshToken
+    }
+
+    suspend fun clearSessionData() {
+        _bearerToken.value = null
+        context.PersistedAppDataStore.updateData { currentData ->
+            currentData.copy(
+                refreshToken = null,
+                onboardingCompleted = false
+            )
+        }
     }
 
     suspend fun updateAppTheme(theme: AppSettingsAppThemeType) {

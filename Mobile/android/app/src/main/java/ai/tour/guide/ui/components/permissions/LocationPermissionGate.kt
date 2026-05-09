@@ -56,19 +56,19 @@ fun LocationPermissionGate(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var hasLocationPermission by remember {
-        mutableStateOf(context.hasLocationPermission())
+    var hasLocationAccess by remember {
+        mutableStateOf(context.hasLocationPermission() && context.isLocationEnabled())
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        hasLocationPermission = context.hasLocationPermission()
+        hasLocationAccess = context.hasLocationPermission() && context.isLocationEnabled()
     }
 
     LaunchedEffect(requestOnFirstComposition) {
-        hasLocationPermission = context.hasLocationPermission()
-        if (requestOnFirstComposition && !hasLocationPermission) {
+        hasLocationAccess = context.hasLocationPermission() && context.isLocationEnabled()
+        if (requestOnFirstComposition && !context.hasLocationPermission()) {
             locationPermissionLauncher.launch(LocationPermissions)
         }
     }
@@ -76,7 +76,7 @@ fun LocationPermissionGate(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                hasLocationPermission = context.hasLocationPermission()
+                hasLocationAccess = context.hasLocationPermission() && context.isLocationEnabled()
             }
         }
 
@@ -87,19 +87,26 @@ fun LocationPermissionGate(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        if (hasLocationPermission) {
+        if (hasLocationAccess) {
             content()
         } else {
+            val hasPermission = context.hasLocationPermission()
             LocationPermissionRequiredModal(
+                hasPermission = hasPermission,
                 onRequestPermission = {
                     locationPermissionLauncher.launch(LocationPermissions)
                 },
                 onOpenSettings = {
-                    val intent = Intent(
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.fromParts("package", context.packageName, null)
-                    )
-                    context.startActivity(intent)
+                    if (!hasPermission) {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null)
+                        )
+                        context.startActivity(intent)
+                    } else {
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        context.startActivity(intent)
+                    }
                 }
             )
         }
@@ -108,6 +115,7 @@ fun LocationPermissionGate(
 
 @Composable
 private fun LocationPermissionRequiredModal(
+    hasPermission: Boolean,
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -136,25 +144,27 @@ private fun LocationPermissionRequiredModal(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(R.string.location_permission_required_title),
+                    text = if (hasPermission) stringResource(R.string.location_services_disabled_title) else stringResource(R.string.location_permission_required_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(top = 24.dp)
                 )
                 Text(
-                    text = stringResource(R.string.location_permission_required_body),
+                    text = if (hasPermission) stringResource(R.string.location_services_disabled_body) else stringResource(R.string.location_permission_required_body),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .padding(top = 12.dp, bottom = 24.dp)
                         .fillMaxWidth()
                 )
-                Button(
-                    onClick = onRequestPermission,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = stringResource(R.string.location_permission_grant_button))
+                if (!hasPermission) {
+                    Button(
+                        onClick = onRequestPermission,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = stringResource(R.string.location_permission_grant_button))
+                    }
                 }
                 FilledTonalButton(
                     onClick = onOpenSettings,
@@ -162,7 +172,7 @@ private fun LocationPermissionRequiredModal(
                         .padding(top = 8.dp)
                         .fillMaxWidth()
                 ) {
-                    Text(text = stringResource(R.string.location_permission_settings_button))
+                    Text(text = if (hasPermission) stringResource(R.string.location_services_enable_button) else stringResource(R.string.location_permission_settings_button))
                 }
             }
         }
@@ -174,4 +184,14 @@ private fun Context.hasLocationPermission(): Boolean {
         this,
         Manifest.permission.ACCESS_FINE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun Context.isLocationEnabled(): Boolean {
+    val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+        locationManager.isLocationEnabled
+    } else {
+        locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+        locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+    }
 }

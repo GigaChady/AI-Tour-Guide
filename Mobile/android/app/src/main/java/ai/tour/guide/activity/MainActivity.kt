@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -43,7 +44,9 @@ class MainActivity : ComponentActivity() {
                     } else {
                         Route.Dashboard
                     }
-                    AppNavigationDisplay(initialRoute = startRoute)
+                    key(completed) {
+                        AppNavigationDisplay(initialRoute = startRoute)
+                    }
                 }
             }
         }

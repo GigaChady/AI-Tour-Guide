@@ -1,6 +1,7 @@
 package ai.tour.guide.domain.route
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
@@ -16,6 +17,7 @@ class RouteAudioRepository(private val context: Context) {
     private val chunkFiles = mutableListOf<File>()
 
     suspend fun startSession(sessionId: String) {
+        Log.i(TAG, "starting session with $sessionId")
         withContext(Dispatchers.IO) {
             synchronized(lock) {
                 val directory = File(context.cacheDir, "route_audio_$sessionId")
@@ -33,13 +35,8 @@ class RouteAudioRepository(private val context: Context) {
             synchronized(lock) {
                 val directory = sessionDir ?: return@withContext null
                 val chunkFile = File(directory, chunkFileName(nextChunkIndex++))
-                if (chunk.size <= 4) {
-                    return@withContext null
-                }
-                // The first 4 bytes are the chunk id; only persist the MP3 payload.
-                val audioBytes = chunk.copyOfRange(4, chunk.size)
                 FileOutputStream(chunkFile).use { output ->
-                    output.write(audioBytes)
+                    output.write(chunk)
                     output.flush()
                 }
                 chunkFiles.add(chunkFile)
@@ -48,11 +45,8 @@ class RouteAudioRepository(private val context: Context) {
         }
     }
 
-    fun getChunkFiles(): List<File> {
-        return synchronized(lock) { chunkFiles.toList() }
-    }
-
     suspend fun clearSession() {
+        Log.i(TAG, "clearing session")
         withContext(Dispatchers.IO) {
             synchronized(lock) {
                 sessionDir?.deleteRecursively()
@@ -65,5 +59,9 @@ class RouteAudioRepository(private val context: Context) {
 
     private fun chunkFileName(index: Int): String {
         return "chunk_%05d.mp3".format(index)
+    }
+
+    private companion object {
+        const val TAG = "RouteAudioRepository"
     }
 }
