@@ -12,3 +12,6 @@ redis
 pydantic
 pydantic-settings
 minio
+unidecode
+
+langchain-nvidia-ai-endpoints

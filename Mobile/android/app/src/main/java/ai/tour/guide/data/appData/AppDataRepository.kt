@@ -1,5 +1,6 @@
 package ai.tour.guide.data.appData
 
+import ai.tour.guide.data.appSettings.AppSettingsAppThemeType
 import ai.tour.guide.network.schema.response.TokenResponseDto
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -24,6 +25,11 @@ class AppDataRepository(private val context: Context) {
     val onboardingCompletedFlow: Flow<Boolean> =
         context.PersistedAppDataStore.data.map { preferences ->
             preferences.onboardingCompleted
+        }
+
+    val appThemeFlow: Flow<AppSettingsAppThemeType> =
+        context.PersistedAppDataStore.data.map { preferences ->
+            preferences.appTheme
         }
 
     suspend fun updateCredentialsWithAPIResponse(response: TokenResponseDto?) {
@@ -63,5 +69,11 @@ class AppDataRepository(private val context: Context) {
         val refreshToken = preferencesSnapshot.refreshToken
             ?: throw Exception("Trying to refresh bearer token with a null refresh")
         return refreshToken
+    }
+
+    suspend fun updateAppTheme(theme: AppSettingsAppThemeType) {
+        context.PersistedAppDataStore.updateData { currentData ->
+            currentData.copy(appTheme = theme)
+        }
     }
 }
