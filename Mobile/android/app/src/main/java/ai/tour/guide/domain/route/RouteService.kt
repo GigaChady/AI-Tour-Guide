@@ -183,10 +183,11 @@ class RouteService(
         startEventBusListeners()
     }
 
-    fun onDestroy() {
+    suspend fun onDestroy() {
         wsClient.onDestroy()
         locationService.stopTracking()
         eventBusJob?.cancel()
+        routeAudioRepository.clearSession()
     }
 
     fun startEventBusListeners() {
