@@ -195,6 +195,7 @@ services:
       - MINIO_SECRET_KEY=admin12345
       - MINIO_BUCKET=poi-images
       - MINIO_SECURE=false
+    env_file: ./AI/.env
     volumes:
       - ./AI:/app
     networks:
