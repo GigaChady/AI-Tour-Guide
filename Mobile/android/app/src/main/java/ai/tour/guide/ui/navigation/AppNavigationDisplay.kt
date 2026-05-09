@@ -109,6 +109,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
                     )
                 }
             }
+
             entry<Route.TripEndSummary> {
                 WithScreenTopBar(backStack = backStack) {
                     TripEndSummaryScreen(

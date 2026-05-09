@@ -158,6 +158,21 @@ class TourRouteViewModel(
         }
     }
 
+    private fun promotePendingNarration() {
+        currentNarrationText.value = pendingNarrationText
+        currentNarrationChunkId.value = pendingNarrationChunkId
+        currentNarrationWords.value = pendingNarrationWords
+    }
+
+    private fun resetNarrationState() {
+        pendingNarrationText = ""
+        pendingNarrationChunkId = null
+        pendingNarrationWords = emptyList()
+        currentNarrationText.value = ""
+        currentNarrationChunkId.value = null
+        currentNarrationWords.value = emptyList()
+    }
+
     private fun buildNarrationText(
         text: String,
         words: List<NarrationWordDto>,
