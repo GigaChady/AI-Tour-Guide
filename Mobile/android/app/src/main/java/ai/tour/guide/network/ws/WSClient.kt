@@ -96,6 +96,10 @@ class WSClient {
         webSocketListeners.onRoutePOIsReceived(listener)
     }
 
+    fun onEndOfStream(listener: suspend (ServerEvent.EndOfStream) -> Unit) {
+        webSocketListeners.onEndOfStream(listener)
+    }
+
     fun onDestroy() {
         webSocketListeners.clearListeners()
         scope.launch {
