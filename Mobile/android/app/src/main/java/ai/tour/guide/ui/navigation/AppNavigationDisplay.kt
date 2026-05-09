@@ -5,7 +5,7 @@ import ai.tour.guide.ui.navigation.wrappers.WithDrawerLayout
 import ai.tour.guide.ui.navigation.wrappers.WithOnlySafeDrawingPadding
 import ai.tour.guide.ui.navigation.wrappers.WithScreenTopBar
 import ai.tour.guide.ui.screens.main.AccountSettingsScreen
-import ai.tour.guide.ui.screens.main.AppSettingsScreen
+import ai.tour.guide.ui.screens.main.appSettings.AppSettingsScreen
 import ai.tour.guide.ui.screens.main.MapUserPositionScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
@@ -109,6 +109,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
                     )
                 }
             }
+
             entry<Route.TripEndSummary> {
                 WithScreenTopBar(backStack = backStack) {
                     TripEndSummaryScreen(
