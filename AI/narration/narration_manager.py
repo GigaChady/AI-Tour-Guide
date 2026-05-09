@@ -2,8 +2,12 @@ import logging
 
 from langchain_community.tools import DuckDuckGoSearchRun
 
+from narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
+from narration.filtering.cloud_filtering_agent import CloudFilteringAgent
 from narration.filtering.filtering_agent import FilteringAgent
 from narration.location.location_processor import LocationProcessor
+from narration.narrative_generation.abstract_narrative_generation_agent import AbstractNarrativeGenerationAgent
+from narration.narrative_generation.cloud_narrative_agent import CloudNarrativeAgent
 from narration.photos.abstract_photo_generator import AbstractPhotoGenerator
 from narration.photos.default_photo_generator import DefaultPhotoGenerator
 from utils.schemas import NarrationSettings
@@ -12,7 +16,7 @@ from narration.scraping.scraping_agent import LangChainScrapingAgent
 
 logger = logging.getLogger(__name__)
 class NarrationManager:
-    def __init__(self, narration_settings: NarrationSettings, location_processor: LocationProcessor, scraping_agent: LangChainScrapingAgent, filtering_agent: FilteringAgent, narrative_generation_agent: OllamaNarrativeGenerationAgent):
+    def __init__(self, narration_settings: NarrationSettings, location_processor: LocationProcessor, scraping_agent: LangChainScrapingAgent, filtering_agent: AbstractFilteringAgent, narrative_generation_agent: AbstractNarrativeGenerationAgent):
         self.narration_settings = narration_settings
         self.location_processor = location_processor
         self.scraping_agent = scraping_agent
@@ -47,7 +51,7 @@ class NarrationManager:
             narration_settings=narration_settings,
             location_processor=LocationProcessor(narration_settings=narration_settings, user_agent="my-user-agent"),
             scraping_agent=LangChainScrapingAgent(narration_settings=narration_settings, search_tool=DuckDuckGoSearchRun()),
-            filtering_agent=FilteringAgent(narration_settings=narration_settings),
-            narrative_generation_agent=OllamaNarrativeGenerationAgent(narration_settings=narration_settings),
+            filtering_agent=CloudFilteringAgent(narration_settings=narration_settings),
+            narrative_generation_agent=CloudNarrativeAgent(narration_settings=narration_settings),
         )
         return narration_manager
