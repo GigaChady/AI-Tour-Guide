@@ -136,7 +136,9 @@
     <string name="location_permission_required_body">Aplikacja potrzebuje dostępu do dokładnej lokalizacji, aby pokazywać Twoje położenie i prowadzić zwiedzanie wokół Ciebie. Wybierz dokładną lokalizację podczas przyznawania uprawnienia.</string>
     <string name="location_permission_grant_button">Przyznaj dokładną lokalizację</string>
     <string name="location_permission_settings_button">Otwórz ustawienia aplikacji</string>
-
+    <string name="location_services_disabled_title">Usługi lokalizacji są wyłączone</string>
+    <string name="location_services_disabled_body">Proszę włączyć usługi lokalizacji w ustawieniach urządzenia, aby korzystać z tej funkcji.</string>
+    <string name="location_services_enable_button">Włącz usługi lokalizacji</string>
     <!-- Validation errors -->
     <string name="validation_error_password_mismatch">Hasła są różne</string>
 
