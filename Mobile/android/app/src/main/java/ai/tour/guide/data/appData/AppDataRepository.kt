@@ -77,6 +77,16 @@ class AppDataRepository(private val context: Context) {
         return refreshToken
     }
 
+    suspend fun clearSessionData() {
+        _bearerToken.value = null
+        context.PersistedAppDataStore.updateData { currentData ->
+            currentData.copy(
+                refreshToken = null,
+                onboardingCompleted = false
+            )
+        }
+    }
+
     suspend fun updateAppTheme(theme: AppSettingsAppThemeType) {
         context.PersistedAppDataStore.updateData { currentData ->
             currentData.copy(appTheme = theme)

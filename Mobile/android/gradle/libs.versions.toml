@@ -29,6 +29,7 @@ slf4jAndroid = "1.7.36"
 media3 = "1.10.0"
 ksp = "2.3.7"
 room = "2.8.4"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -85,6 +86,7 @@ androidx-media3-datasource = { module = "androidx.media3:media3-datasource", ver
 androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
