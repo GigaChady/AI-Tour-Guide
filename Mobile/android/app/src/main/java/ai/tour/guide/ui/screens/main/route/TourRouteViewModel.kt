@@ -6,9 +6,7 @@ import ai.tour.guide.domain.AppEventBus
 import ai.tour.guide.domain.route.RouteNarrationPlaybackService
 import ai.tour.guide.domain.route.RouteService
 import ai.tour.guide.network.schema.response.NarrationWordDto
-import android.Manifest
 import android.util.Log
-import androidx.annotation.RequiresPermission
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -117,10 +115,14 @@ class TourRouteViewModel(
         }
     }
 
-    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     private suspend fun onTourStart() {
-        routeService.onStart()
-        routeAudioService.onStart()
+        try {
+            routeService.onStart()
+            routeAudioService.onStart()
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Missing location permission, cant start $TAG", e)
+        }
+
     }
 
     fun onDestroy() {
@@ -128,6 +130,8 @@ class TourRouteViewModel(
             routeAudioService.onDestroy()
             routeService.onDestroy()
         }
+        currentStopId.value = null
+        lastPlayedStopId = null
     }
 
     fun onPlayClicked() {
