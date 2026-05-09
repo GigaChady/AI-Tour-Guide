@@ -143,17 +143,18 @@ class RouteNarrationPlaybackService(
     }
 
     suspend fun onDestroy() {
-        routeAudioRepository.clearSession()
         hasBroadcastLocationNearCurrentNarrationEnd = false
         withContext(Dispatchers.Main.immediate) {
             progressJob?.cancel()
             progressJob = null
+            player?.stop()
             player?.release()
             player = null
             autoPlayEnabled = true
             _isPlaying.value = false
             _playbackState.value = RoutePlaybackState()
         }
+        routeAudioRepository.clearSession()
     }
 
     fun onStart() {

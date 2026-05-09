@@ -23,6 +23,7 @@ class WebSocketListeners {
         null
 
     private var narrationPOIsListener: (suspend (data: RoutePOIDto) -> Unit)? = null
+    private var endOfStreamListener: (suspend (ServerEvent.EndOfStream) -> Unit)? = null
 
     fun onConnected(listener: suspend (WSEvent.Connected) -> Unit) {
         connectedListener = listener
@@ -54,6 +55,10 @@ class WebSocketListeners {
 
     fun onRoutePOIsReceived(listener: suspend (data: RoutePOIDto) -> Unit) {
         narrationPOIsListener = listener
+    }
+
+    fun onEndOfStream(listener: suspend (ServerEvent.EndOfStream) -> Unit) {
+        endOfStreamListener = listener
     }
 
     suspend fun handleWSEvent(event: WSEvent.Connected) {
@@ -104,6 +109,12 @@ class WebSocketListeners {
                     ServerEvent.RoutePOIs(
                         Json.decodeFromString<RoutePOIDto>(event)
                     )
+                )
+            }
+
+            "end_of_stream" -> {
+                handleServerEvent(
+                    ServerEvent.EndOfStream(sessionID)
                 )
             }
         }
@@ -163,6 +174,10 @@ class WebSocketListeners {
         narrationPOIsListener?.invoke(event.data)
     }
 
+    private suspend fun handleServerEvent(event: ServerEvent.EndOfStream) {
+        endOfStreamListener?.invoke(event)
+    }
+
     fun clearListeners() {
         connectedListener = null
         disconnectedListener = null
@@ -170,5 +185,6 @@ class WebSocketListeners {
         tourStartedListener = null
         narrationTranscriptListener = null
         narrationWordsListener = null
+        endOfStreamListener = null
     }
 }
