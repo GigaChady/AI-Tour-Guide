@@ -132,6 +132,7 @@ class TourRouteViewModel(
         }
         currentStopId.value = null
         lastPlayedStopId = null
+        updateData { TourRouteState.default() }
     }
 
     fun onPlayClicked() {

@@ -117,6 +117,10 @@ class RouteService(
         appDatabase.routeStopDao().upsert(stop)
     }
 
+    private suspend fun wsEndOfStreamReceived(event: ServerEvent.EndOfStream) {
+        Log.i(TAG, "End of stream received for session: ${event.sessionId}")
+    }
+
     private suspend fun initWSClient() {
         wsClient.onConnected { event: WSEvent.Connected ->
             Log.i(TAG, "ws connected: $event")
@@ -130,6 +134,7 @@ class RouteService(
         wsClient.onNarrationWords(::wsWordsMapReceived)
         wsClient.onAudioChunkReceived(::wsAudioChunkReceived)
         wsClient.onRoutePOIsReceived(::wsRoutePOISReceived)
+        wsClient.onEndOfStream(::wsEndOfStreamReceived)
         wsClient.connect(WSClientRoute.ROUTE)
     }
 
@@ -188,6 +193,9 @@ class RouteService(
         locationService.stopTracking()
         eventBusJob?.cancel()
         routeAudioRepository.clearSession()
+        _currentSessionId.value = null
+        routeSession = null
+        lastRouteStopRowId = null
     }
 
     fun startEventBusListeners() {
