@@ -6,15 +6,15 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
 @Composable
-fun SegmentedButton(modifier: Modifier = Modifier, options: List<String> = listOf()) {
-    var selectedIndex by remember { mutableIntStateOf(0) }
+fun SegmentedButton(
+    modifier: Modifier = Modifier,
+    options: List<String> = listOf(),
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit
+) {
     SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
         options.forEachIndexed { index, label ->
             SegmentedButton(
@@ -22,7 +22,7 @@ fun SegmentedButton(modifier: Modifier = Modifier, options: List<String> = listO
                     index = index,
                     count = options.size
                 ),
-                onClick = { selectedIndex = index },
+                onClick = { onOptionSelected(index) },
                 selected = index == selectedIndex,
                 label = { Text(label) }
             )

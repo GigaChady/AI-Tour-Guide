@@ -11,6 +11,16 @@ Filtering Ollama Settings (FILTERING_OLLAMA_ prefix):
     - FILTERING_OLLAMA_TOP_P: Top-p nucleus sampling (default: 0.7, lower = faster)
     - FILTERING_OLLAMA_NUM_PREDICT: Max tokens to generate (default: 256, lower = faster)
 
+Cloud Filtering Settings (CLOUD_FILTERING_ prefix):
+    - CLOUD_FILTERING_PROMPT_LANGUAGE: Language used for the composed prompt (default: en)
+    - CLOUD_FILTERING_INCLUDE_PROMPT: Whether to include the Prompt for narration (default: false)
+
+Cloud Narrative Settings (CLOUD_NARRATIVE_ prefix):
+    - CLOUD_NARRATIVE_MODEL_NAME: Model name for cloud narration generation (default: meta/llama-3.1-8b-instruct)
+    - CLOUD_NARRATIVE_TEMPERATURE: Temperature for cloud narration generation (default: 0.4)
+    - CLOUD_NARRATIVE_TOP_P: Top-p nucleus sampling (default: 0.9)
+    - CLOUD_NARRATIVE_MAX_TOKENS: Max tokens to generate (default: 700)
+
 Narrative Generation Ollama Settings (NARRATIVE_OLLAMA_ prefix):
     - NARRATIVE_OLLAMA_MODEL_NAME: Model name for narration generation (default: mistral-nemo)
     - NARRATIVE_OLLAMA_TEMPERATURE: Temperature for narration (default: 0.2)
@@ -31,11 +41,10 @@ Example .env file for fast mode:
     NARRATIVE_OLLAMA_TOP_P=0.7
     NARRATIVE_OLLAMA_NUM_PREDICT=400
 """
-import os
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
+from narration.configs.cloud_narration_config import CloudFilteringSettings, CloudNarrativeSettings
 from utils.schemas import NarrationDetailLevel, NarrationLanguage
 
 
@@ -81,6 +90,7 @@ class FilteringOllamaSettings(BaseSettings):
         default=256,
         description="Maximum tokens to generate (lower = faster)"
     )
+
 
 
 class NarrativeGenerationOllamaSettings(BaseSettings):
@@ -183,6 +193,16 @@ class NarrationSettings(BaseSettings):
     filtering_ollama: FilteringOllamaSettings = Field(
         default_factory=FilteringOllamaSettings,
         description="Configuration settings for filtering Ollama model"
+    )
+
+    cloud_filtering: CloudFilteringSettings = Field(
+        default_factory=CloudFilteringSettings,
+        description="Configuration settings for cloud filtering prompt composition"
+    )
+
+    cloud_narrative: CloudNarrativeSettings = Field(
+        default_factory=CloudNarrativeSettings,
+        description="Configuration settings for cloud narrative generation model"
     )
 
     narrative_generation_ollama: NarrativeGenerationOllamaSettings = Field(
