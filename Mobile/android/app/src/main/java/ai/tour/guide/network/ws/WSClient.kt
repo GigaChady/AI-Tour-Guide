@@ -100,6 +100,10 @@ class WSClient {
         webSocketListeners.onEndOfStream(listener)
     }
 
+    fun onTimeout(listener: suspend (ServerEvent.Timeout) -> Unit) {
+        webSocketListeners.onTimeout(listener)
+    }
+
     fun onDestroy() {
         webSocketListeners.clearListeners()
         scope.launch {

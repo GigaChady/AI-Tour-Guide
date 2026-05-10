@@ -3,6 +3,7 @@ package ai.tour.guide.ui.screens.main.route
 import ai.tour.guide.data.room.AppDatabase
 import ai.tour.guide.data.shared.BaseViewModel
 import ai.tour.guide.domain.AppEventBus
+import ai.tour.guide.domain.AppEventBusEvent
 import ai.tour.guide.domain.route.RouteNarrationPlaybackService
 import ai.tour.guide.domain.route.RouteService
 import ai.tour.guide.network.schema.response.NarrationWordDto
@@ -12,13 +13,14 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
@@ -32,13 +34,34 @@ class TourRouteViewModel(
     BaseViewModel<TourRouteState>(TourRouteState.default()) {
     val isPlayingFlow: StateFlow<Boolean> = routeAudioService.isPlayingFlow
     val playbackStateFlow = routeAudioService.playbackStateFlow
-
     private val sessionId: StateFlow<String?> = routeService.currentSessionIdFlow
-    private val currentStopId = MutableStateFlow<Int?>(null)
+    val currentStopId = MutableStateFlow<Int?>(null)
+    private val currentLatestStopId = MutableStateFlow<Int?>(null)
     private var lastPlayedStopId: Int? = null
+    private val currentHistoryOffset = MutableStateFlow(0)
+    private var stopStateListenersJob: Job? = null
+    private var eventListenersJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _stopFlow = currentStopId.flatMapLatest { stopId ->
+    val stopsCount = currentLatestStopId.flatMapLatest { stopId ->
+        appDatabase.routeStopDao().getStopsCountUntilStopId(stopId)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val selectedStopId =
+        combine(currentLatestStopId, currentHistoryOffset) { stopId, offset ->
+            Pair(stopId, offset)
+        }.flatMapLatest { (stopId, offset) ->
+            appDatabase.routeStopDao().getStopIdByOffsetFromStop(stopId, offset)
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentStopIndex = currentStopId.flatMapLatest { stopId ->
+        appDatabase.routeStopDao().getStopIndexById(stopId)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentStopFlow = currentStopId.flatMapLatest { stopId ->
         Log.i(TAG, "Getting stop $stopId")
         appDatabase.routeStopDao().getStopById(stopId)
     }
@@ -53,55 +76,97 @@ class TourRouteViewModel(
         appDatabase.routeStopDao().narrationFilesExistsForCurrentSession(id)
     }
 
-    private val eventBusScope = CoroutineScope(Dispatchers.Default)
-
     private fun startStopStateListeners() {
-        viewModelScope.launch {
-            combine(_latestStopId, playbackStateFlow) { latestStopId, playback ->
-                Pair(latestStopId, playback)
-            }.collect { (latestStopId, playback) ->
-                val current = currentStopId.value
-                if (current == null) {
-                    currentStopId.value = latestStopId
-                } else if (latestStopId != null && current != latestStopId) {
-                    if (playback.isEnded) {
-                        Log.i(TAG, "Changing current stop to $latestStopId")
-                        currentStopId.value = latestStopId
+        if (stopStateListenersJob?.isActive == true) {
+            return
+        }
+
+        stopStateListenersJob = viewModelScope.launch {
+            launch {
+                _latestStopId.collect { latestStopId ->
+                    if (currentLatestStopId.value == null) {
+                        currentLatestStopId.value = latestStopId
                     }
                 }
             }
-        }
 
-        viewModelScope.launch {
-            combine(_stopFlow, playbackStateFlow) { stop, playback ->
-                Pair(stop, playback)
-            }.collect { (stop, playback) ->
-                val text = stop?.narrationString ?: ""
-                val words = stop?.narrationWordsMap ?: emptyList()
+            launch {
+                combine(
+                    _latestStopId,
+                    playbackStateFlow.map { it.isEnded }.distinctUntilChanged()
+                ) { latestStopId, isPlaybackEnded ->
+                    Pair(latestStopId, isPlaybackEnded)
+                }.collect { (latestStopId, isPlaybackEnded) ->
+                    if (!isPlaybackEnded) {
+                        return@collect
+                    }
 
-                val narrationText = buildNarrationText(
-                    text = text,
-                    words = words,
-                    playbackPositionMs = playback.positionMs,
-                    playbackDurationMs = playback.durationMs
-                )
-                updateData {
-                    TourRouteState(
-                        text = text,
-                        styledText = narrationText.text,
-                        currentWordStartOffset = narrationText.currentWordStartOffset,
-                        words = words
-                    )
+                    val offset = currentHistoryOffset.value
+                    if (offset > 0) {
+                        currentHistoryOffset.value = offset - 1
+                        return@collect
+                    }
+
+                    val current = currentLatestStopId.value
+                    if (current == null) {
+                        currentLatestStopId.value = latestStopId
+                    } else if (latestStopId != null && current != latestStopId) {
+                        Log.i(TAG, "Changing current stop to $latestStopId")
+                        currentLatestStopId.value = latestStopId
+                    }
                 }
             }
-        }
 
-        viewModelScope.launch {
-            _stopFlow.collect { stop ->
-                val filePath = stop?.narrationAudioFilePath
-                if (stop != null && filePath != null && stop.id != lastPlayedStopId) {
-                    lastPlayedStopId = stop.id
-                    routeAudioService.playAudioFile(filePath)
+            launch {
+                selectedStopId.collect { stopId ->
+                    if (stopId != null) {
+                        currentStopId.value = stopId
+                    } else {
+                        currentHistoryOffset.value = 0
+                        currentStopId.value = currentLatestStopId.value
+                    }
+                }
+            }
+
+            launch {
+                combine(
+                    currentStopFlow,
+                    playbackStateFlow,
+                    currentStopIndex,
+                    stopsCount
+                ) { stop, playback, index, total ->
+                    Triple(stop, playback, Pair(index, total))
+                }.collect { (stop, playback, counts) ->
+                    val (index, total) = counts
+                    val text = stop?.narrationString ?: ""
+                    val words = stop?.narrationWordsMap ?: emptyList()
+
+                    val narrationText = buildNarrationText(
+                        text = text,
+                        words = words,
+                        playbackPositionMs = playback.positionMs,
+                        playbackDurationMs = playback.durationMs
+                    )
+                    updateData {
+                        TourRouteState(
+                            text = text,
+                            styledText = narrationText.text,
+                            currentWordStartOffset = narrationText.currentWordStartOffset,
+                            words = words,
+                            currentStopIndex = index,
+                            totalStops = total
+                        )
+                    }
+                }
+            }
+
+            launch {
+                currentStopFlow.collect { stop ->
+                    val filePath = stop?.narrationAudioFilePath
+                    if (stop != null && filePath != null && stop.id != lastPlayedStopId) {
+                        lastPlayedStopId = stop.id
+                        routeAudioService.playAudioFile(filePath)
+                    }
                 }
             }
         }
@@ -110,6 +175,25 @@ class TourRouteViewModel(
     private suspend fun initEventListeners() {
         appEventBus.eventsFlow.collect { event ->
             when (event) {
+                is AppEventBusEvent.AudioChunkNearlyFinished -> {
+                    Log.i(
+                        TAG,
+                        "current offset is ${currentHistoryOffset.value}, ${if (currentHistoryOffset.value == 0) "requesting" else "skipping"} sending location"
+                    )
+                    if (currentHistoryOffset.value == 0) {
+                        routeService.sendLastKnownLocation()
+                    }
+                }
+
+                is AppEventBusEvent.RouteTimeout -> {
+                    Log.i(TAG, "Route timeout: ${event.reason}")
+                    updateData {
+                        copy(
+                            isSuccess = true,
+                        )
+                    }
+                }
+
                 else -> {}
             }
         }
@@ -131,6 +215,12 @@ class TourRouteViewModel(
             routeService.onDestroy()
         }
         currentStopId.value = null
+        currentLatestStopId.value = null
+        currentHistoryOffset.value = 0
+        stopStateListenersJob?.cancel()
+        stopStateListenersJob = null
+        eventListenersJob?.cancel()
+        eventListenersJob = null
         lastPlayedStopId = null
         updateData { TourRouteState.default() }
     }
@@ -150,8 +240,10 @@ class TourRouteViewModel(
 
     fun onStart() {
         startStopStateListeners()
-        eventBusScope.launch {
-            initEventListeners()
+        if (eventListenersJob?.isActive != true) {
+            eventListenersJob = viewModelScope.launch {
+                initEventListeners()
+            }
         }
         viewModelScope.launch {
             onTourStart()
@@ -213,6 +305,16 @@ class TourRouteViewModel(
         }
 
         return playbackPositionMs.coerceAtMost(playbackDurationMs).toDouble() >= word.offsetMs
+    }
+
+    fun onNextClicked() {
+        currentHistoryOffset.value = (currentHistoryOffset.value - 1).coerceAtLeast(0)
+    }
+
+    fun onPrevClicked() {
+        val totalStops = viewStateFlow.value.data.totalStops ?: return
+        val maxOffset = (totalStops - 1).coerceAtLeast(0)
+        currentHistoryOffset.value = (currentHistoryOffset.value + 1).coerceAtMost(maxOffset)
     }
 
     private companion object {
