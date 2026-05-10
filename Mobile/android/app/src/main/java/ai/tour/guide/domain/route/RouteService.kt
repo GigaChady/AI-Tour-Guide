@@ -22,12 +22,9 @@ import android.Manifest
 import android.location.Location
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.json.JSONObject
@@ -41,11 +38,10 @@ class RouteService(
     private val eventBus: AppEventBus,
     private val locationService: LocationService,
     private val appDatabase: AppDatabase,
+    private val appEventBus: AppEventBus,
     private val routeAudioRepository: RouteAudioRepository,
 ) {
     private var routeSession: RouteSession? = null
-    private val eventBusScope = CoroutineScope(Dispatchers.Default)
-    private var eventBusJob: kotlinx.coroutines.Job? = null
     private var lastRouteStopRowId: Int? = null
 
     private val _currentSessionId = MutableStateFlow<String?>(null)
@@ -121,6 +117,10 @@ class RouteService(
         Log.i(TAG, "End of stream received for session: ${event.sessionId}")
     }
 
+    private suspend fun wsOnTimeout(event: ServerEvent.Timeout) {
+        appEventBus.publish(AppEventBusEvent.RouteTimeout(event.reason))
+    }
+
     private suspend fun initWSClient() {
         wsClient.onConnected { event: WSEvent.Connected ->
             Log.i(TAG, "ws connected: $event")
@@ -135,6 +135,7 @@ class RouteService(
         wsClient.onAudioChunkReceived(::wsAudioChunkReceived)
         wsClient.onRoutePOIsReceived(::wsRoutePOISReceived)
         wsClient.onEndOfStream(::wsEndOfStreamReceived)
+        wsClient.onTimeout(::wsOnTimeout)
         wsClient.connect(WSClientRoute.ROUTE)
     }
 
@@ -152,7 +153,7 @@ class RouteService(
         sendLastKnownLocation()
     }
 
-    private suspend fun sendLastKnownLocation() {
+    suspend fun sendLastKnownLocation() {
         val location = try {
             locationService.getLastKnownLocation()
         } catch (exception: SecurityException) {
@@ -185,32 +186,15 @@ class RouteService(
         }
         initWSClient()
         wsBeginSession()
-        startEventBusListeners()
     }
 
     suspend fun onDestroy() {
         wsClient.onDestroy()
         locationService.stopTracking()
-        eventBusJob?.cancel()
         routeAudioRepository.clearSession()
         _currentSessionId.value = null
         routeSession = null
         lastRouteStopRowId = null
-    }
-
-    fun startEventBusListeners() {
-        eventBusJob?.cancel()
-        eventBusJob = eventBusScope.launch {
-            eventBus.eventsFlow.collect { event ->
-                when (event) {
-                    is AppEventBusEvent.AudioChunkNearlyFinished -> {
-                        sendLastKnownLocation()
-                    }
-
-                    else -> {}
-                }
-            }
-        }
     }
 
     private companion object {
