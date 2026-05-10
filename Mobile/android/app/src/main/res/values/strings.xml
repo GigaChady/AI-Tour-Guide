@@ -74,6 +74,7 @@
     <string name="account_settings_cta">Zapisz</string>
 
     <string name="tour_audio_player_location_header">Twoja lokalizacja</string>
+    <string name="tour_audio_player_session_timeout">Przekroczono limit czasu sesji</string>
     <string name="tour_audio_player_example_location">Zamek Królewski</string>
 
     <string name="tour_audio_player_narration_header_title">Opis</string>
