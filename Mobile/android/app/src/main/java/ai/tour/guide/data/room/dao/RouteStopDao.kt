@@ -66,4 +66,19 @@ interface RouteStopDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM stops JOIN sessions ON stops.session_id = sessions.id WHERE sessions.server_session_id = :serverSessionId AND stops.narration_audio_file_path IS NOT NULL LIMIT 1)")
     fun narrationFilesExistsForCurrentSession(serverSessionId: String?): Flow<Boolean>
+
+    @Query("SELECT COUNT(stops.id) FROM stops JOIN sessions ON stops.session_id = sessions.id WHERE server_session_id = :serverSessionId")
+    fun getStopsCountForServerSession(serverSessionId: String?): Flow<Int?>
+
+    @Query("SELECT COUNT(*) FROM stops WHERE session_id = (SELECT session_id FROM stops WHERE id = :stopId) AND id <= :stopId")
+    fun getStopsCountUntilStopId(stopId: Int?): Flow<Int?>
+
+    @Query("SELECT COUNT(*) FROM stops WHERE session_id = (SELECT session_id FROM stops WHERE id = :stopId) AND id <= :stopId")
+    fun getStopIndexById(stopId: Int?): Flow<Int?>
+
+    @Query("SELECT stops.id FROM stops JOIN sessions ON stops.session_id = sessions.id WHERE server_session_id = :serverSessionId ORDER BY stops.id DESC LIMIT 1 OFFSET :offset")
+    fun getStopIdByOffset(serverSessionId: String?, offset: Int): Flow<Int?>
+
+    @Query("SELECT id FROM stops WHERE session_id = (SELECT session_id FROM stops WHERE id = :stopId) AND id <= :stopId ORDER BY id DESC LIMIT 1 OFFSET :offset")
+    fun getStopIdByOffsetFromStop(stopId: Int?, offset: Int): Flow<Int?>
 }
