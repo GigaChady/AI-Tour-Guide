@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,13 +34,15 @@ class TourRouteViewModel(
     val isPlayingFlow: StateFlow<Boolean> = routeAudioService.isPlayingFlow
     val playbackStateFlow = routeAudioService.playbackStateFlow
     private val sessionId: StateFlow<String?> = routeService.currentSessionIdFlow
-    val currentStopId = MutableStateFlow<Int?>(null)
-    private val currentLatestStopId = MutableStateFlow<Int?>(null)
     private var lastPlayedStopId: Int? = null
-    private val currentHistoryOffset = MutableStateFlow(0)
-    private val pendingNextChunkRequestAfterStopId = MutableStateFlow<Int?>(null)
     private var stopStateListenersJob: Job? = null
     private var eventListenersJob: Job? = null
+
+    private val currentStopId = viewStateFlow.map { it.data.currentStopId }.distinctUntilChanged()
+    private val currentLatestStopId =
+        viewStateFlow.map { it.data.currentLatestStopId }.distinctUntilChanged()
+    private val currentHistoryOffset =
+        viewStateFlow.map { it.data.currentHistoryOffset }.distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val stopsCount = currentLatestStopId.flatMapLatest { stopId ->
@@ -94,8 +95,10 @@ class TourRouteViewModel(
 
     private suspend fun initializeCurrentLatestStop() {
         _latestStopId.collect { latestStopId ->
-            if (currentLatestStopId.value == null) {
-                currentLatestStopId.value = latestStopId
+            if (viewStateFlow.value.data.currentLatestStopId == null) {
+                updateData {
+                    copy(currentLatestStopId = latestStopId)
+                }
             }
         }
     }
@@ -111,18 +114,25 @@ class TourRouteViewModel(
                 return@collect
             }
 
-            val offset = currentHistoryOffset.value
+            val data = viewStateFlow.value.data
+            val offset = data.currentHistoryOffset
             if (offset > 0) {
-                currentHistoryOffset.value = offset - 1
+                updateData {
+                    copy(currentHistoryOffset = offset - 1)
+                }
                 return@collect
             }
 
-            val current = currentLatestStopId.value
+            val current = data.currentLatestStopId
             if (current == null) {
-                currentLatestStopId.value = latestStopId
+                updateData {
+                    copy(currentLatestStopId = latestStopId)
+                }
             } else if (latestStopId != null && current != latestStopId) {
                 Log.i(TAG, "Changing current stop to $latestStopId")
-                currentLatestStopId.value = latestStopId
+                updateData {
+                    copy(currentLatestStopId = latestStopId)
+                }
             }
         }
     }
@@ -130,7 +140,7 @@ class TourRouteViewModel(
     private suspend fun advanceStopWhenRequestedChunkArrives() {
         combine(
             _latestStopId,
-            pendingNextChunkRequestAfterStopId
+            viewStateFlow.map { it.data.pendingNextChunkRequestAfterStopId }.distinctUntilChanged()
         ) { latestStopId, requestedAfterStopId ->
             Pair(latestStopId, requestedAfterStopId)
         }.collect { (latestStopId, requestedAfterStopId) ->
@@ -138,19 +148,29 @@ class TourRouteViewModel(
                 return@collect
             }
 
-            currentHistoryOffset.value = 0
-            currentLatestStopId.value = latestStopId
-            pendingNextChunkRequestAfterStopId.value = null
+            updateData {
+                copy(
+                    currentHistoryOffset = 0,
+                    currentLatestStopId = latestStopId,
+                    pendingNextChunkRequestAfterStopId = null
+                )
+            }
         }
     }
 
     private suspend fun syncCurrentStopWithSelectedStop() {
         selectedStopId.collect { stopId ->
             if (stopId != null) {
-                currentStopId.value = stopId
+                updateData {
+                    copy(currentStopId = stopId)
+                }
             } else {
-                currentHistoryOffset.value = 0
-                currentStopId.value = currentLatestStopId.value
+                updateData {
+                    copy(
+                        currentHistoryOffset = 0,
+                        currentStopId = currentLatestStopId
+                    )
+                }
             }
         }
     }
@@ -175,7 +195,7 @@ class TourRouteViewModel(
                 playbackDurationMs = playback.durationMs
             )
             updateData {
-                TourRouteState(
+                copy(
                     text = text,
                     styledText = narrationText.text,
                     currentWordStartOffset = narrationText.currentWordStartOffset,
@@ -201,11 +221,12 @@ class TourRouteViewModel(
         appEventBus.eventsFlow.collect { event ->
             when (event) {
                 is AppEventBusEvent.AudioChunkNearlyFinished -> {
+                    val offset = viewStateFlow.value.data.currentHistoryOffset
                     Log.i(
                         TAG,
-                        "current offset is ${currentHistoryOffset.value}, ${if (currentHistoryOffset.value == 0) "requesting" else "skipping"} sending location"
+                        "current offset is $offset, ${if (offset == 0) "requesting" else "skipping"} sending location"
                     )
-                    if (currentHistoryOffset.value == 0) {
+                    if (offset == 0) {
                         routeService.sendLastKnownLocation()
                     }
                 }
@@ -239,10 +260,6 @@ class TourRouteViewModel(
             routeAudioService.onDestroy()
             routeService.onDestroy()
         }
-        currentStopId.value = null
-        currentLatestStopId.value = null
-        currentHistoryOffset.value = 0
-        pendingNextChunkRequestAfterStopId.value = null
         stopStateListenersJob?.cancel()
         stopStateListenersJob = null
         eventListenersJob?.cancel()
@@ -334,13 +351,18 @@ class TourRouteViewModel(
     }
 
     fun onNextClicked() {
-        val offset = currentHistoryOffset.value
+        val data = viewStateFlow.value.data
+        val offset = data.currentHistoryOffset
         if (offset > 0) {
-            currentHistoryOffset.value = offset - 1
+            updateData {
+                copy(currentHistoryOffset = offset - 1)
+            }
             return
         }
 
-        pendingNextChunkRequestAfterStopId.value = currentLatestStopId.value
+        updateData {
+            copy(pendingNextChunkRequestAfterStopId = data.currentLatestStopId)
+        }
         viewModelScope.launch {
             routeService.sendLastKnownLocation()
         }
@@ -349,7 +371,9 @@ class TourRouteViewModel(
     fun onPrevClicked() {
         val totalStops = viewStateFlow.value.data.totalStops ?: return
         val maxOffset = (totalStops - 1).coerceAtLeast(0)
-        currentHistoryOffset.value = (currentHistoryOffset.value + 1).coerceAtMost(maxOffset)
+        updateData {
+            copy(currentHistoryOffset = (currentHistoryOffset + 1).coerceAtMost(maxOffset))
+        }
     }
 
     private companion object {
