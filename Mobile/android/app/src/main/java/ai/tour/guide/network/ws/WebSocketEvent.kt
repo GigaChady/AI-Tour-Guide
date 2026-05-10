@@ -16,4 +16,5 @@ sealed interface ServerEvent {
     data class NarrationWords(val data: NarrationWordsResponseDto) : ServerEvent
     data class RoutePOIs(val data: RoutePOIDto) : ServerEvent
     data class EndOfStream(val sessionId: String) : ServerEvent
+    data class Timeout(val reason: String? = null) : ServerEvent
 }

@@ -4,7 +4,6 @@ import ai.tour.guide.R
 import ai.tour.guide.ui.components.audio.AudioPlayerWidget
 import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.sharedFragments.TourSummaryBottomSheet
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -23,7 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +31,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 
 @Preview(showBackground = true)
@@ -45,6 +45,9 @@ fun TourAudioPlayerScreen(
     val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackStateFlow.collectAsStateWithLifecycle()
     val playerEnabled by viewModel.playerEnabledFlow.collectAsStateWithLifecycle(false)
+    val currentStopIdx by viewModel.currentStopIndex.collectAsStateWithLifecycle(1)
+    val allStopsCount by viewModel.stopsCount.collectAsStateWithLifecycle(1)
+    val currentStop by viewModel.currentStopFlow.collectAsStateWithLifecycle(null)
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val narrationScrollState = rememberScrollState()
@@ -80,6 +83,17 @@ fun TourAudioPlayerScreen(
         )
     }
 
+    val onSessionFinished = {
+        backStack?.clear()
+        backStack?.add(Route.TripEndSummary)
+    }
+
+    LaunchedEffect(viewModelState.data.isSuccess) {
+        if (viewModelState.data.isSuccess) {
+            onSessionFinished()
+        }
+    }
+
     LifecycleStartEffect(Unit) {
         viewModel.onStart()
         onStopOrDispose {
@@ -107,18 +121,19 @@ fun TourAudioPlayerScreen(
                     style = MaterialTheme.typography.labelLarge
                 )
                 Text(
-                    text = stringResource(R.string.tour_audio_player_example_location),
+                    text = currentStop?.locationTitle ?: "",
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
-            Image(
+            AsyncImage(
                 modifier = Modifier
                     .fillMaxHeight(0.3f)
                     .fillMaxWidth()
                     .padding(0.dp),
-                painter = painterResource(R.drawable.dashboard_example_img_2),
-                contentDescription = null
+                model = currentStop?.locationImage,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
             )
             Text(
                 text = stringResource(R.string.tour_audio_player_narration_header_title),
@@ -141,13 +156,13 @@ fun TourAudioPlayerScreen(
             AudioPlayerWidget(
                 controlsEnabled = playerEnabled,
                 onEndClicked = {
-                    backStack?.clear()
-                    backStack?.add(Route.TripEndSummary)
+                    onSessionFinished()
                 },
                 onSpeakerClicked = {
                     showBottomSheet = true
                 },
                 onPreviousClicked = {
+                    viewModel.onPrevClicked()
                 },
                 onPlayClicked = {
                     viewModel.onPlayClicked()
@@ -156,9 +171,12 @@ fun TourAudioPlayerScreen(
                     viewModel.onPauseClicked()
                 },
                 onNextClicked = {
+                    viewModel.onNextClicked()
                 },
                 isPlaying = isPlaying,
                 progressFraction = progressFraction,
+                totalMediaCount = allStopsCount,
+                currentMediaIndex = currentStopIdx
             )
         }
     }
