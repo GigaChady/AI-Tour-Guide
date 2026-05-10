@@ -25,4 +25,5 @@ sealed class AppEventBusEvent {
     data class AudioChunkReceived(val file: File) : AppEventBusEvent()
     data class AudioChunkNearlyFinished(val position: Long) : AppEventBusEvent()
     data class RouteSessionStarted(val sessionId: String) : AppEventBusEvent()
+    data class RouteTimeout(val reason: String?) : AppEventBusEvent()
 }

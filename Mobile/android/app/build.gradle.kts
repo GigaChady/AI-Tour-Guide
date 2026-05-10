@@ -116,4 +116,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.play.services.location)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }

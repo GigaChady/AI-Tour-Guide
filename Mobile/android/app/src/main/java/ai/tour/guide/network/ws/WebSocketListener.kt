@@ -24,6 +24,7 @@ class WebSocketListeners {
 
     private var narrationPOIsListener: (suspend (data: RoutePOIDto) -> Unit)? = null
     private var endOfStreamListener: (suspend (ServerEvent.EndOfStream) -> Unit)? = null
+    private var timeoutListener: (suspend (ServerEvent.Timeout) -> Unit)? = null
 
     fun onConnected(listener: suspend (WSEvent.Connected) -> Unit) {
         connectedListener = listener
@@ -61,6 +62,10 @@ class WebSocketListeners {
         endOfStreamListener = listener
     }
 
+    fun onTimeout(listener: suspend (ServerEvent.Timeout) -> Unit) {
+        timeoutListener = listener
+    }
+
     suspend fun handleWSEvent(event: WSEvent.Connected) {
         val handler = connectedListener ?: throw Exception("No handler for event $event")
         handler.invoke(event)
@@ -74,6 +79,7 @@ class WebSocketListeners {
     suspend fun handleRawEvent(event: String) {
         val data = Json.parseToJsonElement(event).jsonObject
         val eventType = data["type"]?.jsonPrimitive?.content
+        val detail = data["detail"]?.jsonPrimitive?.content
         val sessionID = data["session_id"]?.jsonPrimitive?.content ?: ""
         when (eventType) {
             "session_start" -> {
@@ -115,6 +121,13 @@ class WebSocketListeners {
             "end_of_stream" -> {
                 handleServerEvent(
                     ServerEvent.EndOfStream(sessionID)
+                )
+            }
+        }
+        when (detail) {
+            "timeout" -> {
+                handleServerEvent(
+                    ServerEvent.Timeout(sessionID)
                 )
             }
         }
@@ -178,6 +191,10 @@ class WebSocketListeners {
         endOfStreamListener?.invoke(event)
     }
 
+    private suspend fun handleServerEvent(event: ServerEvent.Timeout) {
+        timeoutListener?.invoke(event)
+    }
+
     fun clearListeners() {
         connectedListener = null
         disconnectedListener = null
@@ -185,6 +202,9 @@ class WebSocketListeners {
         tourStartedListener = null
         narrationTranscriptListener = null
         narrationWordsListener = null
+        audioChunkReceivedListener = null
+        narrationPOIsListener = null
         endOfStreamListener = null
+        timeoutListener = null
     }
 }

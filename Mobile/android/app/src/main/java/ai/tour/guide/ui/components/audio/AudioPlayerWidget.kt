@@ -20,8 +20,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,8 +42,12 @@ fun AudioPlayerWidget(
     onNextClicked: () -> Unit = {},
     isPlaying: Boolean = false,
     progressFraction: Float = 0f,
-    controlsEnabled: Boolean = true
+    controlsEnabled: Boolean = true,
+    totalMediaCount: Int? = null,
+    currentMediaIndex: Int? = null
 ) {
+    val idx = currentMediaIndex ?: 0
+    val total = totalMediaCount ?: 1
     Column(
         modifier = Modifier
             .fillMaxWidth(),
