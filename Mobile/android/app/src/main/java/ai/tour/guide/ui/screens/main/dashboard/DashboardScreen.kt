@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -40,13 +39,7 @@ fun DashboardScreen(
     backStack: NavBackStack<NavKey>? = null,
     viewModel: DashboardViewModel = koinInject()
 ) {
-    val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
-    LifecycleStartEffect(Unit) {
-        viewModel.onStart()
-        onStopOrDispose {
-            viewModel.onDestroy()
-        }
-    }
+    val viewModelState by viewModel.latestPoiFlow.collectAsStateWithLifecycle(DashboardState.default())
 
     LocationPermissionGate(modifier = modifier) {
         val part1 = stringResource(R.string.dashboard_header_text_content_part1)
@@ -88,7 +81,7 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = viewModelState.data.poiName.ifBlank {
+                            text = viewModelState.poiName.ifBlank {
                                 stringResource(R.string.dashboard_main_section_header_subtext_example)
                             },
                             style = MaterialTheme.typography.headlineLarge,
@@ -102,7 +95,7 @@ fun DashboardScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    imageUrls = viewModelState.data.poiPhotos
+                    imageUrls = viewModelState.poiPhotos
                 )
 
                 ExtendedFloatingActionButton(

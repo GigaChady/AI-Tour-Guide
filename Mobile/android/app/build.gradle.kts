@@ -75,7 +75,6 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.material3)
-    implementation(libs.coil.compose)
     implementation(libs.googleid)
     implementation(libs.androidx.credentials.core)
     implementation(libs.androidx.credentials.play)
