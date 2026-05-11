@@ -55,6 +55,26 @@ settings = Settings()
 DEFAULT_NARRATION = {"language": "pl", "speed": 5, "pitch": 50, "volume": 50}
 GRACE_SECONDS: int = 60
 
+NARRATION_TEST_TEXTS: dict[str, str] = {
+    "pl": "To jest test narracji. Sprawdź, jak brzmi wybrany głos z Twoimi ustawieniami.",
+    "en": "This is a narration test. Check how the selected voice sounds with your settings.",
+}
+
+
+TTS_PROVIDERS = [
+    {"key": "edge", "label": "Edge TTS"},
+    {"key": "google", "label": "Google TTS"},
+]
+
+LLM_PROVIDERS = [
+    {"key": "cloud", "label": "Cloud (NVIDIA / Claude)"},
+    {"key": "ollama", "label": "Ollama (Local)"},
+]
+
+DEFAULT_SYSTEM_CONFIG = {
+    "tts_provider": "edge",
+    "llm_provider": "cloud",
+}
 
 DEFAULT_ONBOARDING_CATALOG = [
     {
