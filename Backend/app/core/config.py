@@ -5,13 +5,22 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 9999
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 99999  
 
     MAX_REFRESH_TOKENS_PER_USER: int = 1
 
 #     #Google
     GOOGLE_CLIENT_ID: str
+
+    # Keycloak SSO
+    KEYCLOAK_SERVER_URL: str = "http://localhost:8080"
+    KEYCLOAK_INTERNAL_URL: str = "http://keycloak:8080"
+    KEYCLOAK_REALM: str = "tourguide"
+    KEYCLOAK_CLIENT_ID: str = "web-client"
+    KEYCLOAK_CLIENT_SECRET: str = "web-secret"
+    KEYCLOAK_REDIRECT_URI: str = "http://localhost:8000/auth/keycloak/callback"
+    FRONTEND_URL: str = "http://localhost:3000"
 
 
 #    # PostgreSQL (asyncpg)

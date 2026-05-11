@@ -1,7 +1,8 @@
 import logging
 import re
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -13,9 +14,10 @@ from app.core.config import settings
 from app.models.models import User, RefreshToken
 from app.schemas.schemas import (
     ErrorResponse, RegisterRequest, LoginRequest, GoogleAuthRequest,
-    TokenResponse, RefreshRequest, LogoutRequest
+    TokenResponse, RefreshRequest, LogoutRequest, KeycloakLoginResponse
 )
 from app.services.token_service import token_service
+from app.services.keycloak_service import keycloak_service
 
 logger = logging.getLogger("auth")
 
@@ -171,6 +173,79 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     logger.info(f"Google login successful for email: {masked_email}")
 
     return await token_service.issue_tokens(user, db)
+
+
+@router.get("/keycloak/login", response_model=KeycloakLoginResponse)
+async def keycloak_login():
+    state = keycloak_service.generate_state()
+    url = keycloak_service.build_login_url(state)
+    return KeycloakLoginResponse(login_url=url)
+
+
+@router.get("/keycloak/register", response_model=KeycloakLoginResponse)
+async def keycloak_register():
+    state = keycloak_service.generate_state()
+    url = keycloak_service.build_register_url(state)
+    return KeycloakLoginResponse(login_url=url)
+
+
+@router.get("/keycloak/callback", response_model=TokenResponse, responses={401: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
+async def keycloak_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
+    if not keycloak_service.verify_state(state):
+        logger.warning("Keycloak callback received invalid state.")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Invalid state parameter")
+
+    try:
+        token_data = await keycloak_service.exchange_code(code)
+        user_info = await keycloak_service.verify_id_token(token_data["id_token"], token_data["access_token"])
+    except ValueError as exc:
+        logger.warning(f"Keycloak authentication failed: {exc}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Keycloak authentication failed")
+
+    keycloak_sub = user_info["sub"]
+    normalized_email = user_info.get("email", "").strip().lower()
+    masked_email = _mask_email_for_logs(normalized_email)
+
+    result = await db.execute(select(User).where(User.keycloak_id == keycloak_sub))
+    user = result.scalar()
+
+    if not user and normalized_email:
+        result_by_email = await db.execute(select(User).where(User.email == normalized_email))
+        user_by_email = result_by_email.scalar()
+
+        if user_by_email:
+            if not user_by_email.keycloak_id:
+                user_by_email.keycloak_id = keycloak_sub
+                user = user_by_email
+            elif user_by_email.keycloak_id != keycloak_sub:
+                logger.warning(f"Keycloak account conflict for email: {masked_email}")
+                raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already linked to another Keycloak account")
+            else:
+                user = user_by_email
+
+    if not user:
+        user = User(
+            email=normalized_email,
+            keycloak_id=keycloak_sub,
+            name=user_info.get("given_name") or user_info.get("name"),
+        )
+        db.add(user)
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        logger.warning(f"Keycloak auth conflict for email: {masked_email}")
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Account conflict during Keycloak login")
+
+    await db.refresh(user)
+    logger.info(f"Keycloak login successful for email: {masked_email}")
+
+    tokens = await token_service.issue_tokens(user, db)
+    response = RedirectResponse(url=f"{settings.FRONTEND_URL}/dashboard")
+    response.set_cookie("access_token", tokens.access_token, httponly=True, samesite="lax")
+    response.set_cookie("refresh_token", tokens.refresh_token, httponly=True, samesite="lax")
+    return response
 
 
 @router.post("/refresh", response_model=TokenResponse, responses={401: {"model": ErrorResponse}})

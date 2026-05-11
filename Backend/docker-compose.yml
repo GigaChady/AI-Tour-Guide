@@ -115,6 +115,17 @@ services:
   #          devices:
   #            - capabilities: [gpu]
   #    runtime: nvidia
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    command: start-dev --import-realm
+    ports:
+      - "8080:8080"
+
 volumes:
   pgdata:
   pgdata_test:
