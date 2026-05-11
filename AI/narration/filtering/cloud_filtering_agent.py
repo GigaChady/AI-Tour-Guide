@@ -2,6 +2,7 @@ import logging
 
 from narration.configs.cloud_narration_config import CloudFilteringSettings
 from narration.filtering.abstract_filtering_agent import AbstractFilteringAgent
+from prompts.filtering_prompt_builder import FilteringPromptBuilder
 from utils.schemas import NarrationSettings
 
 
@@ -10,14 +11,17 @@ logger = logging.getLogger(__name__)
 
 class CloudFilteringAgent(AbstractFilteringAgent):
     """
-    Class that builds a prompt with proper formating in point list for external llm with preferences.
+    Builds a filtering prompt for cloud narration generation.
     """
+
     def __init__(
         self,
         narration_settings: NarrationSettings,
         cloud_filtering_config: CloudFilteringSettings | None = None,
+        prompt_builder: FilteringPromptBuilder | None = None,
     ):
         super().__init__(narration_settings)
+        self.prompt_builder = prompt_builder or FilteringPromptBuilder()
         self.cloud_filtering_config = (
             cloud_filtering_config
             or getattr(narration_settings, "cloud_filtering", None)
@@ -34,21 +38,11 @@ class CloudFilteringAgent(AbstractFilteringAgent):
         poi_description: str | None = None,
         user_preferences: str | None = None,
     ) -> str:
-        description = (poi_description or "").strip() or "No POI description provided."
-        preferences = (
-            (user_preferences or self.narration_settings.user_preferences or "").strip()
-            or "No user preferences provided."
-        )
-
-        if self.cloud_filtering_config.include_prompt is False:
-            return f"User preferences: {preferences}"
-
-        return (
-            "You are preparing a cloud filtering prompt for a travel narration pipeline.\n"
-            f"POI name: {poi_name.strip()}\n"
-            f"POI description: {description}\n"
-            f"User preferences: {preferences}\n"
-            "Compose a concise English prompt that keeps only the most relevant factual details for this POI."
+        return self.prompt_builder.build_cloud_prompt(
+            poi_name=poi_name,
+            poi_description=poi_description,
+            user_preferences=user_preferences or self.narration_settings.user_preferences,
+            include_prompt=self.cloud_filtering_config.include_prompt,
         )
 
     def filter_information(self, poi_name, raw_text):
