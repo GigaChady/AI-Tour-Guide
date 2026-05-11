@@ -22,6 +22,8 @@ class User(Base):
     keycloak_id = Column(String, unique=True, nullable=True)
     name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     gender = Column(String, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     narration_settings = relationship("UserNarrationSettings", back_populates="user", uselist=False)
@@ -64,6 +66,13 @@ class Route(Base):
     __table_args__ = (
         Index("ix_routes_user_id", "user_id"),
     )
+
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=False)
 
 
 class RefreshToken(Base):
