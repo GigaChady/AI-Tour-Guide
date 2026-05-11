@@ -93,7 +93,7 @@ async def get_dashboard(
             total_distance_km=round(total_distance_m / 1000, 2),
             total_duration_minutes=total_duration_s // 60,
         ),
-        recent_expeditions=[
+        recent_expeditions=[ #TODO: add limit later
             WebDashboardExpedition(
                 id=str(r.id),
                 city=r.city,
