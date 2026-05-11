@@ -51,6 +51,7 @@ class Route(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     started_at = Column(DateTime, default=utc_now_naive)
     ended_at = Column(DateTime, nullable=True)
+    country = Column(String, nullable=True)
     city = Column(String, nullable=True)
     name = Column(String, nullable=True)
     path = Column(Geometry("LINESTRING"), nullable=True)

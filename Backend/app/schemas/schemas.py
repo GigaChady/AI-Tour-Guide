@@ -139,6 +139,23 @@ class RouteStatsResponse(BaseModel):
 
 
 # ----------------WEB HISTORY SCHEMAS----------------
+class WebDashboardStats(BaseModel):
+    total_countries: int
+    total_cities: int
+    total_distance_km: float
+    total_duration_minutes: int
+
+class WebDashboardExpedition(BaseModel):
+    id: str
+    city: str | None
+    date: datetime
+    route_url: str | None
+
+class WebDashboardResponse(BaseModel):
+    stats: WebDashboardStats
+    recent_expeditions: list[WebDashboardExpedition]
+
+
 class RouteHistoryUser(BaseModel):
     name: str
     avatar_url: str | None
