@@ -113,7 +113,7 @@ class NarrationProcessor(AbstractProcessor):
         narration_text = narration['narration']
         location = narration['location']
         
-        output_text = f"{location} - {narration_text}"
+        output_text = f"{narration_text}"
         
         response = NarrationMessage(text=output_text)
         
