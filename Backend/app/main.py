@@ -9,6 +9,7 @@ from app.core.redis import close_redis, init_redis
 from app.routers import map as map_router
 from app.routers import route
 from app.routers.dashboard import router as dashboard_router
+from app.routers.web_history import router as web_history_router
 from app.routers.user import auth
 from app.routers.user import narration_settings as user_narration_settings
 from app.routers.user import onboarding as user_onboarding
@@ -42,6 +43,7 @@ app.include_router(user_onboarding.router)
 app.include_router(user_narration_settings.router)
 app.include_router(user_login_settings.router)
 app.include_router(map_router.router)
+app.include_router(web_history_router)
 
 
 @app.get("/health")

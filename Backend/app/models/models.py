@@ -21,6 +21,7 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True)
     keycloak_id = Column(String, unique=True, nullable=True)
     name = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
     gender = Column(String, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     narration_settings = relationship("UserNarrationSettings", back_populates="user", uselist=False)
@@ -54,6 +55,7 @@ class Route(Base):
     name = Column(String, nullable=True)
     path = Column(Geometry("LINESTRING"), nullable=True)
     distance_m = Column(Float, nullable=True)
+    route_url = Column(String, nullable=True)
 
     user = relationship("User", back_populates="routes")
     pois = relationship("RoutePoi", back_populates="route")
