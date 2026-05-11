@@ -28,6 +28,7 @@ import kotlinx.serialization.decodeFromString
         )],
     indices = [
         Index(value = ["stop_id"]),
+        Index(value = ["stop_id", "poi_index"]),
         Index(value = ["session_id"]),
     ]
 )
@@ -43,11 +44,18 @@ data class RoutePOI(
     val desc: String,
     val lat: Double,
     val lng: Double,
+    @ColumnInfo(name = "poi_index")
+    val poiIndex: Int = 0,
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis()
 ) {
     companion object {
-        fun fromReceivedPoi(data: ReceivedRoutePOI, sessionId: Int?, stopId: Int?): RoutePOI =
+        fun fromReceivedPoi(
+            data: ReceivedRoutePOI,
+            sessionId: Int?,
+            stopId: Int?,
+            poiIndex: Int
+        ): RoutePOI =
             RoutePOI(
                 sessionId = sessionId,
                 stopId = stopId,
@@ -55,7 +63,8 @@ data class RoutePOI(
                 photos = Json.encodeToString(data.photos),
                 desc = data.desc,
                 lat = data.lat,
-                lng = data.lng
+                lng = data.lng,
+                poiIndex = poiIndex
             )
     }
 
