@@ -19,6 +19,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=True)
     google_id = Column(String, unique=True, nullable=True)
+    keycloak_id = Column(String, unique=True, nullable=True)
     name = Column(String, nullable=True)
     gender = Column(String, nullable=True)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
