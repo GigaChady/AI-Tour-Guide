@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.models.models import User, RefreshToken
 from app.schemas.schemas import (
     ErrorResponse, RegisterRequest, LoginRequest, GoogleAuthRequest,
-    TokenResponse, RefreshRequest, LogoutRequest, KeycloakLoginResponse
+    TokenResponse, RefreshRequest, LogoutRequest
 )
 from app.services.token_service import token_service
 from app.services.keycloak_service import keycloak_service
@@ -175,18 +175,18 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     return await token_service.issue_tokens(user, db)
 
 
-@router.get("/keycloak/login", response_model=KeycloakLoginResponse)
+@router.get("/keycloak/login")
 async def keycloak_login():
     state = keycloak_service.generate_state()
     url = keycloak_service.build_login_url(state)
-    return KeycloakLoginResponse(login_url=url)
+    return RedirectResponse(url=url)
 
 
-@router.get("/keycloak/register", response_model=KeycloakLoginResponse)
+@router.get("/keycloak/register")
 async def keycloak_register():
     state = keycloak_service.generate_state()
     url = keycloak_service.build_register_url(state)
-    return KeycloakLoginResponse(login_url=url)
+    return RedirectResponse(url=url)
 
 
 @router.get("/keycloak/callback", response_model=TokenResponse, responses={401: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
