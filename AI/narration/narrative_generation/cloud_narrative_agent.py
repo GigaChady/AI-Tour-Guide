@@ -1,13 +1,15 @@
-import json
 import logging
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from unidecode import unidecode
 
 from narration.configs.cloud_narration_config import CloudNarrativeSettings
+from narration.narrative_generation.abstract_narrative_generation_agent import (
+    AbstractNarrativeGenerationAgent,
+)
+from parsers.narration_response_parser import NarrationResponseParser
+from prompts.narration_prompt_builder import NarrationPromptBuilder
 from utils.schemas import NarrationSettings
-from narration.narrative_generation.abstract_narrative_generation_agent import AbstractNarrativeGenerationAgent
 
 
 class CloudNarrativeAgent(AbstractNarrativeGenerationAgent):
@@ -16,8 +18,12 @@ class CloudNarrativeAgent(AbstractNarrativeGenerationAgent):
         narration_settings: NarrationSettings,
         cloud_narrative_config: CloudNarrativeSettings | None = None,
         model_name: str | None = None,
+        prompt_builder: NarrationPromptBuilder | None = None,
+        response_parser: NarrationResponseParser | None = None,
     ):
         super().__init__(narration_settings)
+        self.prompt_builder = prompt_builder or NarrationPromptBuilder()
+        self.response_parser = response_parser or NarrationResponseParser()
 
         self.cloud_narrative_config = (
             cloud_narrative_config
@@ -34,49 +40,20 @@ class CloudNarrativeAgent(AbstractNarrativeGenerationAgent):
             max_tokens=self.cloud_narrative_config.max_tokens,
         )
 
-
     def generate_narration(self, location_name: str, location_info: str):
         logging.info("Starting narration generation about: %s", location_name)
 
-        system_prompt = (
-            "You are a tourist guide. Your task is to create a narration about the given place.\n"
-            "RULES:\n"
-            "1. Use the provided facts, but present them in an interesting and engaging way.\n"
-            "2. Adapt the narration to the user's preferences.\n"
-            "3. Return the result only as valid JSON with the field: 'location' 'narration'.\n"
-            f"4. The narration must be written in the following language: {self.narration_settings.language.language_name}.\n"
-            "5. Write the narration as a single line. Do not use newline characters.\n"
-            "6. Do not add markdown, comments, explanations, Raw:, or any text outside the JSON."
+        prompt_template = ChatPromptTemplate.from_messages(
+            self.prompt_builder.build_messages(
+                location_name=location_name,
+                location_info=location_info,
+                user_preferences=self.narration_settings.user_preferences,
+                language_name=self.narration_settings.language.language_name,
+            )
         )
-
-        user_prompt = (
-            f"LOCATION: {location_name}\n"
-            f"USER's PREFERENCES: {self.narration_settings.user_preferences}\n"
-            f"FACTS: {location_info}"
-        )
-
-        prompt_template = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("user", user_prompt),
-        ])
 
         chain = prompt_template | self.model
         response = chain.invoke({})
 
         logging.info("Finished narration generation")
-
-        try:
-            result = json.loads(response.content)
-
-            if isinstance(result, dict):
-                for key, value in result.items():
-                    if isinstance(value, str):
-                        result[key] = unidecode(value)
-
-            logging.info("Narration with ASCII conversion: %s", result)
-            return result
-
-        except json.JSONDecodeError as e:
-            logging.error("Invalid narration response. JSON decoding error: %s", e)
-            logging.error("Raw response: %s", response.content)
-            return unidecode(response.content)
+        return self.response_parser.parse(response.content)
