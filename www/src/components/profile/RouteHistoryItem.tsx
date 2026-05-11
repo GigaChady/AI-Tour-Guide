@@ -26,7 +26,7 @@ export function RouteHistoryItem({ icon, title, date, distance, duration }: Rout
       <div className="flex flex-col md:flex-row items-start md:items-center gap-md md:gap-xl mt-md md:mt-0">
         <div className="flex items-center gap-lg bg-surface py-2 px-4 rounded-full border border-surface-container-highest">
           <div className="flex flex-col items-center">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Distance</span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant">Dystans</span>
             <span className="font-title-md text-title-md text-on-surface flex items-center gap-1">
               <span className="material-symbols-outlined text-[18px] text-primary-container">
                 straighten
@@ -36,7 +36,7 @@ export function RouteHistoryItem({ icon, title, date, distance, duration }: Rout
           </div>
           <div className="w-px h-8 bg-surface-container-highest" />
           <div className="flex flex-col items-center">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Duration</span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant">Czas trwania</span>
             <span className="font-title-md text-title-md text-on-surface flex items-center gap-1">
               <span className="material-symbols-outlined text-[18px] text-primary-container">
                 timer
@@ -46,7 +46,7 @@ export function RouteHistoryItem({ icon, title, date, distance, duration }: Rout
           </div>
         </div>
         <button className="w-full md:w-auto px-6 py-3 rounded-full bg-primary-container text-on-primary-container font-label-lg text-label-lg hover:bg-primary transition-colors">
-          View Details
+          Zobacz szczegóły
         </button>
       </div>
     </div>

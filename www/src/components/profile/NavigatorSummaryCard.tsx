@@ -25,7 +25,7 @@ export function NavigatorSummaryCard({
     <div className="bg-surface-container rounded-xl p-md md:p-lg mb-lg flex flex-col md:flex-row items-center justify-between gap-md border border-primary/20">
       <div className="flex items-center gap-md md:gap-lg">
         <img
-          alt="Traveler Avatar"
+          alt="Awatar podróżnika"
           className="w-20 h-20 rounded-full object-cover border-2 border-primary"
           src={avatarSrc}
         />
@@ -37,7 +37,7 @@ export function NavigatorSummaryCard({
             {name}
           </h3>
           <span className="font-body-md text-body-md text-on-surface-variant">
-            Total Explorations: {explorationCount}
+            Łącznie eksploracji: {explorationCount}
           </span>
         </div>
       </div>

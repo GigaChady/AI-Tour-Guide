@@ -2,12 +2,12 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ExpeditionItem } from '@/components/dashboard/ExpeditionItem'
 
 const stats = [
-  { icon: 'fa-solid fa-earth-americas', label: 'Countries', value: '14' },
-  { icon: 'fa-solid fa-plane-departure', label: 'Cities', value: '32' },
-  { icon: 'fa-solid fa-route', label: 'Kilometres', value: '42k' },
+  { icon: 'fa-solid fa-earth-americas', label: 'Kraje', value: '14' },
+  { icon: 'fa-solid fa-plane-departure', label: 'Miasta', value: '32' },
+  { icon: 'fa-solid fa-route', label: 'Kilometry', value: '42k' },
   {
     icon: 'fa-regular fa-star',
-    label: 'Elite Status',
+    label: 'Status elitarny',
     value: 'Gold',
     valueClassName: 'text-pink-300',
   },
@@ -99,7 +99,7 @@ export function Dashboard() {
       <div className="max-w-6xl mx-auto space-y-10">
         <header className="border-b border-gray-800 pb-6">
           <h1 className="text-3xl font-semibold text-white tracking-tight">
-            Welcome back, Traveler
+            Witaj z powrotem, Podróżniku
           </h1>
         </header>
 
@@ -112,7 +112,7 @@ export function Dashboard() {
         <section>
           <div className="flex items-center space-x-2 mb-6 text-white">
             <i className="fa-solid fa-clock-rotate-left" />
-            <h2 className="text-xl font-medium">Recent Expeditions</h2>
+            <h2 className="text-xl font-medium">Ostatnie ekspedycje</h2>
           </div>
           <div className="space-y-4">
             {expeditions.map((exp, i) => (

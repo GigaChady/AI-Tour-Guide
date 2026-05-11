@@ -29,19 +29,19 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
               manage_accounts
             </span>
           </div>
-          <h1 className="font-headline-md text-headline-md text-on-surface">Change User Details</h1>
+          <h1 className="font-headline-md text-headline-md text-on-surface">Zmień dane użytkownika</h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-2">
-            Update your account information securely.
+            Bezpiecznie zaktualizuj informacje o koncie.
           </p>
         </div>
 
         <form className="space-y-6 relative z-10">
-          <TextBox id="fullName" label="Full Name" defaultValue={user?.name} />
-          <TextBox id="email" label="Email Address" type="email" />
-          <TextBox id="newPassword" label="New Password" type="password" />
-          <TextBox id="confirmPassword" label="Confirm New Password" type="password" />
+          <TextBox id="fullName" label="Pełne imię i nazwisko" defaultValue={user?.name} />
+          <TextBox id="email" label="Adres e-mail" type="email" />
+          <TextBox id="newPassword" label="Nowe hasło" type="password" />
+          <TextBox id="confirmPassword" label="Potwierdź nowe hasło" type="password" />
           <div className="pt-4">
-            <Button icon="save">Save Changes</Button>
+            <Button icon="save">Zapisz zmiany</Button>
           </div>
         </form>
       </div>

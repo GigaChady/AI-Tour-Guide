@@ -2,11 +2,11 @@ import { Link, useLocation } from 'react-router-dom'
 import sidebarImage from '@/assets/sidebar_image.png'
 
 const navItems = [
-  { icon: 'fa-solid fa-list-ul', label: 'DASHBOARD', to: '/' },
-  { icon: 'fa-regular fa-user', label: 'MY PROFILE', to: '/profile' },
-  { icon: 'fa-regular fa-map', label: 'MAP EXPLORER', to: '/map-explorer' },
-  { icon: 'fa-solid fa-gear', label: 'PREFERENCES', to: '/preferences' },
-  { icon: 'fa-solid fa-shield-halved', label: 'ADMIN PANEL', to: '/admin' },
+  { icon: 'fa-solid fa-list-ul', label: 'PULPIT', to: '/' },
+  { icon: 'fa-regular fa-user', label: 'MÓJ PROFIL', to: '/profile' },
+  { icon: 'fa-regular fa-map', label: 'EKSPLORACJA MAPY', to: '/map-explorer' },
+  { icon: 'fa-solid fa-gear', label: 'USTAWIENIA', to: '/preferences' },
+  { icon: 'fa-solid fa-shield-halved', label: 'PANEL ADMINA', to: '/admin' },
 ]
 
 function NavItem({ icon, label, to }: { icon: string; label: string; to: string }) {
@@ -49,7 +49,7 @@ export function Sidebar() {
       <div className="p-4">
         <a className="flex items-center space-x-3 px-4 py-3 text-textMuted hover:text-textMain hover:bg-hoverHighlight rounded-xl font-medium transition-colors">
           <i className="fa-solid fa-arrow-right-from-bracket w-5 text-center" />
-          <span>LOGOUT</span>
+          <span>WYLOGUJ</span>
         </a>
       </div>
     </aside>
