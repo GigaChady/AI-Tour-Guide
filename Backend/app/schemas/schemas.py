@@ -138,6 +138,27 @@ class RouteStatsResponse(BaseModel):
     pois: list[RoutePoiResponse]
 
 
+# ----------------WEB HISTORY SCHEMAS----------------
+class RouteHistoryUser(BaseModel):
+    name: str
+    avatar_url: str | None
+    total_explorations: int
+    total_distance_km: float
+    total_duration_minutes: int
+
+class RouteHistoryItem(BaseModel):
+    id: str
+    name: str | None
+    date: datetime
+    distance_km: float | None
+    duration_minutes: int | None
+    route_url: str | None
+
+class RouteHistoryResponse(BaseModel):
+    user: RouteHistoryUser
+    routes: list[RouteHistoryItem]
+
+
 # ----------------DASHBOARD SCHEMAS----------------
 class DashboardJobResponse(BaseModel):
     session_id: str
