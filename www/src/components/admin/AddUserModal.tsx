@@ -29,30 +29,30 @@ export function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
               person_add
             </span>
           </div>
-          <h1 className="font-headline-md text-headline-md text-on-surface">Add New User</h1>
+          <h1 className="font-headline-md text-headline-md text-on-surface">Dodaj nowego użytkownika</h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-2">
-            Create a new account and assign a role.
+            Utwórz nowe konto i przypisz rolę.
           </p>
         </div>
 
         <form className="space-y-6 relative z-10">
-          <TextBox id="newFullName" label="Full Name" />
-          <TextBox id="newEmail" label="Email Address" type="email" />
+          <TextBox id="newFullName" label="Pełne imię i nazwisko" />
+          <TextBox id="newEmail" label="Adres e-mail" type="email" />
           <select
             id="newRole"
             defaultValue=""
             className="w-full bg-surface border border-outline rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
           >
             <option value="" disabled>
-              Select a role
+              Wybierz rolę
             </option>
             <option value="admin">Administrator</option>
-            <option value="editor">Content Editor</option>
-            <option value="viewer">Read-Only Viewer</option>
+            <option value="editor">Redaktor treści</option>
+            <option value="viewer">Przeglądający (tylko odczyt)</option>
           </select>
-          <TextBox id="newPassword" label="Temporary Password" type="password" />
+          <TextBox id="newPassword" label="Tymczasowe hasło" type="password" />
           <div className="pt-4">
-            <Button icon="person_add">Create User</Button>
+            <Button icon="person_add">Utwórz użytkownika</Button>
           </div>
         </form>
       </div>

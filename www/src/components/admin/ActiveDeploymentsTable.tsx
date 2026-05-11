@@ -19,14 +19,14 @@ function StatusBadge({ status }: { status: UserStatus }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/20 text-primary-fixed-dim font-label-sm text-label-sm border border-primary/20">
         <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-        Active
+        Aktywny
       </span>
     )
   }
   return (
     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm border border-white/10">
       <span className="w-1.5 h-1.5 rounded-full bg-outline" />
-      Idle
+      Nieaktywny
     </span>
   )
 }
@@ -96,11 +96,11 @@ function UserDeploymentRow({
                 }}
               >
                 <span className="material-symbols-outlined text-[18px]">edit</span>
-                Edit
+                Edytuj
               </button>
               <button className="w-full flex items-center gap-2 px-4 py-3 text-error hover:bg-white/5 transition-colors font-body-md text-body-md">
                 <span className="material-symbols-outlined text-[18px]">delete</span>
-                Delete
+                Usuń
               </button>
             </div>
           )}
@@ -137,23 +137,23 @@ export function ActiveDeploymentsTable() {
     <>
       <div className="xl:col-span-2 bg-surface-container rounded-[2rem] border border-white/5 shadow-lg overflow-hidden flex flex-col">
         <div className="p-lg border-b border-white/5 flex items-center justify-between bg-surface-container-low">
-          <h3 className="font-title-lg text-title-lg text-on-surface">Active Deployments</h3>
+          <h3 className="font-title-lg text-title-lg text-on-surface">Aktywne wdrożenia</h3>
           <button
             className="bg-primary hover:bg-primary-fixed-dim text-on-primary font-label-lg text-label-lg py-2 px-6 rounded-full transition-all duration-300 flex items-center gap-2 active:scale-95"
             onClick={() => setAddingUser(true)}
           >
             <span className="material-symbols-outlined text-lg">add</span>
-            Add User
+            Dodaj użytkownika
           </button>
         </div>
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container/50 border-b border-white/5 font-label-lg text-label-lg text-on-surface-variant">
-                <th className="p-4 font-medium pl-lg">User / Instance</th>
+                <th className="p-4 font-medium pl-lg">Użytkownik / Instancja</th>
                 <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Current Route</th>
-                <th className="p-4 font-medium text-right pr-lg">Actions</th>
+                <th className="p-4 font-medium">Aktualna trasa</th>
+                <th className="p-4 font-medium text-right pr-lg">Akcje</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">

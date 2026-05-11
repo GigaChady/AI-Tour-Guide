@@ -32,22 +32,22 @@ export function NeuralProvidersCard() {
     <div className="bg-surface-container rounded-[2rem] p-lg border border-white/5 shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <span className="material-symbols-outlined text-primary text-3xl">neurology</span>
-        <h3 className="font-title-lg text-title-lg text-on-surface">Neural Providers</h3>
+        <h3 className="font-title-lg text-title-lg text-on-surface">Dostawcy neuronowi</h3>
       </div>
       <div className="space-y-6">
         <SelectField
-          label="Primary LLM Engine"
+          label="Główny silnik LLM"
           options={['GPT-4 Turbo', 'Claude 3.5 Sonnet', 'Llama 3 (Local Hosted)']}
         />
         <SelectField
-          label="Voice Synthesis (TTS)"
+          label="Synteza głosu (TTS)"
           options={['ElevenLabs V2', 'OpenAI TTS', 'Google Cloud TTS']}
         />
         <div className="pt-4 border-t border-white/5 flex items-center justify-between">
           <div>
-            <div className="font-title-md text-title-md text-on-surface">Streaming Mode</div>
+            <div className="font-title-md text-title-md text-on-surface">Tryb strumieniowania</div>
             <div className="font-body-md text-body-md text-on-surface-variant">
-              Enable token-by-token output
+              Włącz wyjście token po tokenie
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">

@@ -5,11 +5,11 @@ import avatarPlaceholder from '@/assets/avatar_placeholder.svg'
 const navigator = {
   avatarSrc: avatarPlaceholder,
   name: 'Traveler One',
-  role: 'Current Navigator',
+  role: 'Aktualny nawigator',
   explorationCount: 3,
   stats: [
-    { icon: 'straighten', label: 'Total Distance', value: '21.4 km' },
-    { icon: 'timer', label: 'Total Time', value: '7h 10m' },
+    { icon: 'straighten', label: 'Łączny dystans', value: '21.4 km' },
+    { icon: 'timer', label: 'Łączny czas', value: '7h 10m' },
   ],
 }
 
@@ -42,9 +42,9 @@ export function Profile() {
     <main className="flex-1 overflow-y-auto bg-background p-md md:p-lg">
       <div className="max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-sm mb-lg">
-          <h2 className="font-headline-lg text-headline-lg text-on-surface">Route History</h2>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface">Historia tras</h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Review your past explorations and detailed tour metrics.
+            Przejrzyj swoje poprzednie eksploracje i szczegółowe statystyki wycieczek.
           </p>
         </div>
 

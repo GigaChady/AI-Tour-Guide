@@ -21,7 +21,7 @@ export function Login() {
 
             <h1 className="font-headline-lg text-headline-lg text-on-surface">AI Tour Guide</h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-2 mb-10">
-              Sign in to access your dashboard.
+              Zaloguj się, aby uzyskać dostęp do panelu.
             </p>
 
             <button
@@ -34,7 +34,7 @@ export function Login() {
               >
                 passkey
               </span>
-              Continue with SSO
+              Kontynuuj przez SSO
             </button>
           </div>
         </div>
