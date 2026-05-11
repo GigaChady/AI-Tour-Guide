@@ -1,23 +1,26 @@
 package ai.tour.guide.ui.components.display
 
 import ai.tour.guide.R
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,40 +28,46 @@ fun ImageCarousel(
     modifier: Modifier = Modifier,
     imageUrls: List<String> = emptyList()
 ) {
-    data class CarouselItem(
-        val id: Int,
-        val imageUrl: String? = null,
-        @param:DrawableRes val imageResId: Int? = null,
-        val contentDescription: String
-    )
-
-    val fallbackResIds = remember {
-        listOf(R.drawable.dashboard_example_img_2)
+    val validImageUrls = remember(imageUrls) {
+        imageUrls.filter { it.isNotBlank() }
     }
+    val imageContentDescription = stringResource(R.string.dashboard_poi_image_content_description)
+    val imageLoadErrorText = stringResource(R.string.dashboard_image_load_error_text)
 
-    val sanitizedUrls = remember(imageUrls) {
-        imageUrls.map { it.trim() }.filter { it.isNotEmpty() }
-    }
-
-    val items = remember(sanitizedUrls) {
-        val targetItemCount = 8
-        val urlItems = repeatToSize(sanitizedUrls, targetItemCount)
-        if (urlItems.isNotEmpty()) {
-            urlItems.mapIndexed { index, url ->
-                CarouselItem(index, imageUrl = url, contentDescription = "poi_image_$index")
-            }
-        } else {
-            repeatToSize(fallbackResIds, targetItemCount).mapIndexed { index, resId ->
-                CarouselItem(index, imageResId = resId, contentDescription = "fallback_image_$index")
-            }
+    if (validImageUrls.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.dashboard_empty_carousel_text),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.outline
+            )
         }
+        return
+    }
+
+    if (validImageUrls.size == 1) {
+        CarouselImage(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 16.dp, bottom = 16.dp)
+                .clip(MaterialTheme.shapes.extraLarge),
+            imageUrl = validImageUrls.first(),
+            contentDescription = imageContentDescription,
+            errorText = imageLoadErrorText
+        )
+        return
     }
 
     BoxWithConstraints(modifier = modifier) {
         val preferredWidth = maxWidth * 0.8f
 
         HorizontalMultiBrowseCarousel(
-            state = rememberCarouselState { items.count() },
+            state = rememberCarouselState { validImageUrls.size },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 16.dp, bottom = 16.dp),
@@ -66,35 +75,51 @@ fun ImageCarousel(
             itemSpacing = 8.dp,
             contentPadding = PaddingValues(horizontal = 16.dp)
         ) { i ->
-            val item = items[i]
-            if (item.imageUrl.isNullOrBlank()) {
-                Image(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .maskClip(MaterialTheme.shapes.extraLarge),
-                    painter = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
-                    contentDescription = item.contentDescription,
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .maskClip(MaterialTheme.shapes.extraLarge),
-                    model = item.imageUrl,
-                    contentDescription = item.contentDescription,
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2),
-                    error = painterResource(id = item.imageResId ?: R.drawable.dashboard_example_img_2)
-                )
-            }
+            CarouselImage(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .maskClip(MaterialTheme.shapes.extraLarge),
+                imageUrl = validImageUrls[i],
+                contentDescription = imageContentDescription,
+                errorText = imageLoadErrorText
+            )
         }
     }
 }
 
-private fun <T> repeatToSize(source: List<T>, size: Int): List<T> {
-    if (source.isEmpty() || size <= 0) {
-        return emptyList()
-    }
-    return List(size) { index -> source[index % source.size] }
+@Composable
+private fun CarouselImage(
+    modifier: Modifier = Modifier,
+    imageUrl: String,
+    contentDescription: String,
+    errorText: String
+) {
+    SubcomposeAsyncImage(
+        modifier = modifier,
+        model = imageUrl,
+        contentDescription = contentDescription,
+        contentScale = ContentScale.Crop,
+        loading = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        },
+        error = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = errorText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    )
 }

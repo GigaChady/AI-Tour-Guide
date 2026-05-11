@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 class LocationProcessor:
     OVERPASS_SERVERS = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
         "https://overpass.openstreetmap.fr/api/interpreter",
+        "https://overpass-api.de/api/interpreter",
         "https://overpass.nchc.org.tw/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
     ]
 
     RETRYABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504}
