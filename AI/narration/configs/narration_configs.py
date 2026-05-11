@@ -175,12 +175,12 @@ class NarrationSettings(BaseSettings):
     )
 
     default_language: str = Field(
-        default="en",
+        default="pl",
         description="Default language code for narrations"
     )
 
     default_language_name: str = Field(
-        default="English",
+        default="Polish",
         description="Default language name for narrations"
     )
 

@@ -28,9 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 
 @Composable
@@ -40,6 +41,13 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = koinInject()
 ) {
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
+    LifecycleStartEffect(Unit) {
+        viewModel.onStart()
+        onStopOrDispose {
+            viewModel.onDestroy()
+        }
+    }
+
     LocationPermissionGate(modifier = modifier) {
         val part1 = stringResource(R.string.dashboard_header_text_content_part1)
         val part2 = stringResource(R.string.dashboard_header_text_content_part2)

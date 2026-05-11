@@ -22,8 +22,7 @@ interface RoutePOIDao {
     @Insert
     suspend fun insertAll(pois: List<RoutePOI>)
 
-    @Query("SELECT * FROM pois WHERE stop_id = :stopId ORDER BY created_at ASC LIMIT 1")
-    fun getFirstPoiForStop(stopId: Int?): Flow<RoutePOI?>
-
+    @Query("SELECT * FROM pois ORDER BY created_at DESC, id DESC LIMIT 1")
+    fun getLatestPoi(): Flow<RoutePOI?>
 
 }
