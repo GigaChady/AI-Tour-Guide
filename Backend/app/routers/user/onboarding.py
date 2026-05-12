@@ -103,6 +103,10 @@ async def get_onboarding_questions(
     catalog = _CATALOGS.get(lang, DEFAULT_ONBOARDING_CATALOG)
     questions = _build_questions(catalog)
 
+    if current_user.language != lang and lang in _CATALOGS:
+        current_user.language = lang
+        await db.commit()
+
     selected_answers = {
         "gender": current_user.gender,
         "interests": [],
