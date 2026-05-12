@@ -101,6 +101,12 @@ class UpdateUserParamsRequest(BaseModel):
     new_email: EmailStr | None = None
     new_password: str | None = None
 
+class AdminUpdateUserRequest(BaseModel):
+    name: str | None = None
+    new_email: EmailStr | None = None
+    new_password: str | None = None
+
+
 # ----------------SESSION SCHEMAS----------------
 class SessionMeta(BaseModel):
     user_id: str
