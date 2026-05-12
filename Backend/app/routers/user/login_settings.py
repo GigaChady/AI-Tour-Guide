@@ -60,7 +60,6 @@ async def get_current_user_params(
     return UserParamsResponse(
         email=user_from_db.email,
         name=user_from_db.name,
-        language=user_from_db.language or "pl",
     )
 
 
