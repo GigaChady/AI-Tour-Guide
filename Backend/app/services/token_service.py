@@ -15,12 +15,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class TokenService:
 
-    def create_access_token(self, user_id: str) -> str:
+    def create_access_token(self, user_id: str, is_admin: bool = False) -> str:
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         )
         return jwt.encode(
-            {"sub": user_id, "exp": expire, "type": "access"},
+            {"sub": user_id, "exp": expire, "type": "access", "is_admin": is_admin},
             settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM
         )
@@ -53,7 +53,7 @@ class TokenService:
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def issue_tokens(self, user: User, db: AsyncSession) -> TokenResponse:
-        access_token = self.create_access_token(str(user.id))
+        access_token = self.create_access_token(str(user.id), is_admin=user.is_admin)
         raw_refresh, hashed_refresh = self.create_refresh_token()
 
         result = await db.execute(
