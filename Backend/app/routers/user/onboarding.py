@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -98,8 +98,9 @@ def _normalize_onboarding_answers(
 async def get_onboarding_questions(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    lang: str = Query(default="pl"),
 ):
-    catalog = _CATALOGS.get(current_user.language or "pl", DEFAULT_ONBOARDING_CATALOG)
+    catalog = _CATALOGS.get(lang, DEFAULT_ONBOARDING_CATALOG)
     questions = _build_questions(catalog)
 
     selected_answers = {
@@ -128,8 +129,7 @@ async def save_onboarding_answers(
     if not answers:
         raise HTTPException(status_code=422, detail="Answers cannot be empty")
 
-    catalog = _CATALOGS.get(current_user.language or "pl", DEFAULT_ONBOARDING_CATALOG)
-    questions = _build_questions(catalog)
+    questions = _build_questions(DEFAULT_ONBOARDING_CATALOG)
     normalized = _normalize_onboarding_answers(answers, questions)
     by_key = {item.question_key: item for item in normalized["items"]}
 
