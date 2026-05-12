@@ -16,13 +16,15 @@ def test_narration_prompt_builder_returns_system_and_user_messages():
     assert len(messages) == 2
     assert messages[0][0] == "system"
     assert "valid JSON" in messages[0][1]
+    assert "Do not include coordinates" in messages[0][1]
+    assert "URLs" in messages[0][1]
     assert "Polish" in messages[0][1]
     assert messages[1][0] == "user"
     assert "Town Hall Tower" in messages[1][1]
     assert "Historic facts" in messages[1][1]
 
 
-def test_filtering_prompt_builder_keeps_cloud_short_mode_behavior():
+def test_filtering_prompt_builder_keeps_cloud_context_without_extra_instruction():
     builder = FilteringPromptBuilder()
 
     prompt = builder.build_cloud_prompt(
@@ -32,7 +34,26 @@ def test_filtering_prompt_builder_keeps_cloud_short_mode_behavior():
         include_prompt=False,
     )
 
-    assert prompt == "User preferences: art"
+    assert "POI name: Museum" in prompt
+    assert "POI context:" in prompt
+    assert "A detailed museum description" in prompt
+    assert "User preferences: art" in prompt
+    assert "Compose a concise English prompt" not in prompt
+
+
+def test_filtering_prompt_builder_omits_cloud_preferences_when_not_provided():
+    builder = FilteringPromptBuilder()
+
+    prompt = builder.build_cloud_prompt(
+        poi_name="Museum",
+        poi_description="A detailed museum description",
+        user_preferences=None,
+        include_prompt=False,
+    )
+
+    assert "POI name: Museum" in prompt
+    assert "A detailed museum description" in prompt
+    assert "User preferences" not in prompt
 
 
 def test_filtering_prompt_builder_builds_ollama_messages():

@@ -7,12 +7,8 @@ from pipeline.steps import (
     PoiEnrichmentStep,
     PoiSelectionStep,
 )
-from tasks.information_filtering_task import InformationFilteringTask
-from tasks.narration_generation_task import NarrationGenerationTask
-from tasks.poi_enrichment_task import PoiEnrichmentTask
-from tasks.poi_selection_task import PoiSelectionTask
-from domain.pipeline_models import TourPipelineResult
-from utils.schemas import NarrationSettings
+from schemas import TourPipelineResult
+from schemas import NarrationSettings
 
 
 class TourNarrationPipeline:
@@ -67,34 +63,3 @@ class TourNarrationPipeline:
             narration=narration,
         )
 
-    @staticmethod
-    def build_default(narration_settings: NarrationSettings) -> "TourNarrationPipeline":
-        from langchain_community.tools import DuckDuckGoSearchRun
-
-        from narration.filtering.cloud_filtering_agent import CloudFilteringAgent
-        from narration.location.location_processor import LocationProcessor
-        from narration.narrative_generation.cloud_narrative_agent import CloudNarrativeAgent
-        from narration.scraping.scraping_agent import LangChainScrapingAgent
-
-        search_agent = LangChainScrapingAgent(
-            narration_settings=narration_settings,
-            search_tool=DuckDuckGoSearchRun(),
-        )
-
-        return TourNarrationPipeline(
-            narration_settings=narration_settings,
-            location_discovery_step=LocationProcessor(
-                narration_settings=narration_settings,
-                user_agent="my-user-agent",
-            ),
-            poi_selection_step=PoiSelectionTask(),
-            poi_enrichment_step=PoiEnrichmentTask(search_agent=search_agent),
-            information_filtering_step=InformationFilteringTask(
-                filtering_agent=CloudFilteringAgent(narration_settings=narration_settings)
-            ),
-            narration_generation_step=NarrationGenerationTask(
-                narrative_generation_agent=CloudNarrativeAgent(
-                    narration_settings=narration_settings
-                )
-            ),
-        )

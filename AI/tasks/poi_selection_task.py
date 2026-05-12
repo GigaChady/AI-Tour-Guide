@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from math import asin, cos, radians, sin, sqrt
 
-from domain.pipeline_models import PoiCandidate, SelectedPoi
+from schemas import PoiCandidate, SelectedPoi
 
 logger = logging.getLogger(__name__)
 

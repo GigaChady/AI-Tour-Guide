@@ -1,14 +1,14 @@
 import logging
 import os
+import json
 
-from narration.narration_manager import NarrationManager
-from narration.photos.default_photo_generator import DefaultPhotoGenerator
+from pipeline.tour_narration_pipeline_factory import TourNarrationPipelineFactory
 from processors.narration_processor import NarrationProcessor
 from processors.photo_processor import PhotoProcessor
 from storage.minio_image_storage import MinioImageStorage
-from utils.schemas import NarrationSettings, NarrationDetailLevel, NarrationLanguage
 from connections.redis_stream_worker import RedisStreamWorker
 from processors.backend_processor import BackendProcessor
+from schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
 
 if __name__ == "__main__":
     # Logging config (debug)
@@ -20,24 +20,21 @@ if __name__ == "__main__":
 
     if os.getenv("AI_RUN_STREAM_WORKER", "1") == "1":
 
-        backend_processor = BackendProcessor(sub_processor=NarrationProcessor(sub_processor=PhotoProcessor(MinioImageStorage())))
+        photo_processor = PhotoProcessor(MinioImageStorage())
+        narration_processor = NarrationProcessor(photo_processor=photo_processor)
+        backend_processor = BackendProcessor(narration_processor=narration_processor)
         stream_worker = RedisStreamWorker(backend_processor)
         stream_worker.run()
         
     else:
-        
-        # Narration settings
         narration_settings = NarrationSettings(
             latitude=41.889799,
             longitude=12.491015,
             detail_level=NarrationDetailLevel.DETAILED,
             search_radius=50,
-            language=NarrationLanguage(language_name="polski", language_tag="pl"),
-            user_preferences="history architecture"
+            language=NarrationLanguage(language_name="Polish", language_tag="pl"),
+            user_preferences="history architecture",
         )
 
-        narration_manager = NarrationManager.build_narration_manager(narration_settings)
-
-        # Generate narration
-        #narration = narration_manager.get_narration()
-        print("Mock Narration - Colosseum in Rome, Italy: The Colosseum, also known as the Flavian Amphitheatre, is an iconic symbol of ancient Rome. Built between 70-80 AD, it was used for gladiatorial contests and public spectacles. With a capacity of around 50,000 spectators, it remains one of the greatest architectural and engineering feats of the Roman Empire.")
+        result = TourNarrationPipelineFactory().create(narration_settings).run()
+        print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))

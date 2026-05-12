@@ -1,4 +1,4 @@
-from domain.pipeline_models import PoiCandidate
+from schemas import PoiCandidate
 from tasks.poi_selection_task import PoiSelectionTask
 
 

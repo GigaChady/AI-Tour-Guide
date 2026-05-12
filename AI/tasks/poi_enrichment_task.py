@@ -2,14 +2,29 @@ from __future__ import annotations
 
 import logging
 
-from domain.pipeline_models import EnrichedPoi, LocationAddress, SelectedPoi
+from schemas import (
+    EnrichedPoi,
+    LocationAddress,
+    PoiInformationSource,
+    SelectedPoi,
+)
+from integrations.contracts import SearchClient
 
 logger = logging.getLogger(__name__)
 
 
+def _quoted(value: str) -> str:
+    value = value.strip()
+    return f'"{value}"' if value else ""
+
+
+def _general_location(address: LocationAddress) -> str:
+    return address.general_location.replace(",", "")
+
+
 class PoiEnrichmentTask:
-    def __init__(self, search_agent):
-        self.search_agent = search_agent
+    def __init__(self, search_client: SearchClient):
+        self.search_client = search_client
 
     def run(
         self,
@@ -17,24 +32,29 @@ class PoiEnrichmentTask:
         address: LocationAddress,
     ) -> EnrichedPoi:
         query = self._build_query(selected_poi=selected_poi, address=address)
-        self.search_agent.query = query
-
-        raw_information = self.search_agent.run_scraping() or ""
+        search_content = self.search_client.search(query)
         logger.info(
-            "Raw location information for POI '%s': %s",
+            "Raw location information for POI '%s' query='%s': %s",
             selected_poi.poi.name,
-            raw_information,
+            query,
+            search_content[:500],
         )
 
         return EnrichedPoi(
             poi=selected_poi.poi,
             address=address,
-            raw_information=raw_information,
+            information_sources=[
+                PoiInformationSource(
+                    query=query,
+                    content=search_content,
+                )
+            ],
         )
 
     @staticmethod
     def _build_query(selected_poi: SelectedPoi, address: LocationAddress) -> str:
-        return (
-            f"Information and history about {selected_poi.poi.name} "
-            f"{address.city} {address.suburb}"
-        )
+        query_parts = [
+            _quoted(selected_poi.poi.name),
+            _quoted(_general_location(address)),
+        ]
+        return " ".join(part for part in query_parts if part)

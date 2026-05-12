@@ -1,24 +1,30 @@
 
-from domain.pipeline_models import PoiCandidate
-from pipeline.tour_narration_pipeline import TourNarrationPipeline
-from processors.abstract_processor import AbstractProcessor
-from transport.backend_message_mapper import BackendMessageMapper
-from utils.schemas import NarrationSettings, LocationEvent, PreferencesEvent
+from schemas import PoiCandidate
+from pipeline.tour_narration_pipeline_factory import TourNarrationPipelineFactory
+from processors.contracts import PhotoGenerator
+from schemas import BackendMessageMapper
+from schemas import NarrationSettings, LocationEvent, PreferencesEvent
 import logging
 
 logger = logging.getLogger(__name__)
 
-class NarrationProcessor(AbstractProcessor):
-    def __init__(self, sub_processor=None, message_mapper: BackendMessageMapper | None = None):
-        super().__init__(sub_processor=sub_processor)
+class NarrationProcessor:
+    def __init__(
+        self,
+        photo_processor: PhotoGenerator | None = None,
+        message_mapper: BackendMessageMapper | None = None,
+        pipeline_factory: TourNarrationPipelineFactory | None = None,
+    ):
+        self.photo_processor = photo_processor
         self.message_mapper = message_mapper or BackendMessageMapper()
+        self.pipeline_factory = pipeline_factory or TourNarrationPipelineFactory()
 
     def validate(self, location: LocationEvent, prefs: PreferencesEvent, **kwargs) -> NarrationSettings:
         """
         Validates and returns narration settings based on the location event and user preferences.
         
         Parses LocationEvent and PreferencesEvent into NarrationSettings, using default values
-        from NarrationSettingsConfig when specific fields are not provided in the preferences.
+        from NarrationDefaultsConfig when specific fields are not provided in the preferences.
         
         Args:
             location: LocationEvent containing latitude and longitude
@@ -44,8 +50,8 @@ class NarrationProcessor(AbstractProcessor):
         """
         Generates narration photo for a given point of interest (POI).
         """
-        if self.sub_processor:
-            return self.sub_processor.generate(category, count)
+        if self.photo_processor:
+            return self.photo_processor.generate(category, count)
         return None
 
     def _generate_photo_urls(self, poi: PoiCandidate, photo_count: int = 1) -> list[str]:
@@ -63,7 +69,7 @@ class NarrationProcessor(AbstractProcessor):
         """
         Runs narration pipeline
         """
-        pipeline = TourNarrationPipeline.build_default(narration_settings)
+        pipeline = self.pipeline_factory.create(narration_settings)
 
         try:
             result = pipeline.run()
@@ -86,10 +92,3 @@ class NarrationProcessor(AbstractProcessor):
             return self.message_mapper.build_narration_message(result.narration), poi_response
 
         return None, poi_response
-
-    def validate_prefs(self, prefs):
-        pass
-
-
-    def generate(self, *args):
-        pass

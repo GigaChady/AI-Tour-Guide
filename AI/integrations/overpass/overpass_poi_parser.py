@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from domain.pipeline_models import PoiCandidate
+from schemas import PoiCandidate
 from integrations.overpass.overpass_models import OverpassResponse
 
 

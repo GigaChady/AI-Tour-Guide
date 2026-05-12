@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from domain.pipeline_models import (
+from schemas import (
     EnrichedPoi,
     FilteredPoiFacts,
     LocationAddress,
     LocationDiscoveryResult,
     NarrationResult,
+    PoiCandidate,
     SelectedPoi,
 )
-from utils.schemas import NarrationSettings
+from schemas import NarrationSettings
 
 
 class LocationDiscoveryStep(Protocol):
@@ -21,7 +22,7 @@ class LocationDiscoveryStep(Protocol):
 class PoiSelectionStep(Protocol):
     def run(
         self,
-        candidates: list,
+        candidates: list[PoiCandidate],
         user_latitude: float,
         user_longitude: float,
     ) -> SelectedPoi | None:

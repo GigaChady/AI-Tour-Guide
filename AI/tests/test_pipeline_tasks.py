@@ -1,21 +1,26 @@
-from domain.pipeline_models import LocationAddress, PoiCandidate, SelectedPoi
+from schemas import LocationAddress, PoiCandidate, SelectedPoi
 from tasks.information_filtering_task import InformationFilteringTask
 from tasks.narration_generation_task import NarrationGenerationTask
 from tasks.poi_enrichment_task import PoiEnrichmentTask
-from utils.schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
+from schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
 
 
 class FakeSearchAgent:
     def __init__(self):
         self.query = None
 
-    def run_scraping(self):
+    def search(self, query):
+        self.query = query
         return "Search result"
 
 
 class FakeFilteringAgent:
-    def filter_information(self, poi_name, raw_text):
-        return f"Facts for {poi_name}: {raw_text}"
+    def __init__(self):
+        self.enriched_poi = None
+
+    def filter_information(self, enriched_poi):
+        self.enriched_poi = enriched_poi
+        return f"Facts for {enriched_poi.poi.name}: {enriched_poi.to_context_text()}"
 
 
 class FakeNarrationAgent:
@@ -39,7 +44,7 @@ def _settings():
 
 def test_poi_enrichment_task_builds_query_and_returns_enriched_model():
     search_agent = FakeSearchAgent()
-    task = PoiEnrichmentTask(search_agent=search_agent)
+    task = PoiEnrichmentTask(search_client=search_agent)
     selected = SelectedPoi(
         poi=PoiCandidate(
             name="Town Hall Tower",
@@ -51,16 +56,27 @@ def test_poi_enrichment_task_builds_query_and_returns_enriched_model():
         category_rank=2,
     )
     address = LocationAddress(
-        raw={"address": {"city": "Krakow", "suburb": "Old Town"}}
+        raw={
+            "address": {
+                "city": "Krakow",
+                "suburb": "Old Town",
+                "road": "Florianska",
+                "country": "Poland",
+            }
+        }
     )
 
     enriched = task.run(selected_poi=selected, address=address)
 
     assert search_agent.query == (
-        "Information and history about Town Hall Tower Krakow Old Town"
+        '"Town Hall Tower" "Krakow Poland"'
     )
     assert enriched.poi.name == "Town Hall Tower"
-    assert enriched.raw_information == "Search result"
+    assert enriched.information_sources[0].query == search_agent.query
+    assert enriched.information_sources[0].source_type == "web_search"
+    assert "Type/category: monument" in enriched.to_context_text()
+    assert "Information source 1:\nSearch result" in enriched.to_context_text()
+    assert "Coordinates:" not in enriched.to_context_text()
 
 
 def test_filtering_and_narration_tasks_return_domain_models():
@@ -74,18 +90,20 @@ def test_filtering_and_narration_tasks_return_domain_models():
         distance_km=0.1,
         category_rank=2,
     )
-    enriched = PoiEnrichmentTask(search_agent=FakeSearchAgent()).run(
+    enriched = PoiEnrichmentTask(search_client=FakeSearchAgent()).run(
         selected_poi=selected,
         address=LocationAddress(),
     )
 
-    facts = InformationFilteringTask(
-        filtering_agent=FakeFilteringAgent()
-    ).run(enriched)
+    filtering_agent = FakeFilteringAgent()
+    facts = InformationFilteringTask(filtering_agent=filtering_agent).run(enriched)
     narration = NarrationGenerationTask(
         narrative_generation_agent=FakeNarrationAgent()
     ).run(facts, _settings())
 
-    assert facts.facts == "Facts for Town Hall Tower: Search result"
+    assert filtering_agent.enriched_poi == enriched
+    assert "Facts for Town Hall Tower" in facts.facts
+    assert "Type/category: monument" in facts.facts
+    assert "Coordinates:" not in facts.facts
     assert narration.location == "Town Hall Tower"
     assert "Facts for Town Hall Tower" in narration.narration

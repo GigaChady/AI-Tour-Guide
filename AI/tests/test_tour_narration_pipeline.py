@@ -1,13 +1,13 @@
-from domain.pipeline_models import LocationAddress, LocationDiscoveryResult, PoiCandidate
+from schemas import LocationAddress, LocationDiscoveryResult, PoiCandidate
 from pipeline.tour_narration_pipeline import TourNarrationPipeline
 from tasks.information_filtering_task import InformationFilteringTask
 from tasks.narration_generation_task import NarrationGenerationTask
 from tasks.poi_enrichment_task import PoiEnrichmentTask
 from tasks.poi_selection_task import PoiSelectionTask
-from utils.schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
+from schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
 
 
-class FakeLocationProcessor:
+class FakeLocationDiscoveryStep:
     def get_location_details(self):
         return LocationDiscoveryResult(
             address=LocationAddress(
@@ -15,6 +15,8 @@ class FakeLocationProcessor:
                     "address": {
                         "city": "Krakow",
                         "suburb": "Old Town",
+                        "road": "Florianska",
+                        "country": "Poland",
                     }
                 }
             ),
@@ -30,17 +32,18 @@ class FakeLocationProcessor:
         )
 
 
-class FakeScrapingAgent:
+class FakeSearchClient:
     def __init__(self):
         self.query = None
 
-    def run_scraping(self):
+    def search(self, query):
+        self.query = query
         return "Raw historical information"
 
 
 class FakeFilteringAgent:
-    def filter_information(self, poi_name, raw_text):
-        return f"Filtered facts about {poi_name}: {raw_text}"
+    def filter_information(self, enriched_poi):
+        return f"Filtered facts about {enriched_poi.poi.name}: {enriched_poi.to_context_text()}"
 
 
 class FakeNarrativeGenerationAgent:
@@ -51,13 +54,13 @@ class FakeNarrativeGenerationAgent:
         }
 
 
-def _pipeline(include_narration=True, scraping_agent=None):
+def _pipeline(include_narration=True, search_client=None):
     return TourNarrationPipeline(
         narration_settings=_settings(include_narration=include_narration),
-        location_discovery_step=FakeLocationProcessor(),
+        location_discovery_step=FakeLocationDiscoveryStep(),
         poi_selection_step=PoiSelectionTask(),
         poi_enrichment_step=PoiEnrichmentTask(
-            search_agent=scraping_agent or FakeScrapingAgent()
+            search_client=search_client or FakeSearchClient()
         ),
         information_filtering_step=InformationFilteringTask(
             filtering_agent=FakeFilteringAgent()
@@ -81,21 +84,24 @@ def _settings(include_narration=True):
 
 
 def test_pipeline_runs_all_steps_and_returns_narration():
-    scraping_agent = FakeScrapingAgent()
-    pipeline = _pipeline(scraping_agent=scraping_agent)
+    search_client = FakeSearchClient()
+    pipeline = _pipeline(search_client=search_client)
 
     result = pipeline.run()
 
     assert result.poi is not None
     assert result.poi.name == "Town Hall Tower"
     assert result.enriched_poi is not None
-    assert result.enriched_poi.raw_information == "Raw historical information"
+    assert result.enriched_poi.information_sources[0].query == search_client.query
+    assert "Type/category: monument" in result.enriched_poi.to_context_text()
+    assert "Information source 1:\nRaw historical information" in result.enriched_poi.to_context_text()
+    assert "Coordinates:" not in result.enriched_poi.to_context_text()
     assert result.filtered_facts is not None
     assert "Filtered facts" in result.filtered_facts.facts
     assert result.narration is not None
     assert result.narration.location == "Town Hall Tower"
-    assert scraping_agent.query == (
-        "Information and history about Town Hall Tower Krakow Old Town"
+    assert search_client.query == (
+        '"Town Hall Tower" "Krakow Poland"'
     )
 
 
