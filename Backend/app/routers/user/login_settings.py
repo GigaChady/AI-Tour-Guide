@@ -37,6 +37,11 @@ async def update_user_params(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Name is required")
         current_user.name = body.name
 
+    if body.language is not None:
+        if body.language not in ("pl", "en"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Unsupported language")
+        current_user.language = body.language
+
     try:
         await db.commit()
     except IntegrityError:
@@ -55,6 +60,7 @@ async def get_current_user_params(
     return UserParamsResponse(
         email=user_from_db.email,
         name=user_from_db.name,
+        language=user_from_db.language or "pl",
     )
 
 
