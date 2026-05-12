@@ -131,6 +131,11 @@ async def update_user(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
         target.name = body.name
 
+    if body.is_active is not None:
+        if not current_user.is_admin:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Only admins can change user active status")
+        target.is_active = body.is_active
+
     try:
         await db.commit()
     except IntegrityError:

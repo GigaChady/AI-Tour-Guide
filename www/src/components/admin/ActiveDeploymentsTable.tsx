@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AddUserModal } from '@/components/admin/AddUserModal'
 import { EditUserModal } from '@/components/admin/EditUserModal'
-import { useAdminDeployments } from '@/hooks/useAdminQueries'
+import { useAdminDeployments, useDeleteUser } from '@/hooks/useAdminQueries'
 import type { AdminDeploymentUser } from '@/types/admin'
 
 type UserStatus = 'active' | 'idle'
@@ -12,6 +12,7 @@ interface UserDeployment {
   name: string
   email: string
   id: string
+  fullId: string
   isActive: boolean
   status: UserStatus
   currentRoute: string
@@ -34,6 +35,7 @@ function mapUser(user: AdminDeploymentUser, index: number): UserDeployment {
     name: user.name ?? user.email,
     email: user.email,
     id: user.id.slice(0, 8),
+    fullId: user.id,
     isActive: user.is_active,
     status: user.on_route ? 'active' : 'idle',
     currentRoute: user.on_route ? 'Na trasie' : '—',
@@ -63,12 +65,14 @@ function UserDeploymentRow({
   name,
   email,
   id,
+  fullId,
   isActive,
   status,
   currentRoute,
   avatarVariant,
   onEdit,
-}: UserDeployment & { onEdit: (user: UserDeployment) => void }) {
+  onDelete,
+}: UserDeployment & { onEdit: (user: UserDeployment) => void; onDelete: (fullId: string) => void }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -116,18 +120,24 @@ function UserDeploymentRow({
             <span className="material-symbols-outlined">more_vert</span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-36 bg-surface-container-high border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 w-36 bg-surface-container-high border border-white/10 rounded-xl shadow-xl z-[9999]">
               <button
                 className="w-full flex items-center gap-2 px-4 py-3 text-on-surface hover:bg-white/5 transition-colors font-body-md text-body-md"
                 onClick={() => {
                   setMenuOpen(false)
-                  onEdit({ initials, name, email, id, isActive, status, currentRoute, avatarVariant })
+                  onEdit({ initials, name, email, id, fullId, isActive, status, currentRoute, avatarVariant })
                 }}
               >
                 <span className="material-symbols-outlined text-[18px]">edit</span>
                 Edytuj
               </button>
-              <button className="w-full flex items-center gap-2 px-4 py-3 text-error hover:bg-white/5 transition-colors font-body-md text-body-md">
+              <button
+                className="w-full flex items-center gap-2 px-4 py-3 text-error hover:bg-white/5 transition-colors font-body-md text-body-md"
+                onClick={() => {
+                  setMenuOpen(false)
+                  onDelete(fullId)
+                }}
+              >
                 <span className="material-symbols-outlined text-[18px]">delete</span>
                 Usuń
               </button>
@@ -143,13 +153,19 @@ export function ActiveDeploymentsTable() {
   const { data, isLoading, isError } = useAdminDeployments()
   const [editingUser, setEditingUser] = useState<UserDeployment | null>(null)
   const [addingUser, setAddingUser] = useState(false)
+  const deleteUser = useDeleteUser()
 
   const users = (data?.users ?? []).map(mapUser)
 
+  function handleDelete(fullId: string) {
+    if (!window.confirm('Czy na pewno chcesz usunąć tego użytkownika?')) return
+    deleteUser.mutate(fullId)
+  }
+
   return (
     <>
-      <div className="xl:col-span-2 bg-surface-container rounded-[2rem] border border-white/5 shadow-lg overflow-hidden flex flex-col">
-        <div className="p-lg border-b border-white/5 flex items-center justify-between bg-surface-container-low">
+      <div className="xl:col-span-2 bg-surface-container rounded-[2rem] border border-white/5 shadow-lg flex flex-col">
+        <div className="p-lg border-b border-white/5 flex items-center justify-between bg-surface-container-low rounded-t-[2rem]">
           <h3 className="font-title-lg text-title-lg text-on-surface">Aktywne wdrożenia</h3>
           <button
             className="bg-primary hover:bg-primary-fixed-dim text-on-primary font-label-lg text-label-lg py-2 px-6 rounded-full transition-all duration-300 flex items-center gap-2 active:scale-95"
@@ -159,7 +175,7 @@ export function ActiveDeploymentsTable() {
             Dodaj użytkownika
           </button>
         </div>
-        <div className="overflow-x-auto flex-1">
+        <div className="flex-1">
           {isLoading && (
             <div className="flex items-center justify-center py-16 text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin text-3xl">progress_activity</span>
@@ -182,7 +198,7 @@ export function ActiveDeploymentsTable() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {users.map((user) => (
-                  <UserDeploymentRow key={user.id} {...user} onEdit={setEditingUser} />
+                  <UserDeploymentRow key={user.fullId} {...user} onEdit={setEditingUser} onDelete={handleDelete} />
                 ))}
                 {users.length === 0 && (
                   <tr>
@@ -197,7 +213,7 @@ export function ActiveDeploymentsTable() {
         </div>
       </div>
 
-      <EditUserModal key={editingUser?.id} user={editingUser} onClose={() => setEditingUser(null)} />
+      <EditUserModal key={editingUser?.fullId} user={editingUser} onClose={() => setEditingUser(null)} />
       <AddUserModal isOpen={addingUser} onClose={() => setAddingUser(false)} />
     </>
   )

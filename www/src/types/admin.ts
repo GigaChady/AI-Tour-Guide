@@ -29,3 +29,16 @@ export interface SystemConfigResponse {
   tts_provider: string
   llm_provider: string
 }
+
+export interface CreateUserRequest {
+  email: string
+  password: string
+  name: string
+}
+
+export interface UpdateUserRequest {
+  name?: string
+  new_email?: string
+  new_password?: string
+  is_active?: boolean
+}
