@@ -1,15 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { TextBox } from '@/components/ui/TextBox'
+import { useUpdateUser } from '@/hooks/useAdminQueries'
 
 interface EditUserModalProps {
-  user: { name: string; email: string; id: string; isActive: boolean } | null
+  user: { name: string; email: string; id: string; fullId: string; isActive: boolean } | null
   onClose: () => void
 }
 
 export function EditUserModal({ user, onClose }: EditUserModalProps) {
+  const [name, setName] = useState(user?.name ?? '')
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isActive, setIsActive] = useState(user?.isActive ?? true)
+  const [error, setError] = useState<string | null>(null)
+
+  const updateUser = useUpdateUser()
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+      setEmail(user.email)
+      setIsActive(user.isActive)
+      setNewPassword('')
+      setConfirmPassword('')
+      setError(null)
+    }
+  }, [user?.fullId])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!user) return
+    setError(null)
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setError('Hasła nie są zgodne.')
+      return
+    }
+
+    const payload: Record<string, unknown> = { id: user.fullId }
+    if (name !== user.name) payload.name = name
+    if (email !== user.email) payload.new_email = email
+    if (newPassword) payload.new_password = newPassword
+    if (isActive !== user.isActive) payload.is_active = isActive
+
+    try {
+      await updateUser.mutateAsync(payload as Parameters<typeof updateUser.mutateAsync>[0])
+      onClose()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setError(msg ?? 'Wystąpił błąd podczas zapisywania zmian.')
+    }
+  }
 
   return (
     <Modal isOpen={user !== null} onClose={onClose}>
@@ -38,11 +82,34 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
           </p>
         </div>
 
-        <form className="space-y-6 relative z-10">
-          <TextBox id="fullName" label="Pełne imię i nazwisko" defaultValue={user?.name} />
-          <TextBox id="email" label="Adres e-mail" type="email" defaultValue={user?.email} />
-          <TextBox id="newPassword" label="Nowe hasło" type="password" />
-          <TextBox id="confirmPassword" label="Potwierdź nowe hasło" type="password" />
+        <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+          <TextBox
+            id="fullName"
+            label="Pełne imię i nazwisko"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextBox
+            id="email"
+            label="Adres e-mail"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextBox
+            id="newPassword"
+            label="Nowe hasło"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <TextBox
+            id="confirmPassword"
+            label="Potwierdź nowe hasło"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
 
           <div className="flex items-center justify-between px-1 py-2">
             <div>
@@ -68,8 +135,14 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
             </button>
           </div>
 
+          {error && (
+            <p className="font-body-sm text-body-sm text-error">{error}</p>
+          )}
+
           <div className="pt-4">
-            <Button icon="save">Zapisz zmiany</Button>
+            <Button icon="save" disabled={updateUser.isPending}>
+              {updateUser.isPending ? 'Zapisywanie…' : 'Zapisz zmiany'}
+            </Button>
           </div>
         </form>
       </div>
