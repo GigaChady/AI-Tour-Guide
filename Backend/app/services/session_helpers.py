@@ -41,5 +41,5 @@ async def teardown_tour_session(
     if pubsub is not None:
         await pubsub.unsubscribe(f"tour:{session_id}")
         await pubsub.aclose()
-    await redis.delete(f"preferences:{session_id}")
+    await redis.delete(f"preferences:{session_id}", f"narration:{session_id}")
     await session_svc.end_session(session_id)
