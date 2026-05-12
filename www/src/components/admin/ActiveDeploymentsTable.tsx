@@ -10,7 +10,9 @@ type AvatarVariant = 'primary' | 'tertiary'
 interface UserDeployment {
   initials: string
   name: string
+  email: string
   id: string
+  isActive: boolean
   status: UserStatus
   currentRoute: string
   avatarVariant: AvatarVariant
@@ -30,7 +32,9 @@ function mapUser(user: AdminDeploymentUser, index: number): UserDeployment {
   return {
     initials: getInitials(user.name, user.email),
     name: user.name ?? user.email,
+    email: user.email,
     id: user.id.slice(0, 8),
+    isActive: user.is_active,
     status: user.on_route ? 'active' : 'idle',
     currentRoute: user.on_route ? 'Na trasie' : '—',
     avatarVariant: index % 2 === 0 ? 'primary' : 'tertiary',
@@ -57,7 +61,9 @@ function StatusBadge({ status }: { status: UserStatus }) {
 function UserDeploymentRow({
   initials,
   name,
+  email,
   id,
+  isActive,
   status,
   currentRoute,
   avatarVariant,
@@ -115,7 +121,7 @@ function UserDeploymentRow({
                 className="w-full flex items-center gap-2 px-4 py-3 text-on-surface hover:bg-white/5 transition-colors font-body-md text-body-md"
                 onClick={() => {
                   setMenuOpen(false)
-                  onEdit({ initials, name, id, status, currentRoute, avatarVariant })
+                  onEdit({ initials, name, email, id, isActive, status, currentRoute, avatarVariant })
                 }}
               >
                 <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -191,7 +197,7 @@ export function ActiveDeploymentsTable() {
         </div>
       </div>
 
-      <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />
+      <EditUserModal key={editingUser?.id} user={editingUser} onClose={() => setEditingUser(null)} />
       <AddUserModal isOpen={addingUser} onClose={() => setAddingUser(false)} />
     </>
   )
