@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { AddUserModal } from '@/components/admin/AddUserModal'
 import { EditUserModal } from '@/components/admin/EditUserModal'
+import { useAdminDeployments } from '@/hooks/useAdminQueries'
+import type { AdminDeploymentUser } from '@/types/admin'
 
 type UserStatus = 'active' | 'idle'
 type AvatarVariant = 'primary' | 'tertiary'
@@ -12,6 +14,27 @@ interface UserDeployment {
   status: UserStatus
   currentRoute: string
   avatarVariant: AvatarVariant
+}
+
+function getInitials(name: string | null, email: string): string {
+  const source = name ?? email
+  return source
+    .split(/[\s@]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0].toUpperCase())
+    .join('')
+}
+
+function mapUser(user: AdminDeploymentUser, index: number): UserDeployment {
+  return {
+    initials: getInitials(user.name, user.email),
+    name: user.name ?? user.email,
+    id: user.id.slice(0, 8),
+    status: user.on_route ? 'active' : 'idle',
+    currentRoute: user.on_route ? 'Na trasie' : '—',
+    avatarVariant: index % 2 === 0 ? 'primary' : 'tertiary',
+  }
 }
 
 function StatusBadge({ status }: { status: UserStatus }) {
@@ -110,28 +133,12 @@ function UserDeploymentRow({
   )
 }
 
-const users: UserDeployment[] = [
-  {
-    initials: 'JD',
-    name: 'John Doe',
-    id: 'usr_8x92a',
-    status: 'active',
-    currentRoute: 'Kyoto Heritage Trail',
-    avatarVariant: 'primary',
-  },
-  {
-    initials: 'SW',
-    name: 'Sarah Wang',
-    id: 'usr_2b49c',
-    status: 'idle',
-    currentRoute: 'Neo-Tokyo Cyber Walk',
-    avatarVariant: 'tertiary',
-  },
-]
-
 export function ActiveDeploymentsTable() {
+  const { data, isLoading, isError } = useAdminDeployments()
   const [editingUser, setEditingUser] = useState<UserDeployment | null>(null)
   const [addingUser, setAddingUser] = useState(false)
+
+  const users = (data?.users ?? []).map(mapUser)
 
   return (
     <>
@@ -147,21 +154,40 @@ export function ActiveDeploymentsTable() {
           </button>
         </div>
         <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface-container/50 border-b border-white/5 font-label-lg text-label-lg text-on-surface-variant">
-                <th className="p-4 font-medium pl-lg">Użytkownik / Instancja</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Aktualna trasa</th>
-                <th className="p-4 font-medium text-right pr-lg">Akcje</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {users.map((user) => (
-                <UserDeploymentRow key={user.id} {...user} onEdit={setEditingUser} />
-              ))}
-            </tbody>
-          </table>
+          {isLoading && (
+            <div className="flex items-center justify-center py-16 text-on-surface-variant">
+              <span className="material-symbols-outlined animate-spin text-3xl">progress_activity</span>
+            </div>
+          )}
+          {isError && (
+            <div className="flex items-center justify-center py-16 text-error font-body-md text-body-md">
+              Nie udało się wczytać danych.
+            </div>
+          )}
+          {!isLoading && !isError && (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container/50 border-b border-white/5 font-label-lg text-label-lg text-on-surface-variant">
+                  <th className="p-4 font-medium pl-lg">Użytkownik / Instancja</th>
+                  <th className="p-4 font-medium">Status</th>
+                  <th className="p-4 font-medium">Aktualna trasa</th>
+                  <th className="p-4 font-medium text-right pr-lg">Akcje</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {users.map((user) => (
+                  <UserDeploymentRow key={user.id} {...user} onEdit={setEditingUser} />
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-on-surface-variant font-body-md text-body-md">
+                      Brak użytkowników.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

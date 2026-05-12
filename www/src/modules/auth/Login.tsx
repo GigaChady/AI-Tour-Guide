@@ -1,8 +1,6 @@
-import { useNavigate } from 'react-router-dom'
+import { config } from '@/config'
 
 export function Login() {
-  const navigate = useNavigate()
-
   return (
     <div className="h-screen w-full bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-[24rem]">
@@ -25,7 +23,7 @@ export function Login() {
             </p>
 
             <button
-              onClick={() => navigate('/')}
+              onClick={() => { window.location.href = config.ssoLoginUrl }}
               className="w-full flex items-center justify-center gap-3 bg-primary text-on-primary font-label-lg text-label-lg py-3.5 rounded-full hover:bg-primary-fixed-dim transition-all active:scale-95"
             >
               <span

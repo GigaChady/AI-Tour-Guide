@@ -16,11 +16,14 @@
     "@fontsource/roboto": "^5.2.10",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/react-query": "^5.100.10",
+    "axios": "^1.16.0",
     "material-symbols": "^0.44.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
