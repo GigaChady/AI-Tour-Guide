@@ -1,6 +1,6 @@
-from domain.pipeline_models import NarrationResult, PoiCandidate
-from transport.backend_message_mapper import BackendMessageMapper
-from utils.schemas import LocationEvent, NarrationDetailLevel, PreferencesEvent
+from schemas import NarrationResult, PoiCandidate
+from schemas import BackendMessageMapper
+from schemas import LocationEvent, NarrationDetailLevel, PreferencesEvent
 
 
 class FakeDefaults:

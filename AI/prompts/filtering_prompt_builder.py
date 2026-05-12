@@ -36,15 +36,25 @@ class FilteringPromptBuilder:
         include_prompt: bool,
     ) -> str:
         description = (poi_description or "").strip() or "No POI description provided."
-        preferences = (user_preferences or "").strip() or "No user preferences provided."
+        preferences = (user_preferences or "").strip()
 
         if include_prompt is False:
-            return f"User preferences: {preferences}"
+            prompt = (
+                f"POI name: {poi_name}\n"
+                f"POI context:\n{description}"
+            )
+            if preferences:
+                prompt += f"\nUser preferences: {preferences}"
+            return prompt
 
+        preference_instruction = (
+            f"\nUser preferences: {preferences}" if preferences else ""
+        )
         return (
             "You are preparing a cloud filtering prompt for a travel narration pipeline.\n"
             f"POI name: {poi_name.strip()}\n"
-            f"POI description: {description}\n"
-            f"User preferences: {preferences}\n"
-            "Compose a concise English prompt that keeps only the most relevant factual details for this POI."
+            f"POI description: {description}"
+            f"{preference_instruction}\n"
+            "Compose a concise English prompt that keeps only the most relevant factual details for this POI. "
+            "Do not include coordinates, URLs, raw links, exact street addresses, ticket prices, opening hours, or technical metadata."
         )

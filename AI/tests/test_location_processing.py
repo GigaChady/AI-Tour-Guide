@@ -1,8 +1,8 @@
-from domain.pipeline_models import LocationAddress
+from schemas import LocationAddress
 from integrations.overpass.overpass_models import OverpassResponse
 from integrations.overpass.overpass_poi_parser import OverpassPoiParser
-from narration.location.location_processor import LocationProcessor
-from utils.schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
+from tasks.location_discovery_task import LocationDiscoveryTask
+from schemas import NarrationDetailLevel, NarrationLanguage, NarrationSettings
 
 
 class FakeGeocodingClient:
@@ -92,7 +92,7 @@ def test_location_processor_uses_clients_and_parser():
     geocoding_client = FakeGeocodingClient()
     overpass_client = FakeOverpassClient(overpass_data)
 
-    processor = LocationProcessor(
+    processor = LocationDiscoveryTask(
         narration_settings=_settings(),
         user_agent="test-agent",
         geocoding_client=geocoding_client,

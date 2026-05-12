@@ -1,16 +1,15 @@
 import logging
 from os import path
 
-from processors.abstract_processor import AbstractProcessor
+from storage.contracts import ImageStorage
 
 logger = logging.getLogger(__name__)
 
-class PhotoProcessor(AbstractProcessor):
+class PhotoProcessor:
     """
     Class for handling photo generation and processing.
     """
-    def __init__(self, storage, photo_path="utils/assets/default_photos"):
-        super().__init__()
+    def __init__(self, storage: ImageStorage, photo_path="utils/assets/default_photos"):
         self.photo_path = photo_path
         self.mapping = {
             "building": "def_building.jpg",
@@ -54,16 +53,4 @@ class PhotoProcessor(AbstractProcessor):
 
         result = self.storage.upload_bytes(storage_name, image_bytes)  # WARNING: swithc to poi_id in production to avoid duplicates
         return result["image_url"]
-
-
-    def process(self, event, preferences):
-        pass
-
-
-    def validate(self, entry_id, payload, **kwargs):
-        pass
-
-
-    def validate_prefs(self, prefs):
-        pass
 

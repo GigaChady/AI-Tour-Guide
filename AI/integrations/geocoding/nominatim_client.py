@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from domain.pipeline_models import LocationAddress
-from utils.schemas import NarrationDetailLevel
+from schemas import LocationAddress
+from schemas import NarrationDetailLevel
 
 logger = logging.getLogger(__name__)
 

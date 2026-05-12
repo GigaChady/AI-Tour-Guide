@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from domain.pipeline_models import FilteredPoiFacts, NarrationResult
-from utils.schemas import NarrationSettings
+from agents.contracts import NarrativeGenerationAgent
+from schemas import FilteredPoiFacts, NarrationResult
+from schemas import NarrationSettings
 
 
 class NarrationGenerationTask:
-    def __init__(self, narrative_generation_agent):
+    def __init__(self, narrative_generation_agent: NarrativeGenerationAgent):
         self.narrative_generation_agent = narrative_generation_agent
 
     def run(
