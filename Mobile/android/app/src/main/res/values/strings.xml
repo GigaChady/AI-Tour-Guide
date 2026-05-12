@@ -2,150 +2,152 @@
     <string name="app_name">AiTourGuide</string>
 
     <!-- Onboarding steps  -->
-    <string name="onboarding_header_text_header">Hej!</string>
-    <string name="onboarding_step1_header_text_body">Na początek spersonalizujemy twoje doświadczenie</string>
-    <string name="onboarding_step1_get_started_btn_content">Zaczynajmy!</string>
+    <string name="onboarding_header_text_header">Hey!</string>
+    <string name="onboarding_step1_header_text_body">First, let\'s personalize your experience</string>
+    <string name="onboarding_step1_get_started_btn_content">Let\'s go!</string>
 
-    <string name="onboarding_step2_header_text_body">Zaloguj się</string>
+    <string name="onboarding_step2_header_text_body">Log in</string>
     <string name="onboarding_step2_email_input_title">Email</string>
-    <string name="onboarding_step2_password_input_title">Hasło</string>
-    <string name="onboarding_step2_no_account_question">Nie masz konta?</string>
-    <string name="onboarding_step2_register_span">Zarejestruj się</string>
-    <string name="onboarding_step2_login_button">Zaloguj się</string>
-    <string name="onboarding_step2_login_with_google_button">Zaloguj się z Google</string>
+    <string name="onboarding_step2_password_input_title">Password</string>
+    <string name="onboarding_step2_no_account_question">Don\'t have an account?</string>
+    <string name="onboarding_step2_register_span">Sign up</string>
+    <string name="onboarding_step2_login_button">Log in</string>
+    <string name="onboarding_step2_login_with_google_button">Log in with Google</string>
 
-    <string name="onboarding_step3_header_text_body">Zarejestruj się</string>
-    <string name="onboarding_step3_name_input_title">Imię i nazwisko</string>
+    <string name="onboarding_step3_header_text_body">Sign up</string>
+    <string name="onboarding_step3_name_input_title">Full name</string>
     <string name="onboarding_step3_email_input_title">Email</string>
-    <string name="onboarding_step3_password_input_title">Hasło</string>
-    <string name="onboarding_step3_confirm_password_input_title">Powtórz hasło</string>
-    <string name="onboarding_step3_register_button">Zarejestruj się</string>
+    <string name="onboarding_step3_password_input_title">Password</string>
+    <string name="onboarding_step3_confirm_password_input_title">Confirm password</string>
+    <string name="onboarding_step3_register_button">Sign up</string>
 
-    <string name="onboarding_step4_header_text_body">Poznajmy się</string>
-    <string name="onboarding_step4_grammatic_form_section_header">Jakich form używać podczas zwracania się do Ciebie?</string>
+    <string name="onboarding_step4_header_text_body">Let\'s get to know you</string>
+    <string name="onboarding_step4_grammatic_form_section_header">Which grammatical form should we use when addressing you?</string>
 
-    <string name="onboarding_step4_grammatic_form_option1_main">żeńskich</string>
-    <string name="onboarding_step4_grammatic_form_option1_hint">Chciałabyś, mogłabyś</string>
-    <string name="onboarding_step4_grammatic_form_option2_main">męskich</string>
-    <string name="onboarding_step4_grammatic_form_option2_hint">Chciałbyś, mógłbyś</string>
-    <string name="onboarding_step4_grammatic_form_option3_main">bezosobowych</string>
-    <string name="onboarding_step4_grammatic_form_option3_hint">Chcesz, możesz</string>
+    <string name="onboarding_step4_grammatic_form_option1_main">Feminine</string>
+    <string name="onboarding_step4_grammatic_form_option1_hint">She/Her</string>
+    <string name="onboarding_step4_grammatic_form_option2_main">Masculine</string>
+    <string name="onboarding_step4_grammatic_form_option2_hint">He/Him</string>
+    <string name="onboarding_step4_grammatic_form_option3_main">Neutral</string>
+    <string name="onboarding_step4_grammatic_form_option3_hint">They/Them</string>
 
-    <string name="onboarding_step4_interests_form_section_header">Jakie są twoje zainteresowania?</string>
-    <string name="onboarding_step4_interests_form_option1_main">Historia</string>
-    <string name="onboarding_step4_interests_form_option2_main">Architektura</string>
-    <string name="onboarding_step4_interests_form_option3_main">Kultura</string>
-    <string name="onboarding_step4_page_hint">Swoje dane możesz zawsze zmienić\npóźniej w sekcji Profil</string>
+    <string name="onboarding_step4_interests_form_section_header">What are your interests?</string>
+    <string name="onboarding_step4_interests_form_option1_main">History</string>
+    <string name="onboarding_step4_interests_form_option2_main">Architecture</string>
+    <string name="onboarding_step4_interests_form_option3_main">Culture</string>
+    <string name="onboarding_step4_page_hint">You can always update your details\nlater in the Profile section</string>
 
-    <string name="onboarding_step4_next_button">Dalej</string>
+    <string name="onboarding_step4_next_button">Next</string>
 
-    <string name="onboarding_step5_header_text_header">Gotowe!</string>
-    <string name="onboarding_step5_header_text_body">Konfiguracja zakończona pomyślnie!</string>
-    <string name="onboarding_step5_get_started_btn_content">Przejdź do aplikacji</string>
+    <string name="onboarding_step5_header_text_header">All done!</string>
+    <string name="onboarding_step5_header_text_body">Setup completed successfully!</string>
+    <string name="onboarding_step5_get_started_btn_content">Go to the app</string>
 
     <!-- Navigation  -->
     <string name="navigation_drawer_item_dashboard">Dashboard</string>
     <string name="navigation_drawer_header">Menu</string>
-    <string name="navigation_drawer_item_profile">Profil</string>
-    <string name="navigation_drawer_item_app_settings">Ustawienia aplikacji</string>
+    <string name="navigation_drawer_item_profile">Profile</string>
+    <string name="navigation_drawer_item_app_settings">App settings</string>
     <string name="navigation_dashboard_route_title">Dashboard</string>
-    <string name="navigation_profile_preferences_route_title">Profil</string>
-    <string name="navigation_app_settings_route_title">Ustawienia</string>
-    <string name="navigation_account_settings_route_title">Ustawienia konta</string>
-    <string name="navigation_tour_audio_player_route_title">Zwiedzanie</string>
-    <string name="navigation_map_user_position_route_title">Mapa</string>
+    <string name="navigation_profile_preferences_route_title">Profile</string>
+    <string name="navigation_app_settings_route_title">Settings</string>
+    <string name="navigation_account_settings_route_title">Account settings</string>
+    <string name="navigation_tour_audio_player_route_title">Tour</string>
+    <string name="navigation_map_user_position_route_title">Map</string>
 
     <string name="navigation_route_dashboard_name">Dashboard</string>
     <!-- Content descriptions  -->
-    <string name="app_bar_hamburger_menu_content_description">Menu aplikacji</string>
-    <string name="app_bar_map_icon_tour_content_description">Przejdź do mapy</string>
+    <string name="app_bar_hamburger_menu_content_description">App menu</string>
+    <string name="app_bar_map_icon_tour_content_description">Go to map</string>
 
     <!-- Screen content -->
-    <string name="dashboard_header_text_content_part1">Jakie miejsca</string>
-    <string name="dashboard_header_text_content_part2">odwiedzimy dzisiaj?</string>
-    <string name="dashboard_main_section_header">Ostatnie odwiedzone miejsce</string>
-    <string name="dashboard_main_section_header_subtext_example">Nie znaleziono</string>
-    <string name="dashboard_empty_carousel_text">Zacznij odkrywać!</string>
-    <string name="dashboard_poi_image_content_description">Zdjęcie ostatnio odwiedzonego miejsca</string>
-    <string name="dashboard_image_load_error_text">Nie udało się załadować zdjęcia</string>
-    <string name="dashboard_main_cta_button_text">Rozpocznij zwiedzanie</string>
+    <string name="dashboard_header_text_content_part1">What places</string>
+    <string name="dashboard_header_text_content_part2">shall we visit today?</string>
+    <string name="dashboard_main_section_header">Last visited place</string>
+    <string name="dashboard_main_section_header_subtext_example">Not found</string>
+    <string name="dashboard_empty_carousel_text">Start exploring!</string>
+    <string name="dashboard_poi_image_content_description">Photo of the last visited place</string>
+    <string name="dashboard_image_load_error_text">Failed to load image</string>
+    <string name="dashboard_main_cta_button_text">Start tour</string>
 
-    <string name="profile_preferences_account_settings_section_header">Ustawienia konta</string>
-    <string name="profile_preferences_cta">Zapisz</string>
+    <string name="profile_preferences_account_settings_section_header">Account settings</string>
+    <string name="profile_preferences_cta">Save</string>
 
-    <string name="account_settings_header">Twoje dane</string>
-    <string name="account_settings_cta">Zapisz</string>
+    <string name="account_settings_header">Your details</string>
+    <string name="account_settings_cta">Save</string>
 
-    <string name="tour_audio_player_location_header">Twoja lokalizacja</string>
-    <string name="tour_audio_player_example_location">Wyszukiwanie...</string>
+    <string name="tour_audio_player_location_header">Your location</string>
+    <string name="tour_audio_player_example_location">Searching…</string>
 
-    <string name="tour_audio_player_narration_header_title">Opis</string>
-    <string name="tour_audio_player_narration_header_example_content_before">Przed Tobą stoi majestatyczny Zamek Królewski. To tutaj, w tym wspaniałym budynku, królowie Polski podejmowali najważniejsze decyzje dla kraju.</string>
-    <string name="tour_audio_player_narration_header_example_content_current">W swojej długiej historii Zamek Królewski był wielokrotnie grabiony i dewastowany przez wojska szwedzkie, brandenburskie, niemieckie i rosyjskie.</string>
-    <string name="tour_audio_player_narration_header_example_content_after">W XIX wieku, po upadku powstania listopadowego, został przeznaczony na potrzeby administracji rosyjskiej. W okresie I wojny światowej rezydencja niemieckiego generalnego gubernatora. W latach 1920–1922 siedziba Naczelnika Państwa, w latach 1926–1939 rezydencja Prezydenta Rzeczypospolitej Polskiej. Spalony i ograbiony przez Niemców w 1939, doszczętnie zniszczony w 1944.</string>
+    <string name="tour_audio_player_narration_header_title">Description</string>
+    <string name="tour_audio_player_narration_header_example_content_before">Before you stands the majestic Royal Castle. It was here, in this magnificent building, that the kings of Poland made the most important decisions for the country.</string>
+    <string name="tour_audio_player_narration_header_example_content_current">Throughout its long history, the Royal Castle was plundered and devastated multiple times by Swedish, Brandenburgian, German, and Russian troops.</string>
+    <string name="tour_audio_player_narration_header_example_content_after">In the 19th century, after the fall of the November Uprising, it was designated for use by the Russian administration. During World War I it served as the residence of the German Governor-General. From 1920 to 1922 it was the seat of the Chief of State, and from 1926 to 1939 the residence of the President of the Republic of Poland. It was looted and burned by the Germans in 1939 and completely destroyed in 1944.</string>
 
-    <string name="trip_end_summary_header">Podsumowanie</string>
-    <string name="trip_end_summary_header_subtext">Twojej podróży</string>
-    <string name="trip_end_summary_quick_summary_section_header">W skrócie</string>
-    <string name="trip_end_summary_visited_places_section_header">Odwiedzone atrakcje</string>
-    <string name="trip_end_summary_go_back_cta_button_text">Powrót do menu głównego</string>
+    <string name="trip_end_summary_header">Summary</string>
+    <string name="trip_end_summary_header_subtext">of your journey</string>
+    <string name="trip_end_summary_quick_summary_section_header">In brief</string>
+    <string name="trip_end_summary_visited_places_section_header">Visited attractions</string>
+    <string name="trip_end_summary_go_back_cta_button_text">Back to main menu</string>
 
-    <string name="app_settings_general_section_header">Ogólne</string>
-    <string name="app_settings_general_section_body">Ustawienia aplikacji</string>
+    <string name="app_settings_general_section_header">General</string>
+    <string name="app_settings_general_section_body">App settings</string>
 
-    <string name="app_settings_general_language_header">Język aplikacji</string>
-    <string name="app_settings_general_language_sample_selection">Polski (PL) (Domyślny)</string>
-    <string name="app_settings_general_language_picker_header">Wybierz język</string>
+    <string name="app_settings_general_language_header">App language</string>
+    <string name="app_settings_general_language_sample_selection">English (EN) (Default)</string>
+    <string name="app_settings_general_language_picker_header">Select language</string>
 
-    <string name="app_settings_general_color_scheme_header">Motyw aplikacji</string>
-    <string name="app_settings_general_color_scheme_option_auto">Systemowy (domyślny)</string>
-    <string name="app_settings_general_color_scheme_option_light">Jasny</string>
-    <string name="app_settings_general_color_scheme_option_dark">Ciemny</string>
+    <string name="app_settings_general_color_scheme_header">App theme</string>
+    <string name="app_settings_general_color_scheme_option_auto">System (default)</string>
+    <string name="app_settings_general_color_scheme_option_light">Light</string>
+    <string name="app_settings_general_color_scheme_option_dark">Dark</string>
 
-    <string name="app_settings_narration_section_header">Ogólne</string>
-    <string name="app_settings_narration_section_body">Ustawienia narracji (TTS)</string>
+    <string name="app_settings_narration_section_header">General</string>
+    <string name="app_settings_narration_section_body">Narration settings (TTS)</string>
 
-    <string name="app_settings_narration_language_header">Głos</string>
-    <string name="app_settings_narration_language_sample_selection">Polski (PL) (Domyślny)</string>
-    <string name="app_settings_narration_language_picker_header">Wybierz język narracji</string>
+    <string name="app_settings_narration_language_header">Voice</string>
+    <string name="app_settings_narration_language_sample_selection">English (EN) (Default)</string>
+    <string name="app_settings_narration_language_picker_header">Select narration language</string>
+    <string name="app_settings_narration_language_option_polish">Polish</string>
+    <string name="app_settings_narration_language_option_english">English</string>
 
-    <string name="app_settings_narration_pitch_header">Wysokość tonu</string>
-    <string name="app_settings_narration_speed_header">Prędkość</string>
-    <string name="app_settings_narration_volume_header">Głośność</string>
-    <string name="app_settings_narration_test_settings_button_content">Testuj głos</string>
+    <string name="app_settings_narration_pitch_header">Pitch</string>
+    <string name="app_settings_narration_speed_header">Speed</string>
+    <string name="app_settings_narration_volume_header">Volume</string>
+    <string name="app_settings_narration_test_settings_button_content">Test voice</string>
 
-    <string name="app_settings_playback_section_header">Odtwarzanie</string>
-    <string name="app_settings_playback_section_body">Dostosuj ustawienia odtwarzania opisów</string>
+    <string name="app_settings_playback_section_header">Playback</string>
+    <string name="app_settings_playback_section_body">Customize playback settings for tour descriptions</string>
 
-    <string name="app_settings_playback_details_count_header">Liczba szczegółów (np. historycznych), które mają zawierać opisy generowane podczas zwiedzania</string>
-    <string name="app_settings_playback_details_count_option_low">Mało</string>
-    <string name="app_settings_playback_details_count_option_mid">Średnio</string>
-    <string name="app_settings_playback_details_count_option_high">Dużo</string>
+    <string name="app_settings_playback_details_count_header">Number of details (e.g. historical) to include in descriptions generated during the tour</string>
+    <string name="app_settings_playback_details_count_option_low">Few</string>
+    <string name="app_settings_playback_details_count_option_mid">Moderate</string>
+    <string name="app_settings_playback_details_count_option_high">Many</string>
 
-    <string name="app_settings_playback_interrupt_header">Automatycznie rozpoczynaj odtwarzanie opisu, kiedy zbliżysz się do punktów wartych uwagi</string>
-    <string name="app_settings_playback_interrupt_option_yes">Tak</string>
-    <string name="app_settings_playback_interrupt_option_no">Nie</string>
+    <string name="app_settings_playback_interrupt_header">Automatically start playing a description when you approach points of interest</string>
+    <string name="app_settings_playback_interrupt_option_yes">Yes</string>
+    <string name="app_settings_playback_interrupt_option_no">No</string>
 
 
-    <string name="app_settings_account_section_header">Konto</string>
-    <string name="app_settings_account_section_body">Ustawienia konta</string>
-    <string name="app_settings_account_section_cta">Przejdź do ustawień konta</string>
+    <string name="app_settings_account_section_header">Account</string>
+    <string name="app_settings_account_section_body">Account settings</string>
+    <string name="app_settings_account_section_cta">Go to account settings</string>
 
     <!-- Component-specific -->
-    <string name="audio_player_widget_header_text">Odtwarzacz</string>
-    <string name="tour_summary_bottom_sheet_header_text">Przegląd trasy</string>
-    <string name="tour_summary_bottom_sheet_places_section">Atrakcje</string>
-    <string name="location_permission_required_title">Wymagana dokładna lokalizacja</string>
-    <string name="location_permission_required_body">Aplikacja potrzebuje dostępu do dokładnej lokalizacji, aby pokazywać Twoje położenie i prowadzić zwiedzanie wokół Ciebie. Wybierz dokładną lokalizację podczas przyznawania uprawnienia.</string>
-    <string name="location_permission_grant_button">Przyznaj dokładną lokalizację</string>
-    <string name="location_permission_settings_button">Otwórz ustawienia aplikacji</string>
-    <string name="location_services_disabled_title">Usługi lokalizacji wyłączone</string>
-    <string name="location_services_disabled_body">Aplikacja potrzebuje włączonych usług lokalizacji. Włącz je w ustawieniach urządzenia.</string>
-    <string name="location_services_enable_button">Włącz usługi lokalizacji</string>
+    <string name="audio_player_widget_header_text">Player</string>
+    <string name="tour_summary_bottom_sheet_header_text">Route overview</string>
+    <string name="tour_summary_bottom_sheet_places_section">Attractions</string>
+    <string name="location_permission_required_title">Precise location required</string>
+    <string name="location_permission_required_body">The app needs access to your precise location to show your position and guide the tour around you. Please select precise location when granting the permission.</string>
+    <string name="location_permission_grant_button">Grant precise location</string>
+    <string name="location_permission_settings_button">Open app settings</string>
+    <string name="location_services_disabled_title">Location services disabled</string>
+    <string name="location_services_disabled_body">The app needs location services to be enabled. Please turn them on in your device settings.</string>
+    <string name="location_services_enable_button">Enable location services</string>
 
     <!-- Validation errors -->
-    <string name="validation_error_password_mismatch">Hasła są różne</string>
+    <string name="validation_error_password_mismatch">Passwords do not match</string>
 
     <!-- Misc messages -->
-    <string name="settings_saved_success">Zapisano pomyślnie</string>
+    <string name="settings_saved_success">Saved successfully</string>
 </resources>
