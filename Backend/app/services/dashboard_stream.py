@@ -67,6 +67,7 @@ async def handle_dashboard_ws(websocket: WebSocket, db: AsyncSession, redis) -> 
         session_svc = SessionService(redis)
         session_id = await session_svc.create(user_id=user_id, route_id="dashboard")
         await _cache_preferences(db, redis, session_id, user_id)
+        await redis.set(f"narration:{session_id}", json.dumps(narration_cfg))
         pubsub = redis.pubsub()
         await pubsub.subscribe(f"tour:{session_id}")
 
