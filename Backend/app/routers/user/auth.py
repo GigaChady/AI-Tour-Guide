@@ -242,10 +242,12 @@ async def keycloak_callback(code: str, state: str, db: AsyncSession = Depends(ge
     logger.info(f"Keycloak login successful for email: {masked_email}")
 
     tokens = await token_service.issue_tokens(user, db)
-    response = RedirectResponse(url=f"{settings.FRONTEND_URL}/dashboard")
-    response.set_cookie("access_token", tokens.access_token, httponly=True, samesite="lax")
-    response.set_cookie("refresh_token", tokens.refresh_token, httponly=True, samesite="lax")
-    return response
+    redirect_url = (
+        f"{settings.FRONTEND_URL}/auth/callback"
+        f"?access_token={tokens.access_token}"
+        f"&refresh_token={tokens.refresh_token}"
+    )
+    return RedirectResponse(url=redirect_url)
 
 
 @router.post("/refresh", response_model=TokenResponse, responses={401: {"model": ErrorResponse}})
