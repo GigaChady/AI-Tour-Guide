@@ -17,11 +17,10 @@ logger = logging.getLogger("user_crud")
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.post("/add", status_code=status.HTTP_201_CREATED, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
+@router.post("/add", status_code=status.HTTP_201_CREATED, responses={400: {"model": ErrorResponse}, 409: {"model": ErrorResponse}}, dependencies=[Depends(get_current_admin)])
 async def create_user(
     body: RegisterRequest,
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(get_current_admin),
 ):
     normalized_email = body.email.strip().lower()
     _validate_password_strength(body.password)
