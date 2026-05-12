@@ -4,7 +4,9 @@ import type {
   AdminDeploymentsResponse,
   AdminStatsResponse,
   AvailableProvidersResponse,
+  CreateUserRequest,
   SystemConfigResponse,
+  UpdateUserRequest,
 } from '@/types/admin'
 
 export function useAdminDeployments() {
@@ -42,6 +44,38 @@ export function useUpdateAdminConfig() {
       api.put<SystemConfigResponse>('/web/admin/config', body).then((r) => r.data),
     onSuccess: (data) => {
       qc.setQueryData(['admin', 'config'], data)
+    },
+  })
+}
+
+export function useCreateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateUserRequest) =>
+      api.post('/user/add', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'deployments'] })
+    },
+  })
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: UpdateUserRequest & { id: string }) =>
+      api.patch(`/user/${id}`, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'deployments'] })
+    },
+  })
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/user/delete/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'deployments'] })
     },
   })
 }

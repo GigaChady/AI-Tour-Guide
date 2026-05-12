@@ -105,6 +105,7 @@ class AdminUpdateUserRequest(BaseModel):
     name: str | None = None
     new_email: EmailStr | None = None
     new_password: str | None = None
+    is_active: bool | None = None
 
 
 # ----------------SESSION SCHEMAS----------------
