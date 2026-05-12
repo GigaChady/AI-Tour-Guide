@@ -100,6 +100,7 @@ class UpdateUserParamsRequest(BaseModel):
     name: str | None = None
     new_email: EmailStr | None = None
     new_password: str | None = None
+    language: str | None = None
 
 class AdminUpdateUserRequest(BaseModel):
     name: str | None = None
@@ -117,6 +118,7 @@ class SessionMeta(BaseModel):
 class UserParamsResponse(BaseModel):
     email: str
     name: str
+    language: str = "pl"
 
 # ----------------PREFERENCES CACHE SCHEMA----------------
 class UserPreferencesCache(BaseModel):

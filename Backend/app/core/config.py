@@ -100,3 +100,28 @@ DEFAULT_ONBOARDING_CATALOG = [
         ],
     },
 ]
+
+DEFAULT_ONBOARDING_CATALOG_EN = [
+    {
+        "question_key": "gender",
+        "title": "What is your gender?",
+        "type": "single_choice",
+        "answers": [
+            {"answer_key": "male", "title": "Male"},
+            {"answer_key": "female", "title": "Female"},
+            {"answer_key": "non_binary", "title": "Non-binary"},
+        ],
+    },
+    {
+        "question_key": "interests",
+        "title": "What are your interests?",
+        "type": "multi_choice",
+        "answers": [
+            {"answer_key": "architecture", "title": "Architecture", "body": "History and architectural styles", "trailing_content": "🏛️"},
+            {"answer_key": "history", "title": "History", "body": "Stories about events and places", "trailing_content": "📜"},
+            {"answer_key": "culture", "title": "Culture", "body": "Traditions, art and local atmosphere", "trailing_content": "🎭"},
+            {"answer_key": "food_and_dining", "title": "Food & Dining", "body": "Flavours, cuisine and local recommendations", "trailing_content": "🍽️"},
+            {"answer_key": "nature", "title": "Nature", "body": "Parks, landscapes and outdoor spots", "trailing_content": "🌿"},
+        ],
+    },
+]

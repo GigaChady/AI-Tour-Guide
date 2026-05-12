@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import DEFAULT_ONBOARDING_CATALOG
+from app.core.config import DEFAULT_ONBOARDING_CATALOG, DEFAULT_ONBOARDING_CATALOG_EN
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.models import User, UserPreferences
@@ -18,9 +18,14 @@ from app.schemas.schemas import (
 
 router = APIRouter(prefix="/user", tags=["user"])
 
+_CATALOGS = {
+    "pl": DEFAULT_ONBOARDING_CATALOG,
+    "en": DEFAULT_ONBOARDING_CATALOG_EN,
+}
 
-def _options_from_catalog(question_key: str) -> dict:
-    item = next((i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == question_key), None)
+
+def _options_from_catalog(question_key: str, catalog: list) -> dict:
+    item = next((i for i in catalog if i["question_key"] == question_key), None)
     if not item:
         return {"items": [], "detail": None}
     return {
@@ -37,13 +42,13 @@ def _options_from_catalog(question_key: str) -> dict:
     }
 
 
-def _build_questions() -> dict:
-    gender_catalog = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "gender")
-    interests_catalog = next(i for i in DEFAULT_ONBOARDING_CATALOG if i["question_key"] == "interests")
+def _build_questions(catalog: list) -> dict:
+    gender_catalog = next(i for i in catalog if i["question_key"] == "gender")
+    interests_catalog = next(i for i in catalog if i["question_key"] == "interests")
     return {
         "items": [
-            OnboardingQuestion(key="gender", title=gender_catalog["title"], type="single_choice", options=_options_from_catalog("gender")["items"]),
-            OnboardingQuestion(key="interests", title=interests_catalog["title"], type="multi_choice", options=_options_from_catalog("interests")["items"]),
+            OnboardingQuestion(key="gender", title=gender_catalog["title"], type="single_choice", options=_options_from_catalog("gender", catalog)["items"]),
+            OnboardingQuestion(key="interests", title=interests_catalog["title"], type="multi_choice", options=_options_from_catalog("interests", catalog)["items"]),
         ],
         "detail": None
     }
@@ -94,7 +99,8 @@ async def get_onboarding_questions(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    questions = _build_questions()
+    catalog = _CATALOGS.get(current_user.language or "pl", DEFAULT_ONBOARDING_CATALOG)
+    questions = _build_questions(catalog)
 
     selected_answers = {
         "gender": current_user.gender,
@@ -122,7 +128,8 @@ async def save_onboarding_answers(
     if not answers:
         raise HTTPException(status_code=422, detail="Answers cannot be empty")
 
-    questions = _build_questions()
+    catalog = _CATALOGS.get(current_user.language or "pl", DEFAULT_ONBOARDING_CATALOG)
+    questions = _build_questions(catalog)
     normalized = _normalize_onboarding_answers(answers, questions)
     by_key = {item.question_key: item for item in normalized["items"]}
 

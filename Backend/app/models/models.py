@@ -25,6 +25,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     gender = Column(String, nullable=True)
+    language = Column(String, default="pl", nullable=False)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     narration_settings = relationship("UserNarrationSettings", back_populates="user", uselist=False)
     routes = relationship("Route", back_populates="user")
