@@ -131,7 +131,12 @@ class RouteService(
         appEventBus.publish(AppEventBusEvent.RouteTimeout(event.reason))
     }
 
+    private var isWsInitialized = false
+
     private suspend fun initWSClient() {
+        if (isWsInitialized) return
+        isWsInitialized = true
+
         wsClient.onConnected { event: WSEvent.Connected ->
             Log.i(TAG, "ws connected: $event")
         }
@@ -190,6 +195,10 @@ class RouteService(
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     suspend fun onStart() {
+        if (_currentSessionId.value != null) {
+            return
+        }
+
         apiClient.fetchBearerTokenIfNeeded()
         if (locationService.hasLocationPermission()) {
             locationService.startTracking()
@@ -205,6 +214,7 @@ class RouteService(
         _currentSessionId.value = null
         routeSession = null
         lastRouteStopRowId = null
+        isWsInitialized = false
     }
 
     private companion object {

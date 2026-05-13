@@ -38,6 +38,7 @@ class RouteNarrationPlaybackService(
     private var progressJob: Job? = null
     private var hasBroadcastLocationNearCurrentNarrationEnd: Boolean = false
     private var autoPlayEnabled: Boolean = true
+    private var currentPlayingFilePath: String? = null
     private val _isPlaying = MutableStateFlow(false)
     private val _playbackState = MutableStateFlow(RoutePlaybackState())
 
@@ -99,7 +100,8 @@ class RouteNarrationPlaybackService(
             else -> durationMs - NARRATION_END_LOCATION_BROADCAST_THRESHOLD_MS
         }
 
-        if (positionMs in minPositionForNearEndBroadcast..<durationMs) {
+        val isEnded = player?.playbackState == Player.STATE_ENDED
+        if (positionMs in minPositionForNearEndBroadcast..<durationMs || isEnded) {
             hasBroadcastLocationNearCurrentNarrationEnd = true
             CoroutineScope(Dispatchers.IO).launch {
                 eventBus.publish(AppEventBusEvent.AudioChunkNearlyFinished(positionMs))
@@ -112,11 +114,19 @@ class RouteNarrationPlaybackService(
             ensurePlayer()
             val currentPlayer = player ?: return@withContext
 
+            if (currentPlayingFilePath == filePath) {
+                autoPlayEnabled = true
+                currentPlayer.play()
+                _isPlaying.value = true
+                return@withContext
+            }
+
             currentPlayer.stop()
             currentPlayer.clearMediaItems()
             currentPlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(File(filePath))))
             currentPlayer.prepare()
 
+            currentPlayingFilePath = filePath
             hasBroadcastLocationNearCurrentNarrationEnd = false
             autoPlayEnabled = true
             currentPlayer.play()
@@ -124,7 +134,6 @@ class RouteNarrationPlaybackService(
             publishPlaybackState()
         }
     }
-
     suspend fun playNarration() {
         withContext(Dispatchers.Main.immediate) {
             ensurePlayer()
@@ -151,6 +160,7 @@ class RouteNarrationPlaybackService(
             player?.release()
             player = null
             autoPlayEnabled = true
+            currentPlayingFilePath = null
             _isPlaying.value = false
             _playbackState.value = RoutePlaybackState()
         }
