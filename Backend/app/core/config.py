@@ -5,13 +5,22 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 9999
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 99999  
 
     MAX_REFRESH_TOKENS_PER_USER: int = 1
 
 #     #Google
     GOOGLE_CLIENT_ID: str
+
+    # Keycloak SSO
+    KEYCLOAK_SERVER_URL: str = "http://localhost:8080"
+    KEYCLOAK_INTERNAL_URL: str = "http://keycloak:8080"
+    KEYCLOAK_REALM: str = "tourguide"
+    KEYCLOAK_CLIENT_ID: str = "web-client"
+    KEYCLOAK_CLIENT_SECRET: str = "web-secret"
+    KEYCLOAK_REDIRECT_URI: str = "http://localhost:8000/auth/keycloak/callback"
+    FRONTEND_URL: str = "http://localhost:3000"
 
 
 #    # PostgreSQL (asyncpg)
@@ -46,6 +55,26 @@ settings = Settings()
 DEFAULT_NARRATION = {"language": "pl", "speed": 5, "pitch": 50, "volume": 50}
 GRACE_SECONDS: int = 60
 
+NARRATION_TEST_TEXTS: dict[str, str] = {
+    "pl": "To jest test narracji. Sprawdź, jak brzmi wybrany głos z Twoimi ustawieniami.",
+    "en": "This is a narration test. Check how the selected voice sounds with your settings.",
+}
+
+
+TTS_PROVIDERS = [
+    {"key": "edge", "label": "Edge TTS"},
+    {"key": "google", "label": "Google TTS"},
+]
+
+LLM_PROVIDERS = [
+    {"key": "cloud", "label": "Cloud (NVIDIA / Claude)"},
+    {"key": "ollama", "label": "Ollama (Local)"},
+]
+
+DEFAULT_SYSTEM_CONFIG = {
+    "tts_provider": "edge",
+    "llm_provider": "cloud",
+}
 
 DEFAULT_ONBOARDING_CATALOG = [
     {
@@ -68,6 +97,31 @@ DEFAULT_ONBOARDING_CATALOG = [
             {"answer_key": "culture", "title": "Kultura", "body": "Tradycje, sztuka i lokalny klimat", "trailing_content": "🎭"},
             {"answer_key": "food_and_dining", "title": "Jedzenie", "body": "Smaki, kuchnia i lokalne rekomendacje", "trailing_content": "🍽️"},
             {"answer_key": "nature", "title": "Natura", "body": "Parki, krajobrazy i miejsca na świeżym powietrzu", "trailing_content": "🌿"},
+        ],
+    },
+]
+
+DEFAULT_ONBOARDING_CATALOG_EN = [
+    {
+        "question_key": "gender",
+        "title": "What is your gender?",
+        "type": "single_choice",
+        "answers": [
+            {"answer_key": "male", "title": "Male"},
+            {"answer_key": "female", "title": "Female"},
+            {"answer_key": "non_binary", "title": "Non-binary"},
+        ],
+    },
+    {
+        "question_key": "interests",
+        "title": "What are your interests?",
+        "type": "multi_choice",
+        "answers": [
+            {"answer_key": "architecture", "title": "Architecture", "body": "History and architectural styles", "trailing_content": "🏛️"},
+            {"answer_key": "history", "title": "History", "body": "Stories about events and places", "trailing_content": "📜"},
+            {"answer_key": "culture", "title": "Culture", "body": "Traditions, art and local atmosphere", "trailing_content": "🎭"},
+            {"answer_key": "food_and_dining", "title": "Food & Dining", "body": "Flavours, cuisine and local recommendations", "trailing_content": "🍽️"},
+            {"answer_key": "nature", "title": "Nature", "body": "Parks, landscapes and outdoor spots", "trailing_content": "🌿"},
         ],
     },
 ]

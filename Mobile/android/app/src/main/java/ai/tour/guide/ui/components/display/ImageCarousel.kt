@@ -34,56 +34,63 @@ fun ImageCarousel(
     val imageContentDescription = stringResource(R.string.dashboard_poi_image_content_description)
     val imageLoadErrorText = stringResource(R.string.dashboard_image_load_error_text)
 
-    if (validImageUrls.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_empty_carousel_text),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.outline
-            )
+    when {
+        validImageUrls.isEmpty() -> {
+            EmptyCarouselState(modifier = modifier)
         }
-        return
-    }
 
-    if (validImageUrls.size == 1) {
-        CarouselImage(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(top = 16.dp, bottom = 16.dp)
-                .clip(MaterialTheme.shapes.extraLarge),
-            imageUrl = validImageUrls.first(),
-            contentDescription = imageContentDescription,
-            errorText = imageLoadErrorText
-        )
-        return
-    }
-
-    BoxWithConstraints(modifier = modifier) {
-        val preferredWidth = maxWidth * 0.8f
-
-        HorizontalMultiBrowseCarousel(
-            state = rememberCarouselState { validImageUrls.size },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp, bottom = 16.dp),
-            preferredItemWidth = preferredWidth,
-            itemSpacing = 8.dp,
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) { i ->
+        validImageUrls.size == 1 -> {
             CarouselImage(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .maskClip(MaterialTheme.shapes.extraLarge),
-                imageUrl = validImageUrls[i],
+                    .padding(top = 16.dp, bottom = 16.dp)
+                    .clip(MaterialTheme.shapes.extraLarge),
+                imageUrl = validImageUrls.first(),
                 contentDescription = imageContentDescription,
                 errorText = imageLoadErrorText
             )
         }
+
+        else -> {
+            BoxWithConstraints(modifier = modifier) {
+                val preferredWidth = maxWidth * 0.8f
+
+                HorizontalMultiBrowseCarousel(
+                    state = rememberCarouselState { validImageUrls.size },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 16.dp, bottom = 16.dp),
+                    preferredItemWidth = preferredWidth,
+                    itemSpacing = 8.dp,
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) { i ->
+                    CarouselImage(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .maskClip(MaterialTheme.shapes.extraLarge),
+                        imageUrl = validImageUrls[i],
+                        contentDescription = imageContentDescription,
+                        errorText = imageLoadErrorText
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyCarouselState(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.dashboard_empty_carousel_text),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.outline
+        )
     }
 }
 

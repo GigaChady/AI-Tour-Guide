@@ -1,0 +1,39 @@
+{
+  "realm": "tourguide",
+  "displayName": "AI Tour Guide",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,  
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": true,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "web-client",
+      "name": "Web Client",
+      "description": "Klient SSO dla aplikacji webowej AI Tour Guide",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "web-secret",
+      "redirectUris": [
+        "http://localhost:8000/auth/keycloak/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:8000"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": [
+        "profile",
+        "email"
+      ]
+    }
+  ]
+}

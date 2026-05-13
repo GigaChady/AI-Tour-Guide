@@ -59,7 +59,7 @@ class OnboardingPreferencesStepViewModelTest {
     }
 
     @Test
-    fun `onStart fetches preferences once and applies fetched state`() = runTest {
+    fun `onStart fetches preferences and applies fetched state`() = runTest {
         val fetchedState = UserPreferenceFragmentState(
             selectedSingleOptions = mapOf("gender" to "female"),
             selectedMultipleOptions = mapOf("interests" to setOf("history"))
@@ -67,11 +67,21 @@ class OnboardingPreferencesStepViewModelTest {
         coEvery { service.fetchPreferencesIfEmpty() } returns fetchedState
 
         viewModel.onStart()
-        viewModel.onStart()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { service.fetchPreferencesIfEmpty() }
         assertEquals(fetchedState, viewModel.viewStateFlow.value.data)
+    }
+
+    @Test
+    fun `onStart called twice triggers fetch twice`() = runTest {
+        coEvery { service.fetchPreferencesIfEmpty() } returns null
+
+        viewModel.onStart()
+        viewModel.onStart()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { service.fetchPreferencesIfEmpty() }
     }
 
     @Test
@@ -99,5 +109,34 @@ class OnboardingPreferencesStepViewModelTest {
         advanceUntilIdle()
 
         assertEquals("Error Message", viewModel.viewStateFlow.value.toastMessage.toString())
+    }
+
+    @Test
+    fun `onMultipleOptionToggled adds option when not present`() = runTest {
+        viewModel.onMultipleOptionToggled("genre", "jazz")
+        advanceUntilIdle()
+
+        assertEquals(setOf("jazz"), viewModel.viewStateFlow.value.data.selectedMultipleOptions["genre"])
+    }
+
+    @Test
+    fun `onMultipleOptionToggled removes option when already selected`() = runTest {
+        viewModel.onMultipleOptionToggled("genre", "jazz")
+        viewModel.onMultipleOptionToggled("genre", "jazz")
+        advanceUntilIdle()
+
+        assertEquals(emptySet<String>(), viewModel.viewStateFlow.value.data.selectedMultipleOptions["genre"])
+    }
+
+    @Test
+    fun `onSavePreferencesClicked triggers savePreferences`() = runTest {
+        val response = mockk<ApiBaseResponseResult>()
+        every { response.isSuccessful } returns true
+        coEvery { service.savePreferences(any()) } returns response
+
+        viewModel.onSavePreferencesClicked()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { service.savePreferences(any()) }
     }
 }

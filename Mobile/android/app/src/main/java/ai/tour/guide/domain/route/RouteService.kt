@@ -104,8 +104,13 @@ class RouteService(
             )
         }
 
-        appDatabase.routePOIDao().insertAll(data.data.map { poi ->
-            RoutePOI.fromReceivedPoi(poi, sessionId, stopId.toInt())
+        appDatabase.routePOIDao().insertAll(data.data.mapIndexed { index, poi ->
+            RoutePOI.fromReceivedPoi(
+                data = poi,
+                sessionId = sessionId,
+                stopId = stopId.toInt(),
+                poiIndex = index
+            )
         })
     }
 

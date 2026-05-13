@@ -19,8 +19,13 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=True)
     google_id = Column(String, unique=True, nullable=True)
+    keycloak_id = Column(String, unique=True, nullable=True)
     name = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     gender = Column(String, nullable=True)
+    language = Column(String, default="pl", nullable=False)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     narration_settings = relationship("UserNarrationSettings", back_populates="user", uselist=False)
     routes = relationship("Route", back_populates="user")
@@ -49,10 +54,12 @@ class Route(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     started_at = Column(DateTime, default=utc_now_naive)
     ended_at = Column(DateTime, nullable=True)
+    country = Column(String, nullable=True)
     city = Column(String, nullable=True)
     name = Column(String, nullable=True)
     path = Column(Geometry("LINESTRING"), nullable=True)
     distance_m = Column(Float, nullable=True)
+    route_url = Column(String, nullable=True)
 
     user = relationship("User", back_populates="routes")
     pois = relationship("RoutePoi", back_populates="route")
@@ -60,6 +67,13 @@ class Route(Base):
     __table_args__ = (
         Index("ix_routes_user_id", "user_id"),
     )
+
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=False)
 
 
 class RefreshToken(Base):

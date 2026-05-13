@@ -156,12 +156,12 @@ fun TTSSettingsSection(
         SettingItemWithTitle(
             title = stringResource(R.string.app_settings_narration_language_header)
         ) {
-            // --------------------------------------------------------
             // TODO: Get available narration languages (tags + names) from backend API
-            // There is no need for translation (languages should be retrieved from backend API anyways)
             val languageCodes = listOf("pl", "en")
-            val languageLabels = listOf("Polski", "Angielski")
-            // --------------------------------------------------------
+            val languageLabels = listOf(
+                stringResource(R.string.app_settings_narration_language_option_polish),
+                stringResource(R.string.app_settings_narration_language_option_english)
+            )
 
             val selectedIndex = languageCodes.indexOf(language).takeIf { it >= 0 } ?: 0
 

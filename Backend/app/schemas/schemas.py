@@ -101,6 +101,13 @@ class UpdateUserParamsRequest(BaseModel):
     new_email: EmailStr | None = None
     new_password: str | None = None
 
+class AdminUpdateUserRequest(BaseModel):
+    name: str | None = None
+    new_email: EmailStr | None = None
+    new_password: str | None = None
+    is_active: bool | None = None
+
+
 # ----------------SESSION SCHEMAS----------------
 class SessionMeta(BaseModel):
     user_id: str
@@ -136,6 +143,77 @@ class RouteStatsResponse(BaseModel):
     started_at: datetime
     ended_at: datetime | None
     pois: list[RoutePoiResponse]
+
+
+# ----------------WEB HISTORY SCHEMAS----------------
+class AdminStatsResponse(BaseModel):
+    active_users: int
+    token_spent: int
+
+
+class ProviderOption(BaseModel):
+    key: str
+    label: str
+
+class AvailableProvidersResponse(BaseModel):
+    tts_providers: list[ProviderOption]
+    llm_providers: list[ProviderOption]
+
+class SystemConfigResponse(BaseModel):
+    tts_provider: str
+    llm_provider: str
+
+class SystemConfigUpdateRequest(BaseModel):
+    tts_provider: str | None = None
+    llm_provider: str | None = None
+
+
+class AdminDeploymentUser(BaseModel):
+    id: str
+    name: str | None
+    email: str
+    is_active: bool
+    on_route: bool
+
+class AdminDeploymentsResponse(BaseModel):
+    users: list[AdminDeploymentUser]
+
+
+class WebDashboardStats(BaseModel):
+    total_countries: int
+    total_cities: int
+    total_distance_km: float
+    total_duration_minutes: int
+
+class WebDashboardExpedition(BaseModel):
+    id: str
+    city: str | None
+    date: datetime
+    route_url: str | None
+
+class WebDashboardResponse(BaseModel):
+    stats: WebDashboardStats
+    recent_expeditions: list[WebDashboardExpedition]
+
+
+class RouteHistoryUser(BaseModel):
+    name: str
+    avatar_url: str | None
+    total_explorations: int
+    total_distance_km: float
+    total_duration_minutes: int
+
+class RouteHistoryItem(BaseModel):
+    id: str
+    name: str | None
+    date: datetime
+    distance_km: float | None
+    duration_minutes: int | None
+    route_url: str | None
+
+class RouteHistoryResponse(BaseModel):
+    user: RouteHistoryUser
+    routes: list[RouteHistoryItem]
 
 
 # ----------------DASHBOARD SCHEMAS----------------
