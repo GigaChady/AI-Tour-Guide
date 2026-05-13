@@ -5,6 +5,7 @@ import ai.tour.guide.ui.components.audio.AudioPlayerWidget
 import ai.tour.guide.ui.navigation.Route
 import ai.tour.guide.ui.sharedFragments.TourSummaryBottomSheet
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -121,20 +124,37 @@ fun TourAudioPlayerScreen(
                     style = MaterialTheme.typography.labelLarge
                 )
                 Text(
-                    text = currentStop?.locationTitle ?: "",
+                    text = currentStop?.locationTitle?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.tour_audio_player_example_location),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
-            AsyncImage(
-                modifier = Modifier
-                    .fillMaxHeight(0.3f)
-                    .fillMaxWidth()
-                    .padding(0.dp),
-                model = currentStop?.locationImage,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
+
+            if (!currentStop?.locationImage.isNullOrBlank()) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillMaxHeight(0.3f)
+                        .fillMaxWidth()
+                        .padding(0.dp),
+                    model = currentStop?.locationImage,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight(0.3f)
+                        .fillMaxWidth()
+                        .padding(0.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(0.2f)
+                    )
+                }
+            }
+
             Text(
                 text = stringResource(R.string.tour_audio_player_narration_header_title),
                 color = MaterialTheme.colorScheme.onBackground,

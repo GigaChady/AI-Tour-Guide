@@ -1,0 +1,131 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import 'tailwindcss';
+
+@theme {
+  /* === Dashboard palette === */
+  --color-bgDark: #12111a;
+  --color-sidebarDark: #1a1825;
+  --color-cardDark: #2d2a3b;
+  --color-textMain: #eae6f8;
+  --color-textMuted: #a09cb0;
+  --color-primaryAccent: #d2b4fa;
+  --color-hoverHighlight: #3e3854;
+
+  /* === History page – Material Design 3 color tokens === */
+  --color-background: #141317;
+  --color-surface: #141317;
+  --color-surface-dim: #141317;
+  --color-surface-bright: #3a383d;
+  --color-surface-tint: #d0bcff;
+  --color-surface-variant: #353438;
+  --color-surface-container-lowest: #0e0e11;
+  --color-surface-container-low: #1c1b1f;
+  --color-surface-container: #201f23;
+  --color-surface-container-high: #2b292d;
+  --color-surface-container-highest: #353438;
+  --color-on-surface: #e5e1e7;
+  --color-on-surface-variant: #cac4d0;
+  --color-inverse-surface: #e5e1e7;
+  --color-inverse-on-surface: #313034;
+  --color-outline: #948f9a;
+  --color-outline-variant: #49454f;
+  --color-primary: #e9ddff;
+  --color-primary-fixed: #e9ddff;
+  --color-primary-fixed-dim: #d0bcff;
+  --color-primary-container: #d0bcff;
+  --color-on-primary: #37265e;
+  --color-on-primary-fixed: #210f48;
+  --color-on-primary-fixed-variant: #4d3d76;
+  --color-on-primary-container: #594983;
+  --color-inverse-primary: #665590;
+  --color-secondary: #ccc2dc;
+  --color-secondary-fixed: #e9def9;
+  --color-secondary-fixed-dim: #ccc2dc;
+  --color-secondary-container: #4a4359;
+  --color-on-secondary: #332d41;
+  --color-on-secondary-fixed: #1e182b;
+  --color-on-secondary-fixed-variant: #4a4359;
+  --color-on-secondary-container: #bab1ca;
+  --color-tertiary: #ffd9e3;
+  --color-tertiary-fixed: #ffd9e3;
+  --color-tertiary-fixed-dim: #efb8c8;
+  --color-tertiary-container: #efb8c8;
+  --color-on-tertiary: #492532;
+  --color-on-tertiary-fixed: #31111d;
+  --color-on-tertiary-fixed-variant: #633b48;
+  --color-on-tertiary-container: #704654;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  /* === History page – semantic spacing === */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* === History page – Material type scale (font sizes) === */
+  --text-label-sm: 11px;
+  --text-label-lg: 14px;
+  --text-body-md: 14px;
+  --text-body-lg: 16px;
+  --text-title-md: 16px;
+  --text-title-lg: 22px;
+  --text-headline-md: 28px;
+  --text-headline-lg: 32px;
+  --text-display-lg: 57px;
+
+  /* === History page – Material type scale (font families) === */
+  --font-label-sm: 'Roboto', sans-serif;
+  --font-label-lg: 'Roboto', sans-serif;
+  --font-body-md: 'Roboto', sans-serif;
+  --font-body-lg: 'Roboto', sans-serif;
+  --font-title-md: 'Roboto', sans-serif;
+  --font-title-lg: 'Roboto', sans-serif;
+  --font-headline-md: 'Roboto', sans-serif;
+  --font-headline-lg: 'Roboto', sans-serif;
+  --font-display-lg: 'Roboto', sans-serif;
+
+  --font-family-sans: 'Inter', sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #12111a;
+  color: #eae6f8;
+}
+
+button,
+a,
+select,
+[role='button'] {
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #12111a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2d2a3b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3e3854;
+}

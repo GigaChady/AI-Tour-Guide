@@ -12,13 +12,9 @@ import org.koin.core.annotation.KoinViewModel
 class UserPreferenceFragmentViewModel(
     private val onboardingPreferencesService: OnboardingPreferencesService
 ) : BaseViewModel<UserPreferenceFragmentState>(UserPreferenceFragmentState()) {
-    private var hasStarted = false
     val preferencesFlow = onboardingPreferencesService.preferences
 
     fun onStart() {
-        if (hasStarted) return
-        hasStarted = true
-
         viewModelScope.launch {
             withLoading {
                 onboardingPreferencesService.fetchPreferencesIfEmpty()?.let { fetchedState ->

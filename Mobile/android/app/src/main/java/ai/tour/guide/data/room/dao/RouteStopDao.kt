@@ -31,6 +31,26 @@ interface RouteStopDao {
     @Query("UPDATE stops SET narration_audio_file_path = :filePath WHERE :narrationId IS NOT NULL AND narration_id = :narrationId")
     suspend fun updateNarrationFilePathForNarrationId(narrationId: String?, filePath: String)
 
+    @Query("UPDATE stops SET narration_string = :text WHERE id = :stopId")
+    suspend fun updateNarrationStringForStop(stopId: Int, text: String)
+
+    @Transaction
+    suspend fun updateLocationTitleAndImage(stopId: Int, title: String, image: String?) {
+        if (image.isNullOrBlank()) {
+            // Only update title if image is null or empty
+            updateLocationTitle(stopId, title)
+        } else {
+            // Update both title and image
+            updateLocationTitleAndImageQuery(stopId, title, image)
+        }
+    }
+
+    @Query("UPDATE stops SET location_title = :title WHERE id = :stopId")
+    suspend fun updateLocationTitle(stopId: Int, title: String)
+
+    @Query("UPDATE stops SET location_title = :title, location_image = :image WHERE id = :stopId")
+    suspend fun updateLocationTitleAndImageQuery(stopId: Int, title: String, image: String)
+
     @Query("SELECT id FROM stops WHERE narration_id = :serverNarrationId")
     suspend fun getStopIdByNarration(serverNarrationId: String): Long
 

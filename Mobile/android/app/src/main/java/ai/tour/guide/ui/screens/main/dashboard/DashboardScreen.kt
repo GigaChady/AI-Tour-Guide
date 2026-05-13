@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,14 +28,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    backStack: NavBackStack<NavKey>? = null
+    backStack: NavBackStack<NavKey>? = null,
+    viewModel: DashboardViewModel = koinInject()
 ) {
+    val viewModelState by viewModel.latestPoiFlow.collectAsStateWithLifecycle(DashboardState.default())
+
     LocationPermissionGate(modifier = modifier) {
         val part1 = stringResource(R.string.dashboard_header_text_content_part1)
         val part2 = stringResource(R.string.dashboard_header_text_content_part2)
@@ -75,7 +81,9 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = stringResource(R.string.dashboard_main_section_header_subtext_example),
+                            text = viewModelState.poiName.ifBlank {
+                                stringResource(R.string.dashboard_main_section_header_subtext_example)
+                            },
                             style = MaterialTheme.typography.headlineLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth()
@@ -86,7 +94,8 @@ fun DashboardScreen(
                 ImageCarousel(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    imageUrls = viewModelState.poiPhotos
                 )
 
                 ExtendedFloatingActionButton(

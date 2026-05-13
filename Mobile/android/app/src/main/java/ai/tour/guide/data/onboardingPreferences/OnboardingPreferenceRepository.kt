@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.annotation.Single
+import java.util.Locale
 
 @Single
 class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
@@ -16,11 +17,16 @@ class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
     private val _preferences = MutableStateFlow<List<OnboardingPreferencesDto>>(emptyList())
     val preferences: StateFlow<List<OnboardingPreferencesDto>> = _preferences.asStateFlow()
 
-    private suspend fun fetchPreferences(): OnboardingPreferencesResponseDto? {
-        val request =
-            apiClient.get<OnboardingPreferencesResponseDto>(ApiClientRoute.USER_ONBOARDING_QUESTIONS)
+    private var lastFetchedLang: String? = null
+
+    private suspend fun fetchPreferences(lang: String): OnboardingPreferencesResponseDto? {
+        val request = apiClient.get<OnboardingPreferencesResponseDto>(
+            ApiClientRoute.USER_ONBOARDING_QUESTIONS,
+            queryParams = mapOf("lang" to lang)
+        )
         if (request.isSuccessful) {
             _preferences.value = request.body?.items ?: emptyList()
+            lastFetchedLang = lang
             return request.body
         } else {
             Log.e(
@@ -32,8 +38,9 @@ class OnboardingPreferenceRepository(private val apiClient: ApiClient) {
     }
 
     suspend fun fetchPreferencesIfEmpty(): OnboardingPreferencesResponseDto? {
-        if (_preferences.value.isEmpty()) {
-            return fetchPreferences()
+        val lang = Locale.getDefault().language
+        if (_preferences.value.isEmpty() || lastFetchedLang != lang) {
+            return fetchPreferences(lang)
         }
         return null
     }

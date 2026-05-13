@@ -10,6 +10,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -69,7 +72,10 @@ class ApiClient(
         }
     }
 
-    suspend inline fun <reified T : IAPIResponseDto> get(route: ApiClientRoute): ApiResponse<T> {
+    suspend inline fun <reified T : IAPIResponseDto> get(
+        route: ApiClientRoute,
+        queryParams: Map<String, String> = emptyMap()
+    ): ApiResponse<T> {
         fetchBearerTokenIfNeeded()
         return try {
             val response = httpClient.get {
@@ -77,6 +83,7 @@ class ApiClient(
                     protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
                     host = AppConfig.HTTPS_CLIENT_HOST
                     path(route.path)
+                    queryParams.forEach { (key, value) -> parameters.append(key, value) }
                 }
                 appDataRepository.bearerTokenFlow.value?.let { token ->
                     header("Authorization", "Bearer $token")
@@ -132,6 +139,14 @@ class ApiClient(
 internal val defaultHttpClient = HttpClient(OkHttp) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
+    }
+    install(Logging) {
+        logger = object : Logger {
+            override fun log(message: String) {
+                Log.d(ApiClient.TAG, message)
+            }
+        }
+        level = LogLevel.ALL
     }
 }
 

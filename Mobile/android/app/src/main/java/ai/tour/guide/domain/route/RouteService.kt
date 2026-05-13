@@ -4,7 +4,6 @@ import ai.tour.guide.data.appData.AppDataRepository
 import ai.tour.guide.data.room.AppDatabase
 import ai.tour.guide.data.room.entity.RoutePOI
 import ai.tour.guide.data.room.entity.RouteSession
-import ai.tour.guide.data.room.entity.RouteStop
 import ai.tour.guide.domain.AppEventBus
 import ai.tour.guide.domain.AppEventBusEvent
 import ai.tour.guide.domain.location.LocationService
@@ -97,20 +96,31 @@ class RouteService(
         val serverNarrationId = data.narrationId ?: return
         val stopId = appDatabase.routeStopDao().getOrCreateStop(sessionId, serverNarrationId)
 
-        appDatabase.routePOIDao().insertAll(data.data.map { poi ->
-            RoutePOI.fromReceivedPoi(poi, sessionId, stopId.toInt())
+        data.data.firstOrNull()?.let { firstPoi ->
+            appDatabase.routeStopDao().updateLocationTitleAndImage(
+                stopId = stopId.toInt(),
+                title = firstPoi.name,
+                image = firstPoi.photos.firstOrNull()
+            )
+        }
+
+        appDatabase.routePOIDao().insertAll(data.data.mapIndexed { index, poi ->
+            RoutePOI.fromReceivedPoi(
+                data = poi,
+                sessionId = sessionId,
+                stopId = stopId.toInt(),
+                poiIndex = index
+            )
         })
     }
 
     private suspend fun wsNarrationTranscriptReceived(data: NarrationResponseDto) {
         val text = data.transcript.firstOrNull()?.text.orEmpty()
+        val sessionId = this.routeSession?.id ?: return
+        val serverNarrationId = data.narrationId ?: return
+        val stopId = appDatabase.routeStopDao().getOrCreateStop(sessionId, serverNarrationId)
 
-        val stop = RouteStop(
-            sessionId = this.routeSession?.id ?: return,
-            serverNarrationId = data.narrationId,
-            narrationString = text
-        )
-        appDatabase.routeStopDao().upsert(stop)
+        appDatabase.routeStopDao().updateNarrationStringForStop(stopId.toInt(), text)
     }
 
     private suspend fun wsEndOfStreamReceived(event: ServerEvent.EndOfStream) {

@@ -1,7 +1,8 @@
 import logging
 import re
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +17,7 @@ from app.schemas.schemas import (
     TokenResponse, RefreshRequest, LogoutRequest
 )
 from app.services.token_service import token_service
+from app.services.keycloak_service import keycloak_service
 
 logger = logging.getLogger("auth")
 
@@ -171,6 +173,81 @@ async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     logger.info(f"Google login successful for email: {masked_email}")
 
     return await token_service.issue_tokens(user, db)
+
+
+@router.get("/keycloak/login")
+async def keycloak_login():
+    state = keycloak_service.generate_state()
+    url = keycloak_service.build_login_url(state)
+    return RedirectResponse(url=url)
+
+
+@router.get("/keycloak/register")
+async def keycloak_register():
+    state = keycloak_service.generate_state()
+    url = keycloak_service.build_register_url(state)
+    return RedirectResponse(url=url)
+
+
+@router.get("/keycloak/callback", response_model=TokenResponse, responses={401: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
+async def keycloak_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
+    if not keycloak_service.verify_state(state):
+        logger.warning("Keycloak callback received invalid state.")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Invalid state parameter")
+
+    try:
+        token_data = await keycloak_service.exchange_code(code)
+        user_info = await keycloak_service.verify_id_token(token_data["id_token"], token_data["access_token"])
+    except ValueError as exc:
+        logger.warning(f"Keycloak authentication failed: {exc}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Keycloak authentication failed")
+
+    keycloak_sub = user_info["sub"]
+    normalized_email = user_info.get("email", "").strip().lower()
+    masked_email = _mask_email_for_logs(normalized_email)
+
+    result = await db.execute(select(User).where(User.keycloak_id == keycloak_sub))
+    user = result.scalar()
+
+    if not user and normalized_email:
+        result_by_email = await db.execute(select(User).where(User.email == normalized_email))
+        user_by_email = result_by_email.scalar()
+
+        if user_by_email:
+            if not user_by_email.keycloak_id:
+                user_by_email.keycloak_id = keycloak_sub
+                user = user_by_email
+            elif user_by_email.keycloak_id != keycloak_sub:
+                logger.warning(f"Keycloak account conflict for email: {masked_email}")
+                raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already linked to another Keycloak account")
+            else:
+                user = user_by_email
+
+    if not user:
+        user = User(
+            email=normalized_email,
+            keycloak_id=keycloak_sub,
+            name=user_info.get("given_name") or user_info.get("name"),
+        )
+        db.add(user)
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        logger.warning(f"Keycloak auth conflict for email: {masked_email}")
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Account conflict during Keycloak login")
+
+    await db.refresh(user)
+    logger.info(f"Keycloak login successful for email: {masked_email}")
+
+    tokens = await token_service.issue_tokens(user, db)
+    redirect_url = (
+        f"{settings.FRONTEND_URL}/auth/callback"
+        f"?access_token={tokens.access_token}"
+        f"&refresh_token={tokens.refresh_token}"
+    )
+    return RedirectResponse(url=redirect_url)
 
 
 @router.post("/refresh", response_model=TokenResponse, responses={401: {"model": ErrorResponse}})

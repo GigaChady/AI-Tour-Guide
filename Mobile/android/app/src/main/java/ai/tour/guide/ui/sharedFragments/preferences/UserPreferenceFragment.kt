@@ -15,11 +15,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleStartEffect
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -29,10 +30,10 @@ fun UserPreferenceFragment(
 ) {
     val preferences by viewModel.preferencesFlow.collectAsState()
     val viewState by viewModel.viewStateFlow.collectAsState()
+    val lang = LocalConfiguration.current.locales[0].language
 
-    LifecycleStartEffect(Unit) {
+    LaunchedEffect(lang) {
         viewModel.onStart()
-        onStopOrDispose { }
     }
 
     ToastOnRequestError(viewModel = viewModel)

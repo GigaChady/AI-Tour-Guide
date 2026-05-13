@@ -6,7 +6,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import kotlin.random.Random
 
 @Entity(
     tableName = "stops",
@@ -31,9 +30,9 @@ data class RouteStop(
     @ColumnInfo(name = "narration_id")
     val serverNarrationId: String? = null,
     @ColumnInfo(name = "location_title")
-    val locationTitle: String? = "Lokalizacja ${Random.nextInt(0, 100000)}",
+    val locationTitle: String? = null,
     @ColumnInfo(name = "location_image")
-    val locationImage: String? = "https://picsum.photos/1280/720",
+    val locationImage: String? = null,
     @ColumnInfo(name = "narration_string")
     val narrationString: String? = null,
     @ColumnInfo(name = "narration_words_map")
