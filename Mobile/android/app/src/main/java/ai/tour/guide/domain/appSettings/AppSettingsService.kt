@@ -28,10 +28,8 @@ class AppSettingsService(
     }
 
     suspend fun saveSettings(state: AppSettingsState): ApiBaseResponseResult {
-        // Save app theme locally
         appDataRepository.updateAppTheme(state.appTheme)
 
-        // Send settings to backend API
         val requestDto = state.toRequestDto()
         return apiClient.post<SaveAppSettingsRequestDto, EmptyAPIResponse>(
             ApiClientRoute.USER_NARRATION_SETTINGS,

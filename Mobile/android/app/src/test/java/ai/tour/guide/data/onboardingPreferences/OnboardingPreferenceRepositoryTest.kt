@@ -21,24 +21,39 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.util.Locale
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class OnboardingPreferenceRepositoryTest {
 
+    private val originalLocale = Locale.getDefault()
+
+    @Before
+    fun setUp() {
+        Locale.setDefault(Locale.ENGLISH)
+    }
+
+    @After
+    fun tearDown() {
+        Locale.setDefault(originalLocale)
+    }
+
     private fun createMockClient(
         jsonResponse: String,
         status: HttpStatusCode = HttpStatusCode.OK,
-        onCall: () -> Unit = {}
+        onCall: (url: String) -> Unit = {}
     ): ApiClient {
-        val mockEngine = MockEngine { _ ->
-            onCall()
+        val mockEngine = MockEngine { request ->
+            onCall(request.url.toString())
             respond(
                 content = jsonResponse,
                 status = status,
@@ -71,8 +86,7 @@ class OnboardingPreferenceRepositoryTest {
                 }
             )
         )
-        val apiClient = createMockClient(json)
-        val repository = OnboardingPreferenceRepository(apiClient)
+        val repository = OnboardingPreferenceRepository(createMockClient(json))
 
         val response = repository.fetchPreferencesIfEmpty()
 
@@ -83,32 +97,61 @@ class OnboardingPreferenceRepositoryTest {
     }
 
     @Test
-    fun `fetchPreferencesIfEmpty does not fetch when flow is not empty`() = runTest {
-        val mockPreferences = listOf(OnboardingPreferencesDto(key = "pref1", title = "Title 1"))
+    fun `fetchPreferencesIfEmpty does not fetch when flow is not empty and lang unchanged`() = runTest {
         val json = Json.encodeToString(
-            OnboardingPreferencesResponseDto(items = mockPreferences)
+            OnboardingPreferencesResponseDto(items = listOf(OnboardingPreferencesDto(key = "pref1")))
         )
-
         var callCount = 0
-        val apiClient = createMockClient(json) {
-            callCount++
-        }
-        val repository = OnboardingPreferenceRepository(apiClient)
+        val repository = OnboardingPreferenceRepository(createMockClient(json) { callCount++ })
 
-        // First call populates it
         repository.fetchPreferencesIfEmpty()
         assertEquals(1, callCount)
 
-        // Second call should skip fetching
         repository.fetchPreferencesIfEmpty()
         assertEquals(1, callCount)
     }
 
     @Test
+    fun `fetchPreferencesIfEmpty refetches when device language changes`() = runTest {
+        val json = Json.encodeToString(
+            OnboardingPreferencesResponseDto(items = listOf(OnboardingPreferencesDto(key = "pref1")))
+        )
+        var callCount = 0
+        val lastUrl = mutableListOf<String>()
+        val repository = OnboardingPreferenceRepository(createMockClient(json) { url ->
+            callCount++
+            lastUrl.add(url)
+        })
+
+        Locale.setDefault(Locale.forLanguageTag("en"))
+        repository.fetchPreferencesIfEmpty()
+        assertEquals(1, callCount)
+        assert(lastUrl.last().contains("lang=en"))
+
+        Locale.setDefault(Locale.forLanguageTag("pl"))
+        repository.fetchPreferencesIfEmpty()
+        assertEquals(2, callCount)
+        assert(lastUrl.last().contains("lang=pl"))
+    }
+
+    @Test
+    fun `fetchPreferencesIfEmpty sends device lang query param`() = runTest {
+        Locale.setDefault(Locale.forLanguageTag("pl"))
+        val json = Json.encodeToString(OnboardingPreferencesResponseDto())
+        var capturedUrl = ""
+        val repository = OnboardingPreferenceRepository(createMockClient(json) { url -> capturedUrl = url })
+
+        repository.fetchPreferencesIfEmpty()
+
+        assert(capturedUrl.contains("lang=pl")) { "Expected lang=pl in URL: $capturedUrl" }
+    }
+
+    @Test
     fun `fetchPreferences handles error responses`() = runTest {
         val json = "{\"detail\": \"Error\"}"
-        val apiClient = createMockClient(json, HttpStatusCode.InternalServerError)
-        val repository = OnboardingPreferenceRepository(apiClient)
+        val repository = OnboardingPreferenceRepository(
+            createMockClient(json, HttpStatusCode.InternalServerError)
+        )
 
         val response = repository.fetchPreferencesIfEmpty()
 
