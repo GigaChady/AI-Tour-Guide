@@ -150,4 +150,6 @@
 
     <!-- Misc messages -->
     <string name="settings_saved_success">Zapisano pomyślnie</string>
+    <string name="map_visited_stop_title_default">Odwiedzone miejsce</string>
+    <string name="map_visited_stop_snippet_default">Miejsce odwiedzone podczas podróży</string>
 </resources>
