@@ -7,6 +7,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RouteSessionDao {
@@ -19,7 +20,13 @@ interface RouteSessionDao {
     @Delete
     suspend fun delete(session: RouteSession)
 
+    @Deprecated(message = "Use getLatestSessionFlow() instead")
     @Query("SELECT * from sessions ORDER BY created_at DESC LIMIT 1")
     fun getLatestSession(): LiveData<RouteSession>
 
+    @Query("SELECT * from sessions ORDER BY created_at DESC LIMIT 1")
+    fun getLatestSessionFlow(): Flow<RouteSession?>
+
+    @Query("SELECT * FROM sessions WHERE server_session_id = :serverId LIMIT 1")
+    suspend fun getSessionByServerId(serverId: String): RouteSession?
 }
