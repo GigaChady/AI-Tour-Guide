@@ -150,4 +150,6 @@
 
     <!-- Misc messages -->
     <string name="settings_saved_success">Saved successfully</string>
+    <string name="map_visited_stop_title_default">Visited POI</string>
+    <string name="map_visited_stop_snippet_default">POI visited during your trip</string>
 </resources>
