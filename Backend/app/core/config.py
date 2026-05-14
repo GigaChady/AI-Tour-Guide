@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_SECRET: str = "web-secret"
     KEYCLOAK_REDIRECT_URI: str = "http://localhost:8000/auth/keycloak/callback"
     FRONTEND_URL: str = "http://localhost:3000"
-
+ 
 
 #    # PostgreSQL (asyncpg)
     DATABASE_URL: str
