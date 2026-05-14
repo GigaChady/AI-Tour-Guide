@@ -4,6 +4,6 @@ data class RouteStopDto(
     val stopId: Int,
     val title: String?,
     val snippet: String?,
-    val lat: Double?,
-    val lng: Double?
+    val latitude: Double?,
+    val longitude: Double?
 )
