@@ -35,14 +35,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Preview(showBackground = true)
 @Composable
 fun TourAudioPlayerScreen(
     modifier: Modifier = Modifier,
     backStack: NavBackStack<NavKey>? = null,
-    viewModel: TourRouteViewModel = koinInject()
+    viewModel: TourRouteViewModel = koinViewModel()
 ) {
     val viewModelState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlayingFlow.collectAsStateWithLifecycle()
@@ -99,8 +99,12 @@ fun TourAudioPlayerScreen(
 
     LifecycleStartEffect(Unit) {
         viewModel.onStart()
+
         onStopOrDispose {
-            viewModel.onDestroy()
+            val isStillInBackStack = backStack?.any { it == Route.TourAudioPlayer } ?: false
+            if (!isStillInBackStack) {
+                viewModel.onDestroy()
+            }
         }
     }
 
@@ -176,6 +180,7 @@ fun TourAudioPlayerScreen(
             AudioPlayerWidget(
                 controlsEnabled = playerEnabled,
                 onEndClicked = {
+                    viewModel.endTour()
                     onSessionFinished()
                 },
                 onSpeakerClicked = {

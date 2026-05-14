@@ -44,6 +44,8 @@ class TourRouteViewModel(
     private val currentHistoryOffset =
         viewStateFlow.map { it.data.currentHistoryOffset }.distinctUntilChanged()
 
+    private var hasStarted = false
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val stopsCount = currentLatestStopId.flatMapLatest { stopId ->
         appDatabase.routeStopDao().getStopsCountUntilStopId(stopId)
@@ -265,6 +267,7 @@ class TourRouteViewModel(
         eventListenersJob?.cancel()
         eventListenersJob = null
         lastPlayedStopId = null
+        hasStarted = false
         updateData { TourRouteState.default() }
     }
 
@@ -280,8 +283,10 @@ class TourRouteViewModel(
         }
     }
 
-
     fun onStart() {
+        if (hasStarted) return
+        hasStarted = true
+
         startStopStateListeners()
         if (eventListenersJob?.isActive != true) {
             eventListenersJob = viewModelScope.launch {
@@ -374,6 +379,15 @@ class TourRouteViewModel(
         updateData {
             copy(currentHistoryOffset = (currentHistoryOffset + 1).coerceAtMost(maxOffset))
         }
+    }
+
+    fun endTour() {
+        onDestroy()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        onDestroy()
     }
 
     private companion object {

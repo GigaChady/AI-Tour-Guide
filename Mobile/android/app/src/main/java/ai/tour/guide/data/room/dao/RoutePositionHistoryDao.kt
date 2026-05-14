@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RoutePositionHistoryDao {
@@ -21,6 +22,9 @@ interface RoutePositionHistoryDao {
 
     @Query("SELECT id FROM sessions ORDER BY id DESC LIMIT 1")
     suspend fun getLatestSessionId(): Int?
+
+    @Query("SELECT * FROM position_history WHERE session_id = :sessionId ORDER BY created_at ASC")
+    fun getHistoryForSession(sessionId: Int): Flow<List<RoutePositionHistory>>
 
     @Transaction
     suspend fun insertForLastSession(pos: RoutePositionHistory) {

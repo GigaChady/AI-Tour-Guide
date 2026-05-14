@@ -6,7 +6,7 @@ import ai.tour.guide.ui.navigation.wrappers.WithOnlySafeDrawingPadding
 import ai.tour.guide.ui.navigation.wrappers.WithScreenTopBar
 import ai.tour.guide.ui.screens.main.AccountSettingsScreen
 import ai.tour.guide.ui.screens.main.appSettings.AppSettingsScreen
-import ai.tour.guide.ui.screens.main.MapUserPositionScreen
+import ai.tour.guide.ui.screens.main.map.MapScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
 import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
 import ai.tour.guide.ui.screens.main.dashboard.DashboardScreen
@@ -104,7 +104,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
                     hasBackButton = true,
                     routeTitle = stringResource(R.string.navigation_map_user_position_route_title)
                 ) {
-                    MapUserPositionScreen(
+                    MapScreen(
                         backStack = backStack
                     )
                 }
