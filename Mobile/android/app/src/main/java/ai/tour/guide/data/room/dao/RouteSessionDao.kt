@@ -1,7 +1,6 @@
 package ai.tour.guide.data.room.dao
 
 import ai.tour.guide.data.room.entity.RouteSession
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
