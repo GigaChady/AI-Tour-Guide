@@ -5,7 +5,7 @@ import uuid
 import redis
 import json
 from connections.configs.redis_config import RedisWorkerConfig
-from processors.abstract_processor import AbstractProcessor
+from processors.contracts import StreamProcessor
 
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ def _build_client(redis_url: str) -> redis.Redis:
 
 
 class RedisStreamWorker:
-    def __init__(self, processor: AbstractProcessor, client: redis.Redis | None = None):
+    def __init__(self, processor: StreamProcessor, client: redis.Redis | None = None):
         self.config = RedisWorkerConfig()
         self.processor = processor
         self.client = client or _build_client(self.config.redis_url)

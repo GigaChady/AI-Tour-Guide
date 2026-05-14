@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class MinioImageStorage:
-    # TODO: add abstract layer for image storage and make this a concrete implementation.
     def __init__(self):
         self.endpoint = os.getenv("MINIO_ENDPOINT", "localhost:9000")
         self.public_endpoint = os.getenv("MINIO_PUBLIC_ENDPOINT", self.endpoint)
