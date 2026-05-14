@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AudioPlayerWidget(
     onEndClicked: () -> Unit = {},
-    onSpeakerClicked: () -> Unit = {},
+    onInfoClicked: () -> Unit = {},
     onPreviousClicked: () -> Unit = {},
     onPlayClicked: () -> Unit = {},
     onPauseClicked: () -> Unit = {},
@@ -76,7 +76,7 @@ fun AudioPlayerWidget(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FilledTonalIconButton(
-                onClick = onSpeakerClicked,
+                onClick = onInfoClicked,
                 enabled = true,
                 shape = CircleShape,
                 modifier = Modifier.size(42.dp)
