@@ -12,7 +12,8 @@ async def test_logout_revokes_refresh_token():
             email = f"logout_{uuid.uuid4()}@example.com"
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "Testpass1"
+                "password": "Testpass1",
+                "name": "Test User"
             })
             tokens = response.json()
             refresh_token = tokens["refresh_token"]

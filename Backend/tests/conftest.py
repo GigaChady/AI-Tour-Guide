@@ -29,14 +29,11 @@ async def setup_database():
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_startup():
-    async def _noop_cleanup_loop():
-        pass
-
     with (
         patch("app.main.init_db", new=AsyncMock()),
         patch("app.main.init_redis", new=AsyncMock()),
         patch("app.main.close_redis", new=AsyncMock()),
-        patch("app.main._audio_cleanup_loop", new=_noop_cleanup_loop),
+        patch("app.main.AsyncSessionLocal", TestSessionLocal),
     ):
         yield
 

@@ -49,7 +49,7 @@ def mock_communicate(monkeypatch):
     async def fake_stream():
         yield {"type": "audio", "data": b"fake_audio_chunk_1"}
         yield {"type": "audio", "data": b"fake_audio_chunk_2"}
-        yield {"type": "WordBoundary", "data": {}}  
+        yield {"type": "WordBoundary", "text": "Hello", "offset": 10000, "duration": 5000}
 
     mock_cls = MagicMock()
     mock_cls.return_value.stream = fake_stream
@@ -61,7 +61,9 @@ def mock_communicate(monkeypatch):
 async def test_synthesize_returns_audio_bytes(mock_communicate):
     provider = EdgeTTSProvider()
     result = await provider.synthesize("Hello", "en", speed=50, pitch=50, loudness=50)
-    assert result == b"fake_audio_chunk_1fake_audio_chunk_2"
+    assert result.audio == b"fake_audio_chunk_1fake_audio_chunk_2"
+    assert len(result.words) == 1
+    assert result.words[0]["text"] == "Hello"
 
 
 @pytest.mark.asyncio
@@ -74,4 +76,5 @@ async def test_synthesize_passes_correct_voice_and_params(mock_communicate):
         rate=_map_rate(75),
         pitch=_map_pitch(25),
         volume=_map_volume(100),
+        boundary="WordBoundary",
     )

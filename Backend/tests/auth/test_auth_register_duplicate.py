@@ -12,11 +12,13 @@ async def test_register_duplicate():
             email = f"dupe_{uuid.uuid4()}@example.com"
             await ac.post("/auth/register", json={
                 "email": email,
-                "password": "Testpass1"
+                "password": "Testpass1",
+                "name": "Test User"
             })
             response = await ac.post("/auth/register", json={
                 "email": email,
-                "password": "Testpass1"
+                "password": "Testpass1",
+                "name": "Test User"
             })
             assert response.status_code == 409
             assert "Email already in use" in response.text

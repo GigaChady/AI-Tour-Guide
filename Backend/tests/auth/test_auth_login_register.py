@@ -15,7 +15,8 @@ async def test_register_and_login():
                 email = f"test_{uuid.uuid4()}@example.com"
                 response = await ac.post("/auth/register", json={
                     "email": email,
-                    "password": "Testpass1"
+                    "password": "Testpass1",
+                    "name": "Test User"
                 })
                 assert response.status_code == 200
                 data = response.json()
