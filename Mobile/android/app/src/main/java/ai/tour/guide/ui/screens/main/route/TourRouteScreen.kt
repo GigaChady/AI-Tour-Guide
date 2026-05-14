@@ -99,11 +99,12 @@ fun TourAudioPlayerScreen(
 
     LifecycleStartEffect(Unit) {
         viewModel.onStart()
+
         onStopOrDispose {
-            // TODO: Verify correct disposal of viewModel
-            // Tour route view model should stay alive to prevent tour route screen from resetting
-            // For example when changing route screen to map screen
-            // viewModel.onDestroy()
+            val isStillInBackStack = backStack?.any { it == Route.TourAudioPlayer } ?: false
+            if (!isStillInBackStack) {
+                viewModel.onDestroy()
+            }
         }
     }
 
