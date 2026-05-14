@@ -267,6 +267,7 @@ class TourRouteViewModel(
         eventListenersJob?.cancel()
         eventListenersJob = null
         lastPlayedStopId = null
+        hasStarted = false
         updateData { TourRouteState.default() }
     }
 
