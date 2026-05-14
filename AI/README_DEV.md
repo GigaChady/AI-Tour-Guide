@@ -2,7 +2,7 @@
 
 ##  Status
 
-Serwis AI jest **mockowany** i **gotowy do podłączenia**. Pracuje z `location:events` (Redis Stream z backendu) i publikuje wyniki na kanał `tour:{session_id}`. Opis dokładnych schematów danych w utils/schemas.py.
+Serwis AI jest **mockowany** i **gotowy do podłączenia**. Pracuje z `location:events` (Redis Stream z backendu) i publikuje wyniki na kanał `tour:{session_id}`. Opis dokładnych schematów danych znajduje się w folderze `schemas`.
 
 **Domyślnie nie wymaga Ollamy ani instalacji modeli LLM** — wystarczy skopiować `.env.example` i uruchomić `docker compose up`.
 
@@ -45,7 +45,7 @@ COMPOSE_PROFILES=llm
 docker compose --profile llm up --build
 ```
 
-Worker będzie czekać na `location:events`, uruchomi full pipeline (scraping → filtering → generation) i publikować rzeczywistą narrację z Ollamy.
+Worker będzie czekać na `location:events`, uruchomi full pipeline (POI enrichment/search → filtering → generation) i publikować rzeczywistą narrację z Ollamy.
 
 ## Jak działa część AI (szczegóły)
 
@@ -53,9 +53,9 @@ Poniżej krótki opis głównych kroków pipeline'u AI oraz ważne uwagi dotycz�
 
 - Odbiór zdarzenia: worker czyta eventy z Redis Stream `location:events`. Event zawiera m.in. `session_id`, `lat`, `lng` i opcjonalnie flagi (np. `include_photos`).
 - Pobranie preferencji: przed generacją worker próbuje odczytać z Redisa klucz `preferences:{session_id}` (jeśli istnieje) i przekazać je dalej jako `UserPreferencesCache`.
-- Lokalizacja i POI: `LocationProcessor.get_location_details()` używa Nominatim (reverse geocoding) oraz Overpass (lub alternatywy) żeby zebrać listę punktów zainteresowania (POI) w pobliżu zadanej lokacji. Każdy POI ma kształt: `{"name":..., "category":..., "lat":..., "lon":...}`.
-- Wybór POI: `scraping_agent.select_best_poi()` ocenia listę POI (na podstawie kategorii i odległości) i wybiera najlepszy kandydat do wygenerowania narracji.
-- Scraping i filtrowanie: `scraping_agent` zbiera surowe informacje o POI (np. przez wyszukiwarkę/serwis zewnętrzny), a `filtering_agent` czyści/skraca i formatuje treść, którą poda się do generatora narracji.
+- Lokalizacja i POI: `LocationDiscoveryTask.get_location_details()` używa Nominatim (reverse geocoding) oraz Overpass (lub alternatywy), a następnie zwraca `LocationDiscoveryResult` z adresem oraz listą `PoiCandidate`.
+- Wybór POI: `PoiSelectionTask` ocenia listę POI (na podstawie kategorii i odległości) i wybiera najlepszy kandydat do wygenerowania narracji.
+- Enrichment i filtrowanie: `PoiEnrichmentTask` zbiera surowe informacje o POI przez search client, a `InformationFilteringTask` czyści/skraca i formatuje treść, którą poda się do generatora narracji.
 - Generacja narracji: `narrative_generation_agent` (w trybie live przy użyciu Ollama) generuje finalny tekst narracji kontekstowy dla danej lokalizacji/POI. W trybie mock zwracane są przykładowe teksty.
 - Zdjęcia (photos): na razie system używa zdjęć domyślnych przypisanych do kategorii POI (tzw. default photos). Oznacza to, że jeśli POI nie ma własnych zdjęć w zasobach projektu, zwracany jest obraz pasujący do kategorii (np. muzeum -> zdjęcie_muzeum.jpg). W przyszłości możliwe dodanie pobierania zdjęć z zasobów zewnętrznych lub generowania miniatur.
 - Publikacja: jeśli generacja powiodła się, worker publikuje dwa komunikaty na kanale Redis `tour:{session_id}`: jeden typu `pois` z listą POI oraz jeden typu `narration` z wygenerowanym tekstem (oraz ewentualnymi metadanymi i linkami do zdjęć).
