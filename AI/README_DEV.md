@@ -26,9 +26,9 @@ To wszystko. Worker podłączy się do Redisa, będzie czekać na `location:even
 ## Dostępne tryby
 
 - **`AI_MOCK=true`** (domyślnie) → mockowane `pois` + `narration`, bez Ollamy
-- **`AI_MOCK=false`** → live pipeline narracji (wymaga profilu `llm` i Ollamy)
+- **`AI_MOCK=false`** → live pipeline narracji (Nominatim + Overpass + Wikimedia + cloud LLM)
 
-## Przełączenie na live (z Ollamą) — opcjonalnie
+## Przełączenie na live — opcjonalnie
 
 Jeśli chcesz później uruchomić pełny pipeline z LLM:
 
@@ -36,16 +36,26 @@ Jeśli chcesz później uruchomić pełny pipeline z LLM:
 
 ```dotenv
 AI_MOCK=false
-COMPOSE_PROFILES=llm
+NVIDIA_API_KEY=...
 ```
 
-2. Uruchom ze wsparciu profilu LLM:
+Opcjonalnie można ustawić:
+
+```dotenv
+WIKIMEDIA_USER_AGENT=AI-Tour-Guide/0.1 (contact: your-email@example.com)
+CLOUD_NARRATIVE_MODEL_NAME=meta/llama-3.3-70b-instruct
+CLOUD_NARRATIVE_REQUEST_TIMEOUT_SECONDS=30
+CLOUD_NARRATIVE_MAX_RETRIES=2
+CLOUD_NARRATIVE_RETRY_BACKOFF_SECONDS=2.0
+```
+
+2. Uruchom:
 
 ```powershell
-docker compose --profile llm up --build
+docker compose up --build
 ```
 
-Worker będzie czekać na `location:events`, uruchomi full pipeline (POI enrichment/search → filtering → generation) i publikować rzeczywistą narrację z Ollamy.
+Worker będzie czekać na `location:events`, uruchomi full pipeline (POI discovery → Wikimedia enrichment → filtering/context → cloud generation) i publikować rzeczywistą narrację.
 
 ## Jak działa część AI (szczegóły)
 
@@ -54,16 +64,19 @@ Poniżej krótki opis głównych kroków pipeline'u AI oraz ważne uwagi dotycz�
 - Odbiór zdarzenia: worker czyta eventy z Redis Stream `location:events`. Event zawiera m.in. `session_id`, `lat`, `lng` i opcjonalnie flagi (np. `include_photos`).
 - Pobranie preferencji: przed generacją worker próbuje odczytać z Redisa klucz `preferences:{session_id}` (jeśli istnieje) i przekazać je dalej jako `UserPreferencesCache`.
 - Lokalizacja i POI: `LocationDiscoveryTask.get_location_details()` używa Nominatim (reverse geocoding) oraz Overpass (lub alternatywy), a następnie zwraca `LocationDiscoveryResult` z adresem oraz listą `PoiCandidate`.
-- Wybór POI: `PoiSelectionTask` ocenia listę POI (na podstawie kategorii i odległości) i wybiera najlepszy kandydat do wygenerowania narracji.
-- Enrichment i filtrowanie: `PoiEnrichmentTask` zbiera surowe informacje o POI przez search client, a `InformationFilteringTask` czyści/skraca i formatuje treść, którą poda się do generatora narracji.
-- Generacja narracji: `narrative_generation_agent` (w trybie live przy użyciu Ollama) generuje finalny tekst narracji kontekstowy dla danej lokalizacji/POI. W trybie mock zwracane są przykładowe teksty.
+- Wybór POI: `PoiSelectionTask` ocenia listę POI przez scoring, który łączy odległość, kategorię oraz sygnały popularności (`wikipedia`, `wikidata`, `website`, `description`). Dzięki temu nie zawsze wygrywa najbliższy punkt; preferowane są obiekty bardziej rozpoznawalne i lepsze do narracji.
+- Enrichment i filtrowanie: `PoiEnrichmentTask` zbiera informacje o POI przez `WikimediaSearchClient`. Klient próbuje kolejno: tag `wikipedia` z OSM, tag `wikidata` z OSM, a potem wyszukiwanie w Wikipedia API po nazwie POI i lokalizacji. Jeśli Wikimedia nic nie zwróci, task buduje fallback context z metadanych OSM, żeby pipeline nadal mógł wygenerować ostrożną narrację.
+- Kontekst z Wikipedii: `WikimediaSearchClient` pobiera dłuższy extract z MediaWiki API (`prop=extracts`, plain text), limitowany domyślnie do ok. 2500 znaków. Krótkie `page/summary` jest używane tylko jako fallback, gdy dłuższy extract jest pusty albo niedostępny.
+- Generacja narracji: `CloudNarrativeAgent` generuje finalny tekst narracji przez NVIDIA/Cloud LLM. Wywołanie modelu ma timeout per próba oraz retry z backoffem, żeby chwilowe problemy serwera nie wieszały całego pipeline'u. W trybie mock zwracane są przykładowe teksty.
 - Zdjęcia (photos): na razie system używa zdjęć domyślnych przypisanych do kategorii POI (tzw. default photos). Oznacza to, że jeśli POI nie ma własnych zdjęć w zasobach projektu, zwracany jest obraz pasujący do kategorii (np. muzeum -> zdjęcie_muzeum.jpg). W przyszłości możliwe dodanie pobierania zdjęć z zasobów zewnętrznych lub generowania miniatur.
 - Publikacja: jeśli generacja powiodła się, worker publikuje dwa komunikaty na kanale Redis `tour:{session_id}`: jeden typu `pois` z listą POI oraz jeden typu `narration` z wygenerowanym tekstem (oraz ewentualnymi metadanymi i linkami do zdjęć).
 
 Ważne uwagi operacyjne:
 - Przy dużym obciążeniu publiczne endpointy Overpass mogą zwracać HTTP 429 lub timeouty — w takim przypadku warto rozważyć użycie alternatywnych usług (Google Places, własny Overpass dla regionu) lub cache'owanie wyników.
+- Wikimedia jest darmowym źródłem enrichmentu, ale wymaga sensownego `User-Agent`. Jeśli `WIKIMEDIA_USER_AGENT` nie jest ustawiony, aplikacja używa domyślnego `AI-Tour-Guide/0.1 (contact: unavailable)`.
+- DuckDuckGo searcher jest zachowany w repo jako niepodpięta klasa pomocnicza, ale domyślny live pipeline go nie używa.
 - Prefetch i cache: preferencje użytkownika są buforowane w Redisie pod kluczem `preferences:{session_id}` (format JSON z polem `interests: list[str]`). Dzięki temu dany session może mieć kontekst preferencji używany przy generacji.
-- Tryby pracy: w trybie `AI_MOCK=true` pipeline zwraca mockowane POI i narracje (szybkie do testów). W trybie `AI_MOCK=false` uruchamiany jest pełny flow z LLM (wymaga Ollamy / profilu `llm`).
+- Tryby pracy: w trybie `AI_MOCK=true` pipeline zwraca mockowane POI i narracje (szybkie do testów). W trybie `AI_MOCK=false` uruchamiany jest pełny flow z LLM i enrichmentiem Wikimedia.
 
 ## Testowanie połączenia z Redisem
 

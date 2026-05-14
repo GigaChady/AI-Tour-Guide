@@ -90,3 +90,51 @@ def test_narration_response_parser_returns_text_on_invalid_json():
     result = parser.parse("Narracja poza JSON-em")
 
     assert result == "Narracja poza JSON-em"
+
+
+def test_narration_response_parser_recovers_json_from_markdown_fence():
+    parser = NarrationResponseParser()
+
+    result = parser.parse(
+        '```json\n{"location": "Lodz", "narration": "Short narration"}\n```'
+    )
+
+    assert result == {
+        "location": "Lodz",
+        "narration": "Short narration",
+    }
+
+
+def test_narration_response_parser_recovers_json_embedded_in_text():
+    parser = NarrationResponseParser()
+
+    result = parser.parse(
+        'Raw response: {"location": "Lodz", "narration": "Short narration"}'
+    )
+
+    assert result == {
+        "location": "Lodz",
+        "narration": "Short narration",
+    }
+
+
+def test_narration_response_parser_recovers_nested_json_string():
+    parser = NarrationResponseParser()
+
+    result = parser.parse(
+        '"{\\"location\\": \\"Lodz\\", \\"narration\\": \\"Short narration\\"}"'
+    )
+
+    assert result == {
+        "location": "Lodz",
+        "narration": "Short narration",
+    }
+
+
+def test_narration_response_parser_decodes_unicode_escapes_in_text_fallback():
+    parser = NarrationResponseParser()
+
+    result = parser.parse("Mi\\u0142ostr\\u00f3\\u017c")
+
+    assert "\\u" not in result
+    assert result in {"Miłostróż", "Milostroz"}

@@ -63,4 +63,22 @@ class CloudNarrativeSettings(BaseSettings):
 		description="Maximum number of tokens generated for narration",
 	)
 
+	request_timeout_seconds: int = Field(
+		default=45,
+		ge=1,
+		description="Timeout for a single cloud narration generation request",
+	)
+
+	max_retries: int = Field(
+		default=2,
+		ge=0,
+		description="Number of retries after failed or timed out cloud narration requests",
+	)
+
+	retry_backoff_seconds: float = Field(
+		default=2.0,
+		ge=0.0,
+		description="Base delay between cloud narration retries; multiplied by attempt number",
+	)
+
 

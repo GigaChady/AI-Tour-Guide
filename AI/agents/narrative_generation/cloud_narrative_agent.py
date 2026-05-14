@@ -7,6 +7,7 @@ from configs.cloud_narration_config import CloudNarrativeSettings
 from parsers.narration_response_parser import NarrationResponseParser
 from prompts.narration_prompt_builder import NarrationPromptBuilder
 from schemas import NarrationSettings
+from utils.retry import call_with_timeout_retry
 
 
 class CloudNarrativeAgent:
@@ -50,7 +51,13 @@ class CloudNarrativeAgent:
         )
 
         chain = prompt_template | self.model
-        response = chain.invoke({})
+        response = call_with_timeout_retry(
+            lambda: chain.invoke({}),
+            timeout_seconds=self.cloud_narrative_config.request_timeout_seconds,
+            max_retries=self.cloud_narrative_config.max_retries,
+            backoff_seconds=self.cloud_narrative_config.retry_backoff_seconds,
+            operation_name="Cloud narration generation",
+        )
 
         logging.info("Finished narration generation")
         return self.response_parser.parse(response.content)

@@ -185,6 +185,8 @@ services:
     build: ./AI
     container_name: ai-narration
     env_file: ./AI/.env
+    depends_on:
+      - minio
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
