@@ -25,24 +25,30 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 @Preview(showBackground = true)
 @Composable
-fun SummaryIconSection() {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+fun SummaryIconSection(
+    modifier: Modifier = Modifier,
+    duration: String = "0 min",
+    distance: String = "0.0 km",
+    attractions: String = "0"
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
         SingleSummarySection(
             iconVector = Icons.Outlined.Schedule,
             sectionName = "Czas",
-            content = "2h 11min"
+            content = duration
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.Route,
             sectionName = "Dystans",
-            content = "5.1km"
+            content = distance
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.PinDrop,
             sectionName = "Atrakcje",
-            content = "10"
+            content = attractions
         )
     }
 }
