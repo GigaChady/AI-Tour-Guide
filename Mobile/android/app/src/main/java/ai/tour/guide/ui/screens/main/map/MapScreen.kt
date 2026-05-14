@@ -40,7 +40,7 @@ private object MapConfig {
     val FallbackLocation = LatLng(0.0, 0.0)
     const val InitialZoom = 2f
     const val TrackingZoom = 16f
-    const val AnimationDuration = 1000
+    const val AnimationDuration = 500
 
     val PathColor = Color.Blue.copy(alpha = 0.4f)
     const val PathWidth = 12f
@@ -100,18 +100,18 @@ fun MapScreen(
     }
 
     LaunchedEffect(focusLocation, isMapLoaded) {
-        if (isMapLoaded && focusLocation != null) {
-            if (!hasInitiallyFocused) {
-                cameraPositionState.move(
-                    update = CameraUpdateFactory.newLatLngZoom(focusLocation, MapConfig.TrackingZoom)
-                )
-                hasInitiallyFocused = true
-            } else if (state.userPath.isNotEmpty()) {
-                cameraPositionState.animate(
-                    update = CameraUpdateFactory.newLatLngZoom(focusLocation, MapConfig.TrackingZoom),
-                    durationMs = MapConfig.AnimationDuration
-                )
-            }
+        if (!isMapLoaded || focusLocation == null) return@LaunchedEffect
+
+        if (!hasInitiallyFocused) {
+            cameraPositionState.move(
+                update = CameraUpdateFactory.newLatLngZoom(focusLocation, MapConfig.TrackingZoom)
+            )
+            hasInitiallyFocused = true
+        } else if (state.userPath.isNotEmpty()) {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(focusLocation, MapConfig.TrackingZoom),
+                durationMs = MapConfig.AnimationDuration
+            )
         }
     }
 
