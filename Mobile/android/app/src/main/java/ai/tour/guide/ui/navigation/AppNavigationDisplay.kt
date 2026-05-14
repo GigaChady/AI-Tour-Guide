@@ -8,7 +8,7 @@ import ai.tour.guide.ui.screens.main.AccountSettingsScreen
 import ai.tour.guide.ui.screens.main.appSettings.AppSettingsScreen
 import ai.tour.guide.ui.screens.main.map.MapScreen
 import ai.tour.guide.ui.screens.main.ProfilePreferencesScreen
-import ai.tour.guide.ui.screens.main.TripEndSummaryScreen
+import ai.tour.guide.ui.screens.main.route.TourRouteSummaryScreen
 import ai.tour.guide.ui.screens.main.dashboard.DashboardScreen
 import ai.tour.guide.ui.screens.main.route.TourAudioPlayerScreen
 import ai.tour.guide.ui.screens.onboarding.OnboardingPreferencesStepScreen
@@ -112,7 +112,7 @@ fun AppNavigationDisplay(modifier: Modifier = Modifier, initialRoute: Route = Ro
 
             entry<Route.TripEndSummary> {
                 WithScreenTopBar(backStack = backStack) {
-                    TripEndSummaryScreen(
+                    TourRouteSummaryScreen(
                         backStack = backStack
                     )
                 }

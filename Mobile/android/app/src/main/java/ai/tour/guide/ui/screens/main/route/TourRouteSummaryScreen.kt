@@ -1,9 +1,10 @@
-package ai.tour.guide.ui.screens.main
+package ai.tour.guide.ui.screens.main.route
 
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.display.SummaryIconSection
 import ai.tour.guide.ui.components.display.TripProgressStepper
 import ai.tour.guide.ui.navigation.Route
+import ai.tour.guide.ui.sharedFragments.tourSummary.TourRouteSummaryViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,17 +20,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 @Preview(showBackground = true)
-fun TripEndSummaryScreen(modifier: Modifier = Modifier, backStack: NavBackStack<NavKey>? = null) {
+fun TourRouteSummaryScreen(
+    modifier: Modifier = Modifier,
+    backStack: NavBackStack<NavKey>? = null,
+    viewModel: TourRouteSummaryViewModel = koinViewModel()
+) {
+    val viewState by viewModel.viewStateFlow.collectAsStateWithLifecycle()
+    val state = viewState.data
+
     val scrollState = rememberScrollState()
+
+    LifecycleStartEffect(Unit) {
+        viewModel.onStart()
+        onStopOrDispose { }
+    }
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -60,13 +78,21 @@ fun TripEndSummaryScreen(modifier: Modifier = Modifier, backStack: NavBackStack<
                     style = MaterialTheme.typography.headlineSmallEmphasized,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                SummaryIconSection()
+                SummaryIconSection(
+                    duration = state.durationText,
+                    distance = state.distanceText,
+                    attractions = state.attractionsCountText
+                )
                 Text(
                     text = stringResource(R.string.trip_end_summary_visited_places_section_header),
                     style = MaterialTheme.typography.headlineSmallEmphasized,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                TripProgressStepper()
+                TripProgressStepper(
+                    places = state.visitedPlaces,
+                    activeStopId = state.activeStopId,
+                    activeProgress = state.activePlaybackProgress
+                )
             }
             ExtendedFloatingActionButton(
                 onClick = {
