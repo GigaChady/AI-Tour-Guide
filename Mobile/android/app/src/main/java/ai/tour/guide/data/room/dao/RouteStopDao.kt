@@ -103,19 +103,16 @@ interface RouteStopDao {
     @Query("SELECT id FROM stops WHERE session_id = (SELECT session_id FROM stops WHERE id = :stopId) AND id <= :stopId ORDER BY id DESC LIMIT 1 OFFSET :offset")
     fun getStopIdByOffsetFromStop(stopId: Int?, offset: Int): Flow<Int?>
 
-    @Query(
-        """
+    @Query("""
         SELECT 
             s.id AS stopId, 
             s.location_title AS title, 
             s.narration_string AS snippet, 
             p.lat AS lat, 
             p.lng AS lng 
-        FROM stops s 
-        LEFT JOIN pois p ON p.stop_id = s.id 
-        WHERE s.session_id = :sessionId 
-        GROUP BY s.id
-    """
-    )
+        FROM stops s
+        LEFT JOIN pois p ON p.stop_id = s.id AND p.poi_index = 0
+        WHERE s.session_id = :sessionId
+    """)
     fun getStopMarkersForSession(sessionId: Int): Flow<List<RouteStopDto>>
 }
