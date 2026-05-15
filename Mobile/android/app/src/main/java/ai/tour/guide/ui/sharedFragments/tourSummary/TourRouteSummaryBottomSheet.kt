@@ -18,8 +18,10 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TourSummaryBottomSheet(
+    modifier: Modifier = Modifier,
     showBottomSheet: Boolean,
     onDismissRequest: () -> Unit,
+    activeStopIdOverride: Int? = null,
     viewModel: TourRouteSummaryViewModel = koinViewModel()
 ) {
     if (showBottomSheet) {
@@ -63,11 +65,23 @@ fun TourSummaryBottomSheet(
                         text = stringResource(R.string.tour_summary_bottom_sheet_places_section),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    TripProgressStepper(
-                        places = state.visitedPlaces,
-                        activeStopId = state.activeStopId,
-                        activeProgress = state.activePlaybackProgress
-                    )
+                    if (viewState.data.visitedPlaces.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.tour_summary_no_attractions_visited),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp)
+                        )
+                    } else {
+                        TripProgressStepper(
+                            places = viewState.data.visitedPlaces,
+                            activeStopId = activeStopIdOverride ?: viewState.data.activeStopId,
+                            activeProgress = viewState.data.activePlaybackProgress
+                        )
+                    }
                 }
             }
         }

@@ -68,19 +68,21 @@ class TourRouteSummaryViewModel(
         session: RouteSessionDto,
         history: List<RoutePositionHistory>,
         markersData: List<RouteStopDto>,
-        latestStopId: Int?,
+        latestStopIdFromDb: Int?,
         playback: RoutePlaybackState
     ): TourRouteSummaryState {
         val distanceKm = calculateTotalDistance(history)
         val durationMin = calculateDurationMin(session)
         val progress = calculatePlaybackProgress(playback)
 
+        val finalActiveStopId = if (session.endedAt != null) null else latestStopIdFromDb
+
         return TourRouteSummaryState(
             durationText = "${durationMin} min",
-            distanceText = "${distanceKm} km",
+            distanceText = "%.1f km".format(distanceKm),
             attractionsCountText = markersData.size.toString(),
             visitedPlaces = markersData,
-            activeStopId = latestStopId,
+            activeStopId = finalActiveStopId,
             activePlaybackProgress = progress
         )
     }

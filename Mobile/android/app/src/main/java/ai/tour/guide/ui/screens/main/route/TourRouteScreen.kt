@@ -114,7 +114,9 @@ fun TourAudioPlayerScreen(
     ) {
         TourSummaryBottomSheet(
             showBottomSheet = showBottomSheet,
-            onDismissRequest = { showBottomSheet = false })
+            onDismissRequest = { showBottomSheet = false },
+            activeStopIdOverride = viewModelState.data.currentStopId
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()

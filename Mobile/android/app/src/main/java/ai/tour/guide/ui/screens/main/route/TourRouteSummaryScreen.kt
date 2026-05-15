@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -48,6 +49,8 @@ fun TourRouteSummaryScreen(
         onStopOrDispose { }
     }
 
+    // TODO: Add a separate component?
+    // Similar code is used in bottom sheet
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -88,11 +91,23 @@ fun TourRouteSummaryScreen(
                     style = MaterialTheme.typography.headlineSmallEmphasized,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                TripProgressStepper(
-                    places = state.visitedPlaces,
-                    activeStopId = state.activeStopId,
-                    activeProgress = state.activePlaybackProgress
-                )
+                if (state.visitedPlaces.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.tour_summary_no_attractions_visited),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp)
+                    )
+                } else {
+                    TripProgressStepper(
+                        places = state.visitedPlaces,
+                        activeStopId = state.activeStopId,
+                        activeProgress = state.activePlaybackProgress
+                    )
+                }
             }
             ExtendedFloatingActionButton(
                 onClick = {

@@ -48,22 +48,21 @@ fun TripProgressStepper(
                 step = index + 1,
                 maxSteps = maxSteps,
                 progress = currentProgress,
-                title = place.title ?: "Punkt trasy",
-                description = place.snippet ?: ""
+                title = place.title ?: "Unknown",
+                description = place.snippet ?: "Unknown"
             )
         }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun TripProgressItem(
     modifier: Modifier = Modifier,
     step: Int = 2,
     maxSteps: Int = 3,
     progress: Float = 0f,
-    title: String = "Rynek Starego Miasta", //TODO
-    description: String = "Serce Starego Miasta" //TODO
+    title: String,
+    description: String
 ) {
     Row(
         modifier = modifier
