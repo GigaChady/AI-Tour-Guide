@@ -9,20 +9,18 @@ class TourNarrationPipelineFactory:
         self.user_agent = user_agent
 
     def create(self, narration_settings: NarrationSettings) -> TourNarrationPipeline:
-        from langchain_community.tools import DuckDuckGoSearchRun
-
         from agents.filtering.cloud_narration_context_agent import (
             CloudNarrationContextAgent,
         )
         from agents.narrative_generation.cloud_narrative_agent import CloudNarrativeAgent
-        from integrations.search.duckduckgo_search_client import DuckDuckGoSearchClient
+        from integrations.search.wikimedia_search_client import WikimediaSearchClient
         from tasks.information_filtering_task import InformationFilteringTask
         from tasks.location_discovery_task import LocationDiscoveryTask
         from tasks.narration_generation_task import NarrationGenerationTask
         from tasks.poi_enrichment_task import PoiEnrichmentTask
         from tasks.poi_selection_task import PoiSelectionTask
 
-        search_client = DuckDuckGoSearchClient(search_tool=DuckDuckGoSearchRun())
+        search_client = WikimediaSearchClient(user_agent=self.user_agent)
 
         return TourNarrationPipeline(
             narration_settings=narration_settings,

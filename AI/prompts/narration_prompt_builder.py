@@ -19,8 +19,7 @@ class NarrationPromptBuilder:
             "5. Write the narration as a single line. Do not use newline characters.\n"
             "6. Do not include coordinates, URLs, raw links, exact street addresses, opening hours, ticket prices, or technical metadata.\n"
             "7. You may mention only the general city or region when it sounds natural.\n"
-            "8. You can try to find some information online about the place if no info is present.\n"
-            "9. Do not add markdown, comments, explanations, Raw:, or any text outside the JSON."
+            "8. Do not add markdown, comments, explanations, Raw:, or any text outside the JSON."
         )
 
         user_prompt = (

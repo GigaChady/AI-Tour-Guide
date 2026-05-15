@@ -1,3 +1,3 @@
-from integrations.search.duckduckgo_search_client import DuckDuckGoSearchClient
+from integrations.search.wikimedia_search_client import WikimediaSearchClient
 
-__all__ = ["DuckDuckGoSearchClient"]
+__all__ = ["WikimediaSearchClient"]

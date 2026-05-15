@@ -20,6 +20,9 @@ Cloud Narrative Settings (CLOUD_NARRATIVE_ prefix):
     - CLOUD_NARRATIVE_TEMPERATURE: Temperature for cloud narration generation (default: 0.4)
     - CLOUD_NARRATIVE_TOP_P: Top-p nucleus sampling (default: 0.9)
     - CLOUD_NARRATIVE_MAX_TOKENS: Max tokens to generate (default: 700)
+    - CLOUD_NARRATIVE_REQUEST_TIMEOUT_SECONDS: Timeout for a single cloud narration request (default: 30)
+    - CLOUD_NARRATIVE_MAX_RETRIES: Retries after failed or timed out cloud narration requests (default: 2)
+    - CLOUD_NARRATIVE_RETRY_BACKOFF_SECONDS: Base retry delay in seconds (default: 2.0)
 
 Narrative Generation Ollama Settings (NARRATIVE_OLLAMA_ prefix):
     - NARRATIVE_OLLAMA_MODEL_NAME: Model name for narration generation (default: mistral-nemo)
