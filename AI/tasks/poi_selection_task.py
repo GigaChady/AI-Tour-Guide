@@ -108,7 +108,7 @@ class PoiSelectionTask:
             poi.lat,
             poi.lon,
         )
-        distance_penalty = distance_km * 4
+        distance_penalty = distance_km * 5
         category_penalty = self.category_ranks.get(poi.category, 99)
         popularity_bonus = self._popularity_bonus(poi)
 
