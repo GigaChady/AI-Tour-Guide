@@ -1,5 +1,6 @@
 package ai.tour.guide.ui.components.display
 
+import ai.tour.guide.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,17 +39,17 @@ fun SummaryIconSection(
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
         SingleSummarySection(
             iconVector = Icons.Outlined.Schedule,
-            sectionName = "Czas",
+            sectionName = stringResource(R.string.summary_icon_section_time),
             content = duration
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.Route,
-            sectionName = "Dystans",
+            sectionName = stringResource(R.string.summary_icon_section_distance),
             content = distance
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.PinDrop,
-            sectionName = "Atrakcje",
+            sectionName = stringResource(R.string.summary_icon_section_attractions),
             content = attractions
         )
     }
@@ -58,8 +60,8 @@ fun SummaryIconSection(
 fun SingleSummarySection(
     modifier: Modifier = Modifier,
     iconVector: ImageVector = Icons.Default.Schedule,
-    sectionName: String = "test",
-    content: String = "test"
+    sectionName: String = "Unknown",
+    content: String = "Unknown"
 ) {
     Column(
         modifier = Modifier

@@ -152,4 +152,8 @@
     <string name="settings_saved_success">Saved successfully</string>
     <string name="map_visited_stop_title_default">Visited POI</string>
     <string name="map_visited_stop_snippet_default">POI visited during your trip</string>
+    <string name="tour_summary_no_attractions_visited">No attractions visited yet</string>
+    <string name="summary_icon_section_time">Time</string>
+    <string name="summary_icon_section_distance">Distance</string>
+    <string name="summary_icon_section_attractions">Attractions</string>
 </resources>
