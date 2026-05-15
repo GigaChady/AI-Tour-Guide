@@ -18,7 +18,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TourSummaryBottomSheet(
-    modifier: Modifier = Modifier,
     showBottomSheet: Boolean,
     onDismissRequest: () -> Unit,
     viewModel: TourRouteSummaryViewModel = koinViewModel()

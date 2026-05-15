@@ -4,7 +4,6 @@ import ai.tour.guide.data.room.AppDatabase
 import ai.tour.guide.data.room.entity.RoutePositionHistory
 import ai.tour.guide.data.shared.BaseViewModel
 import ai.tour.guide.domain.route.RouteNarrationPlaybackService
-import ai.tour.guide.domain.route.RouteService
 import android.location.Location
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
@@ -15,8 +14,7 @@ import kotlin.math.roundToInt
 
 @KoinViewModel
 class TourRouteSummaryViewModel(
-    private val appDatabase: AppDatabase,
-    private val routeService: RouteService,
+    appDatabase: AppDatabase,
     private val routeAudioService: RouteNarrationPlaybackService
 ) : BaseViewModel<TourRouteSummaryState>(TourRouteSummaryState()) {
 
