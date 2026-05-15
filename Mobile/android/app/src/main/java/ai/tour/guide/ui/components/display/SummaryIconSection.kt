@@ -1,5 +1,6 @@
 package ai.tour.guide.ui.components.display
 
+import ai.tour.guide.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,27 +23,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 @Preview(showBackground = true)
 @Composable
-fun SummaryIconSection() {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+fun SummaryIconSection(
+    modifier: Modifier = Modifier,
+    duration: String = "0 min",
+    distance: String = "0.0 km",
+    attractions: String = "0"
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
         SingleSummarySection(
             iconVector = Icons.Outlined.Schedule,
-            sectionName = "Czas",
-            content = "2h 11min"
+            sectionName = stringResource(R.string.summary_icon_section_time),
+            content = duration
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.Route,
-            sectionName = "Dystans",
-            content = "5.1km"
+            sectionName = stringResource(R.string.summary_icon_section_distance),
+            content = distance
         )
         SingleSummarySection(
             iconVector = Icons.Outlined.PinDrop,
-            sectionName = "Atrakcje",
-            content = "10"
+            sectionName = stringResource(R.string.summary_icon_section_attractions),
+            content = attractions
         )
     }
 }
@@ -52,8 +60,8 @@ fun SummaryIconSection() {
 fun SingleSummarySection(
     modifier: Modifier = Modifier,
     iconVector: ImageVector = Icons.Default.Schedule,
-    sectionName: String = "test",
-    content: String = "test"
+    sectionName: String = "Unknown",
+    content: String = "Unknown"
 ) {
     Column(
         modifier = Modifier

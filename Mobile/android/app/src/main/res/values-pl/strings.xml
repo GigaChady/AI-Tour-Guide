@@ -152,4 +152,8 @@
     <string name="settings_saved_success">Zapisano pomyślnie</string>
     <string name="map_visited_stop_title_default">Odwiedzone miejsce</string>
     <string name="map_visited_stop_snippet_default">Miejsce odwiedzone podczas podróży</string>
+    <string name="tour_summary_no_attractions_visited">Nie odwiedzono żadnych atrakcji</string>
+    <string name="summary_icon_section_time">Czas</string>
+    <string name="summary_icon_section_distance">Dystans</string>
+    <string name="summary_icon_section_attractions">Atrakcje</string>
 </resources>

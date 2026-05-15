@@ -3,7 +3,7 @@ package ai.tour.guide.ui.screens.main.route
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.audio.AudioPlayerWidget
 import ai.tour.guide.ui.navigation.Route
-import ai.tour.guide.ui.sharedFragments.TourSummaryBottomSheet
+import ai.tour.guide.ui.sharedFragments.tourSummary.TourSummaryBottomSheet
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,7 +114,9 @@ fun TourAudioPlayerScreen(
     ) {
         TourSummaryBottomSheet(
             showBottomSheet = showBottomSheet,
-            onDismissRequest = { showBottomSheet = false })
+            onDismissRequest = { showBottomSheet = false },
+            activeStopIdOverride = viewModelState.data.currentStopId
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -183,7 +185,7 @@ fun TourAudioPlayerScreen(
                     viewModel.endTour()
                     onSessionFinished()
                 },
-                onSpeakerClicked = {
+                onInfoClicked = {
                     showBottomSheet = true
                 },
                 onPreviousClicked = {

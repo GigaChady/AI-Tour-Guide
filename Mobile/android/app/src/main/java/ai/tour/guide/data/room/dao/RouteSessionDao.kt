@@ -24,4 +24,7 @@ interface RouteSessionDao {
 
     @Query("SELECT * FROM sessions WHERE server_session_id = :serverId LIMIT 1")
     suspend fun getSessionByServerId(serverId: String): RouteSession?
+
+    @Query("UPDATE sessions SET ended_at = :endTime WHERE id = :sessionId")
+    suspend fun updateEndedAt(sessionId: Int, endTime: Long)
 }

@@ -1,5 +1,6 @@
 package ai.tour.guide.ui.components.display
 
+import ai.tour.guide.data.route.RouteStopDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,27 +26,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-@Preview(showBackground = true)
 @Composable
-fun TripProgressStepper(modifier: Modifier = Modifier) {
-    val maxSteps = 6
+fun TripProgressStepper(
+    modifier: Modifier = Modifier,
+    places: List<RouteStopDto> = emptyList(),
+    activeStopId: Int? = null,
+    activeProgress: Float = 0f
+) {
+    val maxSteps = places.size
+
     Column(modifier = modifier) {
-        TripProgressItem(step = 1, maxSteps = maxSteps, progress = 1f)
-        TripProgressItem(step = 2, maxSteps = maxSteps, progress = 0.5f)
-        TripProgressItem(step = 3, maxSteps = maxSteps, progress = 0f)
-        TripProgressItem(step = 4, maxSteps = maxSteps, progress = 0f)
-        TripProgressItem(step = 5, maxSteps = maxSteps, progress = 0f)
-        TripProgressItem(step = 6, maxSteps = maxSteps, progress = 0f)
+        places.forEachIndexed { index, place ->
+            val currentProgress = when {
+                activeStopId == null -> 1f
+                place.stopId < activeStopId -> 1f
+                place.stopId == activeStopId -> activeProgress
+                else -> 0f
+            }
+
+            TripProgressItem(
+                step = index + 1,
+                maxSteps = maxSteps,
+                progress = currentProgress,
+                title = place.title ?: "Unknown",
+                description = place.snippet ?: "Unknown"
+            )
+        }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun TripProgressItem(
     modifier: Modifier = Modifier,
     step: Int = 2,
     maxSteps: Int = 3,
-    progress: Float = 0f
+    progress: Float = 0f,
+    title: String,
+    description: String
 ) {
     Row(
         modifier = modifier
@@ -59,9 +76,10 @@ fun TripProgressItem(
                 .fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
-            when (step) {
-                1 -> TripProgressLeadingItemStart(step = step, progress = progress)
-                maxSteps -> TripProgressLeadingItemEnd(step = step, progress = progress)
+            when {
+                maxSteps == 1 -> TripProgressSpinner(step = step, progress = progress)
+                step == 1 -> TripProgressLeadingItemStart(step = step, progress = progress)
+                step == maxSteps -> TripProgressLeadingItemEnd(step = step, progress = progress)
                 else -> TripProgressLeadingItemMiddle(step = step, progress = progress)
             }
         }
@@ -72,15 +90,17 @@ fun TripProgressItem(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Rynek Starego Miasta",
+                text = title,
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Text(
-                text = "Serce Starego Miasta",
-                style = MaterialTheme.typography.labelLargeEmphasized,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            if (description.isNotBlank()) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
 }

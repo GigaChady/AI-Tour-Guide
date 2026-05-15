@@ -199,6 +199,12 @@ class RouteService(
     }
 
     suspend fun onDestroy() {
+        // Update session endedAt timestamp
+        routeSession?.let { session ->
+            appDatabase.routeSessionDao().updateEndedAt(session.id, System.currentTimeMillis())
+        }
+
+        // Destroy RouteService elements
         wsClient.onDestroy()
         locationService.stopTracking()
         routeAudioRepository.clearSession()

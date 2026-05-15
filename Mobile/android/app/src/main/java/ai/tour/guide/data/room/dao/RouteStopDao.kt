@@ -108,8 +108,8 @@ interface RouteStopDao {
             s.id AS stopId, 
             s.location_title AS title, 
             s.narration_string AS snippet, 
-            p.lat AS lat, 
-            p.lng AS lng 
+            p.lat AS latitude, 
+            p.lng AS longitude 
         FROM stops s
         LEFT JOIN pois p ON p.stop_id = s.id AND p.poi_index = 0
         WHERE s.session_id = :sessionId
