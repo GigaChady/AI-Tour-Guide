@@ -28,6 +28,9 @@ appId: ai.tour.guide.e2e
 - tapOn:
     id: "registration_password_input"
 - inputText: "Testpass1234***"
+- scroll
+- assertVisible:
+    id: "registration_confirm_password_input"
 - tapOn:
     id: "registration_confirm_password_input"
 - inputText: "Testpass1234***"
