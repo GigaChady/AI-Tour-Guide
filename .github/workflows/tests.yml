@@ -7,7 +7,7 @@ on:
       - main
   push:
     branches:
-      - main 
+      - main
 
 env:
   JWT_SECRET_KEY: test-secret
