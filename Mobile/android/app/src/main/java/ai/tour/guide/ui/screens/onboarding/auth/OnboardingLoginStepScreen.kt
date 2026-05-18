@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -66,7 +67,9 @@ fun OnboardingLoginStepScreen(
 
     ToastOnRequestError(viewModel = viewModel)
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("onboarding_login_screen"),
         color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -80,13 +83,17 @@ fun OnboardingLoginStepScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("login_email_input"),
                         value = viewModelState.data.email,
                         onValueChange = { viewModel.onEmailChanged(it) },
                         label = { Text(stringResource(R.string.onboarding_step2_email_input_title)) }
                     )
                     OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("login_password_input"),
                         value = viewModelState.data.password,
                         onValueChange = { viewModel.onPasswordChanged(it) },
                         visualTransformation = PasswordVisualTransformation(),
@@ -154,6 +161,7 @@ fun RegisterLink(onClick: () -> Unit) {
         }
     }
     Text(
+        modifier = Modifier.testTag("login_sign_up"),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurface,
         text = registerLinkText

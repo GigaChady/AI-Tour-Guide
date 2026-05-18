@@ -6,8 +6,6 @@ on:
     branches:
       - main
   push:
-    branches:
-      - main
 
 env:
   JWT_SECRET_KEY: test-secret
@@ -101,6 +99,92 @@ jobs:
         working-directory: Mobile/android
         run: ./gradlew testDevDebugUnitTest
 
+  mobile-e2e:
+    name: Mobile E2E tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        working-directory: Mobile/android
+        run: chmod +x ./gradlew
+
+      - name: Build dev debug APK
+        working-directory: Mobile/android
+        run: ./gradlew assembleDevDebug
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Start backend stack
+        run: docker compose -f docker-compose.ci.yml up -d --build api ai
+
+      - name: Wait for backend API
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose -f docker-compose.ci.yml logs api ai
+          exit 1
+
+      # KVM permissions are required for running Android emulator in GitHub Actions.
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Create and start Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb wait-for-device
+
+            APK_PATH=$(find Mobile/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+            echo "Installing APK: $APK_PATH"
+            adb install -r -d "$APK_PATH"
+
+            adb shell settings put secure location_mode 3 || true
+            adb shell pm grant ai.tour.guide.dev android.permission.ACCESS_FINE_LOCATION || true
+            adb shell pm grant ai.tour.guide.dev android.permission.ACCESS_COARSE_LOCATION || true
+
+            adb reverse tcp:8000 tcp:8000
+            adb reverse tcp:9000 tcp:9000
+
+            adb shell am force-stop ai.tour.guide.dev || true
+
+            maestro test Mobile/android/app/src/test/e2e/maestro
+
+      - name: Stop backend stack
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v --remove-orphans
+
   backend-e2e:
     name: Backend E2E tests
     runs-on: ubuntu-latest
@@ -150,8 +234,8 @@ jobs:
       - name: Audit Python dependencies
         run: |
           pip install pip-audit
-          pip-audit --ignore-vuln CVE-2024-23342 -r Backend/requirements.txt
-          pip-audit --ignore-vuln CVE-2024-23342 -r AI/requirements.txt
+          pip-audit -r Backend/requirements.txt
+          pip-audit -r AI/requirements.txt
 
   performance-smoke:
     name: Backend performance test
