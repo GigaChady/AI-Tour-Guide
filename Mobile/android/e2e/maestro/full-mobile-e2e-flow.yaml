@@ -1,0 +1,80 @@
+appId: ai.tour.guide.e2e
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- assertVisible:
+    id: "onboarding_welcome_screen"
+- tapOn:
+    id: "onboarding_welcome_next"
+- assertVisible:
+    id: "onboarding_login_screen"
+- assertVisible:
+    id: "login_email_input"
+- assertVisible:
+    id: "login_password_input"
+- tapOn:
+    id: "login_sign_up"
+- assertVisible:
+    id: "onboarding_register_screen"
+- tapOn:
+    id: "registration_name_input"
+- inputText: "Mobile E2E User"
+- tapOn:
+    id: "registration_email_input"
+- inputText: "mobile.e2e.${Date.now()}@example.com"
+- tapOn:
+    id: "registration_password_input"
+- inputText: "Testpass1234***"
+- tapOn:
+    id: "registration_confirm_password_input"
+- inputText: "Testpass1234***"
+- hideKeyboard
+- tapOn:
+    id: "registration_submit"
+- assertVisible:
+    id: "onboarding_preferences_screen"
+- tapOn:
+    id: "preference_gender_male"
+- tapOn:
+    id: "preference_interests_history"
+- tapOn:
+    id: "preferences_next"
+- assertVisible:
+    id: "onboarding_finish_screen"
+- tapOn:
+    id: "onboarding_finish_next"
+- assertVisible:
+    id: "dashboard_screen"
+- tapOn:
+    id: "app_menu"
+- tapOn:
+    id: "drawer_profile"
+- assertVisible:
+    id: "profile_screen"
+- tapOn:
+    id: "save_button"
+- tapOn:
+    id: "app_menu"
+- tapOn:
+    id: "drawer_settings"
+- assertVisible:
+    id: "settings_screen"
+- scroll
+- tapOn:
+    id: "save_button"
+- tapOn:
+    id: "app_menu"
+- tapOn:
+    id: "drawer_dashboard"
+- assertVisible:
+    id: "dashboard_screen"
+- tapOn:
+    id: "dashboard_start_tour"
+- assertVisible:
+    id: "tour_screen"
+- tapOn:
+    id: "tour_open_map"
+- assertVisible:
+    id: "map_screen"

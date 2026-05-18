@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -66,6 +67,7 @@ fun UserPreferenceFragment(
                     }
 
                     PreferenceChoiceItem(
+                        testTag = "preference_${preference.key}_${item.key}",
                         item = item,
                         isSingleChoice = isSingleChoice,
                         isSelected = isSelected,
@@ -94,13 +96,16 @@ fun UserPreferenceFragment(
 
 @Composable
 fun PreferenceChoiceItem(
+    testTag: String,
     item: OnboardingPreferenceQuestionDto,
     isSingleChoice: Boolean,
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
     ListItem(
-        modifier = Modifier.clickable { onSelect() },
+        modifier = Modifier
+            .testTag(testTag)
+            .clickable { onSelect() },
         leadingContent = {
             if (isSingleChoice) {
                 RadioButton(selected = isSelected, onClick = null)

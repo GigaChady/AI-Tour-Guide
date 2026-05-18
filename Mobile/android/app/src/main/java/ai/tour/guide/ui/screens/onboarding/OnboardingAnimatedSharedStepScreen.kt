@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -32,6 +33,7 @@ fun OnboardingAnimatedSharedStepScreen(
     headerTitle: String,
     headerBody: String,
     buttonLabel: String,
+    nextButtonTestTag: String = "onboarding_next",
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -56,6 +58,7 @@ fun OnboardingAnimatedSharedStepScreen(
                     .padding(bottom = 32.dp)
             ) {
                 ExtendedFloatingActionButton(
+                    modifier = Modifier.testTag(nextButtonTestTag),
                     onClick = { onNextClicked() },
                     shape = MaterialTheme.shapes.large,
                     icon = { Icon(Icons.AutoMirrored.Default.ArrowForward, null) },

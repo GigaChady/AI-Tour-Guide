@@ -12,7 +12,7 @@ Unit tests verify isolated application logic.
 
 ## Mobile end-to-end tests
 
-Maestro runs a black-box Android UI flow on an emulator against the CI backend stack. The current flow launches the dev app, registers a user, saves onboarding preferences, completes onboarding, and verifies the dashboard.
+Maestro runs a black-box Android UI flow on an emulator against the CI backend stack. The current flow is defined in `Mobile/android/e2e/maestro/full-mobile-e2e-flow.yaml` and covers registration, onboarding preferences, dashboard, profile, app settings, tour start, and map navigation.
 
 ```bash
 cd Mobile/android

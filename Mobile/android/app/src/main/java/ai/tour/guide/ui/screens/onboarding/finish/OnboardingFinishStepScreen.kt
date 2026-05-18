@@ -6,6 +6,7 @@ import ai.tour.guide.ui.screens.onboarding.OnboardingAnimatedSharedStepScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -35,9 +36,10 @@ fun OnboardingFinishStepScreen(
         onNextClicked = {
             viewModel.onFinishClicked()
         },
-        modifier = modifier,
+        modifier = modifier.testTag("onboarding_finish_screen"),
         headerTitle = stringResource(R.string.onboarding_step5_header_text_header),
         headerBody = stringResource(R.string.onboarding_step5_header_text_body),
-        buttonLabel = stringResource(R.string.onboarding_step5_get_started_btn_content)
+        buttonLabel = stringResource(R.string.onboarding_step5_get_started_btn_content),
+        nextButtonTestTag = "onboarding_finish_next"
     )
 }
