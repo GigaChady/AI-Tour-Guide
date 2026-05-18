@@ -130,12 +130,21 @@ jobs:
           done
           docker compose -f docker-compose.ci.yml logs api ai
           exit 1
+        # KVM permissions are required for running Android emulator in GitHub Actions
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: Run Maestro E2E flow
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
+          target: google_apis
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
           # Try to set up en locale - fallback if not supported
           script: |
             adb install -r Mobile/android/app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
