@@ -28,7 +28,7 @@ android:theme="@style/Theme.AiTourGuide">
 </activity>
 <meta-data
 android:name="com.google.android.geo.API_KEY"
-android:value="AIzaSyBIZ59opmNM9Nvi3Jkn_O76Otj0KbeRmzc" />
+android:value="-" />
 </application>
 
 </manifest>
