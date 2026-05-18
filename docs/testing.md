@@ -10,6 +10,24 @@ Unit tests verify isolated application logic.
 - AI: `pytest AI/tests`
 - Mobile: `./gradlew testDevDebugUnitTest` from `Mobile/android`
 
+## Mobile end-to-end tests
+
+Maestro runs a black-box Android UI flow on an emulator against the CI backend stack. The current flow launches the dev app, registers a user, saves onboarding preferences, completes onboarding, and verifies the dashboard.
+
+```bash
+cd Mobile/android
+./gradlew assembleE2eDebug
+```
+
+With an Android emulator running and Maestro installed:
+
+```bash
+docker compose -f ../../docker-compose.ci.yml up -d --build api ai
+adb install -r app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
+maestro test e2e/maestro
+docker compose -f ../../docker-compose.ci.yml down -v --remove-orphans
+```
+
 ## 2. End-to-end smoke tests
 
 Backend E2E smoke tests run against the CI Docker Compose stack with Backend, AI in mock mode, PostgreSQL, Redis, and MinIO.

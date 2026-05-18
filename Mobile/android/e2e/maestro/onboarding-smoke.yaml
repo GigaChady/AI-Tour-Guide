@@ -1,0 +1,31 @@
+appId: ai.tour.guide.e2e
+---
+- clearState
+- launchApp
+- assertVisible: "Hey!"
+- assertVisible: "Let's go!"
+- tapOn: "Let's go!"
+- assertVisible: "Log in"
+- assertVisible: "Email"
+- assertVisible: "Password"
+- tapOn: "Sign up"
+- assertVisible: "Full name"
+- tapOn: "Full name"
+- inputText: "Mobile E2E User"
+- tapOn: "Email"
+- inputText: "mobile.e2e.${Date.now()}@example.com"
+- tapOn: "Password"
+- inputText: "Testpass1"
+- tapOn: "Confirm password"
+- inputText: "Testpass1"
+- hideKeyboard
+- tapOn: "Sign up"
+- assertVisible: "Let's get to know you"
+- tapOn: "Masculine"
+- tapOn: "History"
+- tapOn: "Next"
+- assertVisible: "All done!"
+- assertVisible: "Setup completed successfully!"
+- tapOn: "Go to the app"
+- assertVisible: "Dashboard"
+- assertVisible: "What places"

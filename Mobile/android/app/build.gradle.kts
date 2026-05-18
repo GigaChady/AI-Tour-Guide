@@ -42,9 +42,16 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             isDefault = true
+            buildConfigField("String", "HTTPS_CLIENT_HOST", "\"localhost:8000\"")
+        }
+        create("e2e") {
+            dimension = "env"
+            applicationIdSuffix = ".e2e"
+            buildConfigField("String", "HTTPS_CLIENT_HOST", "\"10.0.2.2:8000\"")
         }
         create("prod") {
             dimension = "env"
+            buildConfigField("String", "HTTPS_CLIENT_HOST", "\"localhost:8000\"")
         }
     }
     compileOptions {
@@ -53,6 +60,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

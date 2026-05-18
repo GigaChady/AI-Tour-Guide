@@ -6,8 +6,6 @@ on:
     branches:
       - main
   push:
-    branches:
-      - main
 
 env:
   JWT_SECRET_KEY: test-secret
@@ -101,6 +99,50 @@ jobs:
         working-directory: Mobile/android
         run: ./gradlew testDevDebugUnitTest
 
+  mobile-e2e:
+    name: Mobile E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Make Gradle wrapper executable
+        working-directory: Mobile/android
+        run: chmod +x ./gradlew
+      - name: Build dev debug APK
+        working-directory: Mobile/android
+        run: ./gradlew assembleE2eDebug
+      - name: Install Maestro
+        run: curl -Ls "https://get.maestro.mobile.dev" | bash
+      - name: Start backend stack
+        run: docker compose -f docker-compose.ci.yml up -d --build api ai
+      - name: Wait for backend API
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.ci.yml logs api ai
+          exit 1
+      - name: Run Maestro E2E flow
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r Mobile/android/app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
+            ~/.maestro/bin/maestro test Mobile/android/e2e/maestro
+      - name: Stop backend stack
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v --remove-orphans
+
   backend-e2e:
     name: Backend E2E tests
     runs-on: ubuntu-latest
@@ -150,8 +192,8 @@ jobs:
       - name: Audit Python dependencies
         run: |
           pip install pip-audit
-          pip-audit --ignore-vuln CVE-2024-23342 -r Backend/requirements.txt
-          pip-audit --ignore-vuln CVE-2024-23342 -r AI/requirements.txt
+          pip-audit -r Backend/requirements.txt
+          pip-audit -r AI/requirements.txt
 
   performance-smoke:
     name: Backend performance test
