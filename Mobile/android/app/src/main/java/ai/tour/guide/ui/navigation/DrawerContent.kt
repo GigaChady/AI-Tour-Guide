@@ -33,7 +33,7 @@ fun DrawerContent(
             style = MaterialTheme.typography.titleLarge,
         )
         NavigationDrawerItem(
-            modifier = Modifier.testTag("drawer_dashboard"),
+            modifier = Modifier.testTag("drawer_dashboard"), // test id for tests
             label = { Text(stringResource(R.string.navigation_drawer_item_dashboard)) },
             selected = selectedRoute == Route.Dashboard,
             onClick = { onRouteSelected(Route.Dashboard) },

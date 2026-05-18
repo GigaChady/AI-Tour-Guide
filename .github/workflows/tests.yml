@@ -145,18 +145,16 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          # Try to set up en locale - fallback if not supported
           script: |
             adb wait-for-device
             adb install -r -d Mobile/android/app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
-            adb shell pm list packages | grep ai.tour.guide
-            adb shell cmd locale set-app-locales ai.tour.guide.e2e en-US || true
             adb shell settings put secure location_mode 3 || true
             adb shell pm grant ai.tour.guide.e2e android.permission.ACCESS_FINE_LOCATION || true
             adb shell pm grant ai.tour.guide.e2e android.permission.ACCESS_COARSE_LOCATION || true
-            adb shell monkey -p ai.tour.guide.e2e -c android.intent.category.LAUNCHER 1
+            adb reverse tcp:8000 tcp:8000
+            adb reverse tcp:9000 tcp:9000
             adb shell am force-stop ai.tour.guide.e2e || true
-            ~/.maestro/bin/maestro test Mobile/android/e2e/maestro
+            ~/.maestro/bin/maestro test Mobile/android/app/src/test/e2e/maestro
       - name: Stop backend stack
         if: always()
         run: docker compose -f docker-compose.ci.yml down -v --remove-orphans

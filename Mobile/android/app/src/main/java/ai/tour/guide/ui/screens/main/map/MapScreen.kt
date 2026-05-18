@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,16 +117,21 @@ fun MapScreen(
         }
     }
 
-    TourGoogleMap(
+    // Content wrapped in the box to allow felxibility like tets tags
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .testTag("map_screen"),
-        cameraPositionState = cameraPositionState,
-        properties = properties,
-        uiSettings = uiSettings,
-        state = state,
-        onMapLoaded = { isMapLoaded = true }
-    )
+            .testTag("map_screen")
+    ) {
+        TourGoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = properties,
+            uiSettings = uiSettings,
+            state = state,
+            onMapLoaded = { isMapLoaded = true }
+        )
+    }
 }
 
 @Composable

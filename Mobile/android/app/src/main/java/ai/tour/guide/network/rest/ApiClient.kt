@@ -1,5 +1,6 @@
 package ai.tour.guide.network.rest
 
+import ai.tour.guide.BuildConfig
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.data.appData.AppDataRepository
 import ai.tour.guide.network.schema.request.AuthRefreshRequestDto
@@ -44,7 +45,7 @@ class ApiClient(
             val response = httpClient.post {
                 url {
                     protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
-                    host = AppConfig.HTTPS_CLIENT_HOST
+                    host = BuildConfig.HTTPS_CLIENT_HOST
                     path(ApiClientRoute.AUTH_REFRESH.path)
                 }
                 contentType(ContentType.Application.Json)
@@ -81,7 +82,7 @@ class ApiClient(
             val response = httpClient.get {
                 url {
                     protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
-                    host = AppConfig.HTTPS_CLIENT_HOST
+                    host = BuildConfig.HTTPS_CLIENT_HOST
                     path(route.path)
                     queryParams.forEach { (key, value) -> parameters.append(key, value) }
                 }
@@ -108,7 +109,7 @@ class ApiClient(
             val response = httpClient.post {
                 url {
                     protocol = AppConfig.HTTPS_CLIENT_PROTOCOL
-                    host = AppConfig.HTTPS_CLIENT_HOST
+                    host = BuildConfig.HTTPS_CLIENT_HOST
                     path(route.path)
                 }
                 contentType(ContentType.Application.Json)

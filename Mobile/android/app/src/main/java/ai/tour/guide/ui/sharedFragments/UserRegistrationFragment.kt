@@ -3,6 +3,8 @@ package ai.tour.guide.ui.sharedFragments
 import ai.tour.guide.R
 import ai.tour.guide.ui.components.shared.ToastOnRequestError
 import ai.tour.guide.ui.screens.onboarding.auth.OnboardingAuthStepViewModel
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,7 +47,9 @@ fun UserRegistrationFragment(
     }
 
     ToastOnRequestError(viewModel = viewModel)
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

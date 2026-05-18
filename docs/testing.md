@@ -12,7 +12,7 @@ Unit tests verify isolated application logic.
 
 ## Mobile end-to-end tests
 
-Maestro runs a black-box Android UI flow on an emulator against the CI backend stack. The current flow is defined in `Mobile/android/e2e/maestro/full-mobile-e2e-flow.yaml` and covers registration, onboarding preferences, dashboard, profile, app settings, tour start, and map navigation.
+Maestro runs a black-box Android UI flow on an emulator against the CI backend stack. The current flow is defined in `Mobile/android/app/src/test/e2e/maestro/full-mobile-e2e-flow.yaml` and covers registration, onboarding preferences, dashboard, profile, app settings, tour start, and map navigation.
 
 ```bash
 cd Mobile/android
@@ -24,7 +24,7 @@ With an Android emulator running and Maestro installed:
 ```bash
 docker compose -f ../../docker-compose.ci.yml up -d --build api ai
 adb install -r app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
-maestro test e2e/maestro
+maestro test app/src/test/e2e/maestro
 docker compose -f ../../docker-compose.ci.yml down -v --remove-orphans
 ```
 

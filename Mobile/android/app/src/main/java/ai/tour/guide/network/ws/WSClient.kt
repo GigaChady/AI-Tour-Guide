@@ -1,5 +1,6 @@
 package ai.tour.guide.network.ws
 
+import ai.tour.guide.BuildConfig
 import ai.tour.guide.config.AppConfig
 import ai.tour.guide.network.schema.response.AudioChunkReceivedResponseDto
 import ai.tour.guide.network.schema.response.NarrationResponseDto
@@ -125,7 +126,7 @@ class WSClient {
             session = httpClient.webSocketSession {
                 url {
                     protocol = URLProtocol.WS
-                    host = AppConfig.HTTPS_CLIENT_HOST
+                    host = BuildConfig.HTTPS_CLIENT_HOST
                     path(route.path)
                 }
             }

@@ -34,12 +34,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -151,13 +149,7 @@ fun RegisterLink(onClick: () -> Unit) {
     val registerLinkText = buildAnnotatedString {
         append(stringResource(R.string.onboarding_step2_no_account_question))
         append(" ")
-        withLink(
-            LinkAnnotation.Clickable(
-                tag = "register",
-                styles = TextLinkStyles(style = SpanStyle(color = MaterialTheme.colorScheme.primary)),
-                linkInteractionListener = { onClick() }
-            )
-        ) {
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
             append(stringResource(R.string.onboarding_step2_register_span))
         }
     }

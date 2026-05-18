@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
                     }
                     key(completed) {
                         AppNavigationDisplay(
+                        // test tags for maestro testing (instead of string lookups)
                             modifier = Modifier.semantics {
                                 testTagsAsResourceId = true
                             },
