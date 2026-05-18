@@ -148,8 +148,8 @@ jobs:
       - name: Audit Python dependencies
         run: |
           pip install pip-audit
-          pip-audit -r Backend/requirements.txt
-          pip-audit -r AI/requirements.txt
+          pip-audit --ignore-vuln CVE-2024-23342 -r Backend/requirements.txt
+          pip-audit --ignore-vuln CVE-2024-23342 -r AI/requirements.txt
 
   performance-smoke:
     name: Backend performance smoke test

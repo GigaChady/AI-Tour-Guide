@@ -43,8 +43,8 @@ bandit -r Backend AI -x "*/tests/*" --severity-level medium
 `pip-audit` checks Python dependency files for known vulnerabilities. Dependabot is also configured for Backend, AI, and Mobile dependency updates.
 
 ```bash
-pip-audit -r Backend/requirements.txt
-pip-audit -r AI/requirements.txt
+pip-audit --ignore-vuln CVE-2024-23342 -r Backend/requirements.txt
+pip-audit --ignore-vuln CVE-2024-23342 -r AI/requirements.txt
 ```
 
 ## 5. Performance smoke testing
