@@ -166,9 +166,7 @@ jobs:
           script: |
             adb wait-for-device
 
-            APK_PATH=$(find Mobile/android/app/build/outputs/apk -name "*.apk" | head -n 1)
-            echo "Installing APK: $APK_PATH"
-            adb install -r -d "$APK_PATH"
+            adb install -r -d Mobile/android/app/build/outputs/apk/dev/debug/app-dev-debug.apk
 
             adb shell settings put secure location_mode 3 || true
             adb shell pm grant ai.tour.guide.dev android.permission.ACCESS_FINE_LOCATION || true
