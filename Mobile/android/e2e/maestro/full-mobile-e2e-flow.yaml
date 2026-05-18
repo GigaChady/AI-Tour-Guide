@@ -1,6 +1,7 @@
 appId: ai.tour.guide.e2e
 ---
 - launchApp:
+    appId: ai.tour.guide.e2e
     clearState: true
     permissions:
       all: allow

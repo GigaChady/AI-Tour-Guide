@@ -147,11 +147,14 @@ jobs:
           disable-animations: true
           # Try to set up en locale - fallback if not supported
           script: |
-            adb install -r Mobile/android/app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
+            adb wait-for-device
+            adb install -r -d Mobile/android/app/build/outputs/apk/e2e/debug/app-e2e-debug.apk
+            adb shell pm list packages | grep ai.tour.guide
             adb shell cmd locale set-app-locales ai.tour.guide.e2e en-US || true
             adb shell settings put secure location_mode 3 || true
             adb shell pm grant ai.tour.guide.e2e android.permission.ACCESS_FINE_LOCATION || true
             adb shell pm grant ai.tour.guide.e2e android.permission.ACCESS_COARSE_LOCATION || true
+            adb shell monkey -p ai.tour.guide.e2e -c android.intent.category.LAUNCHER 1
             adb shell am force-stop ai.tour.guide.e2e || true
             ~/.maestro/bin/maestro test Mobile/android/e2e/maestro
       - name: Stop backend stack
