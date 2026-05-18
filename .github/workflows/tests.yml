@@ -6,6 +6,8 @@ on:
     branches:
       - main
   push:
+    branches:
+      - main 
 
 env:
   JWT_SECRET_KEY: test-secret
@@ -100,7 +102,7 @@ jobs:
         run: ./gradlew testDevDebugUnitTest
 
   backend-e2e:
-    name: Backend E2E smoke tests
+    name: Backend E2E tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +154,7 @@ jobs:
           pip-audit --ignore-vuln CVE-2024-23342 -r AI/requirements.txt
 
   performance-smoke:
-    name: Backend performance smoke test
+    name: Backend performance test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
