@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
@@ -161,7 +162,9 @@ fun RegisterLink(onClick: () -> Unit) {
         }
     }
     Text(
-        modifier = Modifier.testTag("login_sign_up"),
+        modifier = Modifier
+            .testTag("login_sign_up")
+            .clickable { onClick() },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurface,
         text = registerLinkText

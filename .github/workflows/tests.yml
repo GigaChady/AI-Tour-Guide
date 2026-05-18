@@ -113,7 +113,7 @@ jobs:
       - name: Make Gradle wrapper executable
         working-directory: Mobile/android
         run: chmod +x ./gradlew
-      - name: Build dev debug APK
+      - name: Build e2e debug APK
         working-directory: Mobile/android
         run: ./gradlew assembleE2eDebug
       - name: Install Maestro
