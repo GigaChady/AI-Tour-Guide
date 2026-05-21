@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/axios'
+import api from '@/network/axios'
 import type {
   AdminDeploymentsResponse,
   AdminStatsResponse,
