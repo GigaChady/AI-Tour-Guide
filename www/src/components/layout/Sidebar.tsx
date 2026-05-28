@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 const baseNavItems = [
   { icon: 'fa-solid fa-list-ul', label: 'PULPIT', to: '/' },
   { icon: 'fa-regular fa-user', label: 'MÓJ PROFIL', to: '/profile' },
-  { icon: 'fa-regular fa-map', label: 'EKSPLORACJA MAPY', to: '/map-explorer' },
+  { icon: 'fa-regular fa-map', label: 'MAPA', to: '/map-explorer' },
   { icon: 'fa-solid fa-gear', label: 'USTAWIENIA', to: '/preferences' },
 ]
 

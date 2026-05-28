@@ -7,6 +7,8 @@ import { Profile } from '@/modules/profile/Profile'
 import { Admin } from '@/modules/admin/Admin'
 import { PrivateRoute } from '@/components/router/PrivateRoute'
 import { AdminRoute } from '@/components/router/AdminRoute'
+import { Preferences } from '@/modules/preferences/Preferences'
+import { MapExplorer } from '@/modules/map/MapExplorer'
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                  <Route path="/preferences" element={<Preferences />} />
+                  <Route path="/map-explorer" element={<MapExplorer />} />
                 </Routes>
               </div>
             </PrivateRoute>
