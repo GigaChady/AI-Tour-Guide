@@ -1,6 +1,5 @@
 import { Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps'
 
-// Eksportujemy typ POI, aby używać go w innych plikach
 export interface POI {
   id: string
   lat: number
@@ -39,11 +38,11 @@ export function SharedMap({
           map.setZoom(17)
         },
         () => {
-          alert('Nie udało się pobrać lokalizacji. Sprawdź uprawnienia przeglądarki.')
+          alert('Error: The Geolocation service failed.')
         },
       )
     } else {
-      alert('Twoja przeglądarka nie wspiera geolokalizacji.')
+      alert("Error: Your browser doesn't support geolocation.")
     }
   }
 
