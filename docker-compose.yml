@@ -105,6 +105,19 @@ services:
       redis:
         condition: service_healthy
 
+  www:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./www:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    env_file: ./www/.env
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - api
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.2
     environment:
