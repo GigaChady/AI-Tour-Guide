@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { TextBox } from '@/components/ui/TextBox'
 import { useUpdateUser } from '@/hooks/useAdminQueries'
+import type { UpdateUserRequest } from '@/types/admin'
 
 interface EditUserModalProps {
   user: { name: string; email: string; id: string; fullId: string; isActive: boolean } | null
@@ -40,14 +41,14 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
       return
     }
 
-    const payload: Record<string, unknown> = { id: user.fullId }
+    const payload: UpdateUserRequest & { id: string } = { id: user.fullId }
     if (name !== user.name) payload.name = name
     if (email !== user.email) payload.new_email = email
     if (newPassword) payload.new_password = newPassword
     if (isActive !== user.isActive) payload.is_active = isActive
 
     try {
-      await updateUser.mutateAsync(payload as Parameters<typeof updateUser.mutateAsync>[0])
+      await updateUser.mutateAsync(payload)
       onClose()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
