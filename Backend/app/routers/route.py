@@ -95,8 +95,27 @@ async def route_map(
     )
     pois = result.scalars().all()
 
+    duration_s = (
+        int((route.ended_at - route.started_at).total_seconds())
+        if route.started_at and route.ended_at
+        else 0
+    )
+
     return RouteMapResponse(
         geojson=geojson,
+        pois=[
+            RoutePoiResponse(
+                id=str(p.id),
+                poi_id=p.poi_id,
+                name=p.name,
+                lat=p.lat,
+                lng=p.lng,
+                description=p.description,
+            )
+            for p in pois
+        ],
+        poi_count=len(pois),
+        started_at=route.started_at,
     )
 
 

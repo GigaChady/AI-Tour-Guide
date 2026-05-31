@@ -19,7 +19,7 @@ async def get_route_history(
 ):
     stats_result = await db.execute(
         select(func.count(Route.id), func.sum(Route.distance_m)).where(
-            Route.user_id == current_user.id
+            Route.user_id == current_user.id, Route.path != None
         )
     )
     total, total_distance_m = stats_result.one()
@@ -27,7 +27,7 @@ async def get_route_history(
 
     routes_result = await db.execute(
         select(Route)
-        .where(Route.user_id == current_user.id)
+        .where(Route.user_id == current_user.id, Route.path != None)
         .order_by(Route.started_at.desc())
     )
     routes = routes_result.scalars().all()
@@ -52,7 +52,6 @@ async def get_route_history(
                 date=r.started_at,
                 distance_km=r.distance_m if r.distance_m else 0,
                 duration_minutes=(int((r.ended_at - r.started_at).total_seconds()) // 60 if r.started_at and r.ended_at else 0),
-                route_url=r.route_url,
             )
             for r in routes
         ],
@@ -69,14 +68,14 @@ async def get_dashboard(
             func.count(func.distinct(Route.country)),
             func.count(func.distinct(Route.city)),
             func.sum(Route.distance_m),
-        ).where(Route.user_id == current_user.id)
+        ).where(Route.user_id == current_user.id, Route.path != None)
     )
     total_countries, total_cities, total_distance_m = stats_result.one()
     total_distance_m = total_distance_m or 0.0
 
     routes_result = await db.execute(
         select(Route)
-        .where(Route.user_id == current_user.id)
+        .where(Route.user_id == current_user.id, Route.path == None)
         .order_by(Route.started_at.desc())
     )
     routes = routes_result.scalars().all()
@@ -96,9 +95,8 @@ async def get_dashboard(
         recent_expeditions=[ #TODO: add limit later
             WebDashboardExpedition(
                 id=str(r.id),
-                city=r.city,
+                name=r.name,
                 date=r.started_at,
-                route_url=r.route_url,
             )
             for r in routes
         ],

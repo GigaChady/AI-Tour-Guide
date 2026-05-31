@@ -15,6 +15,7 @@ from app.routers import route
 from app.routers.dashboard import router as dashboard_router
 from app.routers.web_history import router as web_history_router
 from app.routers.web_admin import router as web_admin_router
+from app.routers.web_planer import router as web_planer_router
 from app.routers.user import auth
 from app.routers.user import narration_settings as user_narration_settings
 from app.routers.user import onboarding as user_onboarding
@@ -65,6 +66,7 @@ app.include_router(user_crud_router.router)
 app.include_router(map_router.router)
 app.include_router(web_history_router)
 app.include_router(web_admin_router)
+app.include_router(web_planer_router)
 
 
 @app.get("/health")

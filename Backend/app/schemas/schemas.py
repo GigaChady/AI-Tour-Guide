@@ -136,6 +136,9 @@ class RoutePoiResponse(BaseModel):
 
 class RouteMapResponse(BaseModel):
     geojson: dict | None
+    pois: list[RoutePoiResponse] = []
+    poi_count: int
+    started_at: datetime | None
 
 class RouteStatsResponse(BaseModel):
     distance_m: float
@@ -187,9 +190,8 @@ class WebDashboardStats(BaseModel):
 
 class WebDashboardExpedition(BaseModel):
     id: str
-    city: str | None
+    name: str | None
     date: datetime
-    route_url: str | None
 
 class WebDashboardResponse(BaseModel):
     stats: WebDashboardStats
@@ -209,7 +211,6 @@ class RouteHistoryItem(BaseModel):
     date: datetime
     distance_km: float | None
     duration_minutes: int | None
-    route_url: str | None
 
 class RouteHistoryResponse(BaseModel):
     user: RouteHistoryUser
@@ -288,4 +289,36 @@ class LocationEvent(BaseModel):
 class RoutePoints(BaseModel):
     route_id: str
     points: list[Location]
+
+
+# ----------------PLANER SCHEMAS----------------
+class PlanerPoiInput(BaseModel):
+    poi_id: str | None = None
+    name: str | None = None
+    lat: float
+    lng: float
+    description: str | None = None
+
+
+class PlanerSaveRequest(BaseModel):
+    name: str | None = None
+    pois: list[PlanerPoiInput]
+
+
+class PlanerSaveResponse(BaseModel):
+    route_id: str
+
+
+class PlanerListItem(BaseModel):
+    route_id: str
+    name: str | None
+    date: datetime
+
+
+class PlanerListResponse(BaseModel):
+    routes: list[PlanerListItem]
+
+
+class PlanerPoisResponse(BaseModel):
+    pois: list[RoutePoiResponse]
 
