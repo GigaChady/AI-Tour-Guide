@@ -6,13 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.models import Route, RoutePoi, User
-from app.schemas.schemas import PlanerPoisResponse, PlanerSaveRequest, PlanerSaveResponse, RoutePoiResponse
+from app.schemas.schemas import PlanerPoisResponse, PlanerSaveRequest, RoutePoiResponse
 
 
 router = APIRouter(prefix="/web/planer", tags=["planer"])
 
 
-@router.post("", response_model=PlanerSaveResponse, status_code=201)
+@router.post("", response_model=None, status_code=204)
 async def save_planer_route(
     body: PlanerSaveRequest,
     current_user: User = Depends(get_current_user),
@@ -36,7 +36,6 @@ async def save_planer_route(
         ))
 
     await db.commit()
-    return PlanerSaveResponse(route_id=str(route.id))
 
 
 @router.get("/{route_id}", response_model=PlanerPoisResponse)
