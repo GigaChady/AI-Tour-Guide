@@ -31,6 +31,14 @@ class TourNarrationPipeline:
     def run(self) -> TourPipelineResult:
         discovery = self.location_discovery_step.get_location_details()
 
+        if not self.narration_settings.include_narration:
+            planning_pois = self.poi_selection_step.run_many(
+                candidates=discovery.candidates,
+                user_latitude=self.narration_settings.latitude,
+                user_longitude=self.narration_settings.longitude,
+            )
+            return TourPipelineResult(selected_pois=planning_pois)
+
         selected = self.poi_selection_step.run(
             candidates=discovery.candidates,
             user_latitude=self.narration_settings.latitude,
@@ -43,12 +51,6 @@ class TourNarrationPipeline:
             selected_poi=selected,
             address=discovery.address,
         )
-
-        if not self.narration_settings.include_narration:
-            return TourPipelineResult(
-                selected_poi=selected,
-                enriched_poi=enriched,
-            )
 
         filtered = self.information_filtering_step.run(enriched)
         narration = self.narration_generation_step.run(

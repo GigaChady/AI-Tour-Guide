@@ -9,7 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 class PoiSelectionTask:
-    def __init__(self, category_ranks: dict[str, int] | None = None):
+    def __init__(
+        self,
+        category_ranks: dict[str, int] | None = None,
+        redis_client=None,
+        session_id: str | None = None,
+        seen_key_prefix: str = "poi:seen:",
+        seen_ttl: int = 7200,
+    ):
+        self.redis_client = redis_client
+        self.session_id = session_id
+        self.seen_key_prefix = seen_key_prefix
+        self.seen_ttl = seen_ttl
         self.category_ranks = category_ranks or {
             "museum": 1,
             "castle": 1,
@@ -31,8 +42,11 @@ class PoiSelectionTask:
         if not candidates:
             return None
 
+        unseen = self._filter_seen(candidates)
+        pool = unseen if unseen else candidates
+
         ranked = sorted(
-            candidates,
+            pool,
             key=lambda poi: self._selection_score(
                 poi=poi,
                 user_latitude=user_latitude,
@@ -90,11 +104,68 @@ class PoiSelectionTask:
             ],
         )
 
+        self._mark_seen(selected.name)
+
         return SelectedPoi(
             poi=selected,
             distance_km=distance_km,
             category_rank=category_rank,
         )
+
+    def run_many(
+        self,
+        candidates: list[PoiCandidate],
+        user_latitude: float,
+        user_longitude: float,
+        n: int = 5,
+    ) -> list[SelectedPoi]:
+        if not candidates:
+            return []
+
+        unseen = self._filter_seen(candidates)
+        pool = unseen if unseen else candidates
+
+        ranked = sorted(
+            pool,
+            key=lambda poi: self._selection_score(
+                poi=poi,
+                user_latitude=user_latitude,
+                user_longitude=user_longitude,
+            ),
+        )
+
+        results = []
+        for poi in ranked[:n]:
+            distance_km = self._haversine_distance(user_latitude, user_longitude, poi.lat, poi.lon)
+            results.append(SelectedPoi(
+                poi=poi,
+                distance_km=distance_km,
+                category_rank=self.category_ranks.get(poi.category, 99),
+            ))
+            self._mark_seen(poi.name)
+
+        logger.info("Selected %d POIs for planning mode", len(results))
+        return results
+
+    def _filter_seen(self, candidates: list) -> list:
+        if not self.redis_client or not self.session_id:
+            return candidates
+        try:
+            seen = self.redis_client.smembers(f"{self.seen_key_prefix}{self.session_id}")
+            return [c for c in candidates if c.name.strip().lower() not in seen]
+        except Exception:
+            logger.warning("Redis smembers failed; skipping dedup filter")
+            return candidates
+
+    def _mark_seen(self, name: str) -> None:
+        if not self.redis_client or not self.session_id:
+            return
+        try:
+            key = f"{self.seen_key_prefix}{self.session_id}"
+            self.redis_client.sadd(key, name.strip().lower())
+            self.redis_client.expire(key, self.seen_ttl)
+        except Exception:
+            logger.warning("Redis sadd/expire failed; POI '%s' not marked as seen", name)
 
     def _selection_score(
         self,

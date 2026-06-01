@@ -1,11 +1,13 @@
-import { Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps'
+import { useState } from 'react'
+import { Map, AdvancedMarker, Pin, InfoWindow, useMap } from '@vis.gl/react-google-maps'
+import { useWalkingRoute } from '@/components/route-planner/useWalkingRoute'
 
 export interface POI {
   id: string
   lat: number
   lng: number
   title: string
-  category: 'history' | 'architecture' | 'curiosities'
+  category: 'history' | 'architecture' | 'curiosities' | 'planning' | 'saved' | 'selected'
 }
 
 interface SharedMapProps {
@@ -14,7 +16,26 @@ interface SharedMapProps {
   center?: { lat: number; lng: number }
   zoom?: number
   interactive?: boolean
+  selectedPoint?: { lat: number; lng: number }
+  routeWaypoints?: { lat: number; lng: number }[]
+  onRouteReady?: (distanceM: number | null) => void
   onPoiClick?: (poi: POI) => void
+  onMapClick?: (lat: number, lng: number) => void
+}
+
+interface PinColors {
+  background: string
+  borderColor: string
+  glyphColor: string
+}
+
+function getPinColors(category: POI['category']): PinColors {
+  if (category === 'history') return { background: '#e9ddff', borderColor: '#37265e', glyphColor: '#37265e' }
+  if (category === 'architecture') return { background: '#efb8c8', borderColor: '#492532', glyphColor: '#492532' }
+  if (category === 'planning') return { background: '#b9f6ca', borderColor: '#1b5e20', glyphColor: '#1b5e20' }
+  if (category === 'saved') return { background: '#ffe082', borderColor: '#e65100', glyphColor: '#e65100' }
+  if (category === 'selected') return { background: '#d0bcff', borderColor: '#4d3d76', glyphColor: '#4d3d76' }
+  return { background: '#d0bcff', borderColor: '#210f48', glyphColor: '#210f48' }
 }
 
 export function SharedMap({
@@ -23,9 +44,15 @@ export function SharedMap({
   center = { lat: 51.11, lng: 17.061 },
   zoom = 16,
   interactive = true,
+  selectedPoint,
+  routeWaypoints,
+  onRouteReady,
   onPoiClick,
+  onMapClick,
 }: SharedMapProps) {
   const map = useMap()
+  useWalkingRoute(routeWaypoints ?? [], onRouteReady)
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   const handleMyLocation = () => {
     if (navigator.geolocation && map) {
@@ -53,43 +80,37 @@ export function SharedMap({
         defaultZoom={zoom}
         defaultCenter={center}
         disableDefaultUI={true}
+        clickableIcons={false}
         zoomControl={interactive}
         mapTypeControl={false}
         streetViewControl={false}
         fullscreenControl={false}
         gestureHandling={interactive ? 'greedy' : 'none'}
+        onClick={(e) => e.detail.latLng && onMapClick?.(e.detail.latLng.lat, e.detail.latLng.lng)}
       >
+        {selectedPoint && (
+          <AdvancedMarker position={selectedPoint}>
+            <Pin background="#d0bcff" borderColor="#210f48" glyphColor="#210f48" />
+          </AdvancedMarker>
+        )}
+
         {pois.map((poi) => (
           <AdvancedMarker
             key={poi.id}
             position={{ lat: poi.lat, lng: poi.lng }}
             onClick={() => {
+              setActiveId((prev) => (prev === poi.id ? null : poi.id))
               if (interactive && onPoiClick) onPoiClick(poi)
             }}
           >
-            <Pin
-              background={
-                poi.category === 'history'
-                  ? '#e9ddff'
-                  : poi.category === 'architecture'
-                    ? '#efb8c8'
-                    : '#d0bcff'
-              }
-              borderColor={
-                poi.category === 'history'
-                  ? '#37265e'
-                  : poi.category === 'architecture'
-                    ? '#492532'
-                    : '#210f48'
-              }
-              glyphColor={
-                poi.category === 'history'
-                  ? '#37265e'
-                  : poi.category === 'architecture'
-                    ? '#492532'
-                    : '#210f48'
-              }
-            />
+            <div className="relative flex flex-col items-center">
+              {activeId === poi.id && (
+                <div className="absolute bottom-full mb-2 px-2 py-1 rounded-lg bg-surface-container-highest text-on-surface text-xs font-medium whitespace-nowrap shadow-md pointer-events-none">
+                  {poi.title}
+                </div>
+              )}
+              <Pin {...getPinColors(poi.category)} />
+            </div>
           </AdvancedMarker>
         ))}
       </Map>

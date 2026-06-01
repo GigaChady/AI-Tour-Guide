@@ -17,6 +17,7 @@ from app.schemas.schemas import (
     WsPreviewReadyMessage, WsTourMessage,
     PoisMessage, PoiData, WorkerMessage, UserPreferencesCache,
     NarrationTranscript, NarrationTranscriptChunk, NarrationWords, NarrationDone,
+    StartPlanningRequest, PlanningStartedMessage,
 )
 from app.services.session_service import SessionService
 from app.services.session_helpers import teardown_tour_session
@@ -210,6 +211,23 @@ async def _handle_client(
 
         elif msg_type == "end_tour" and state["mode"] == "tour":
             return
+
+        elif msg_type == "start_planning":
+            req = StartPlanningRequest(**{k: v for k, v in data.items() if k in ("lat", "lng")})
+            if req.lat is None or req.lng is None:
+                await websocket.send_text(PlanningStartedMessage(session_id=session_id).model_dump_json())
+            else:
+                try:
+                    event = LocationEvent(
+                        session_id=session_id,
+                        lat=req.lat,
+                        lng=req.lng,
+                        include_photos=1,
+                        is_narration=False,
+                    )
+                    await redis.xadd("location:events", {k: str(v) for k, v in event.model_dump(exclude_none=True).items()})
+                except Exception:
+                    logger.exception("Failed to process start_planning event")
 
         else:
             try:

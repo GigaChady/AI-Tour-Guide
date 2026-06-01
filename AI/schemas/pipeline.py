@@ -131,6 +131,7 @@ class TourPipelineResult(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     selected_poi: SelectedPoi | None = None
+    selected_pois: list[SelectedPoi] = Field(default_factory=list)
     enriched_poi: EnrichedPoi | None = None
     filtered_facts: FilteredPoiFacts | None = None
     narration: NarrationResult | None = None

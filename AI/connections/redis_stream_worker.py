@@ -10,15 +10,16 @@ from processors.contracts import StreamProcessor
 
 logger = logging.getLogger(__name__)
 
-def _build_client(redis_url: str) -> redis.Redis:
-    return redis.from_url(redis_url, decode_responses=True)
-
 
 class RedisStreamWorker:
     def __init__(self, processor: StreamProcessor, client: redis.Redis | None = None):
         self.config = RedisWorkerConfig()
         self.processor = processor
-        self.client = client or _build_client(self.config.redis_url)
+        self.client = client or redis.from_url(
+            self.config.redis_url,
+            decode_responses=True,
+            socket_timeout=self.config.block_ms / 1000 + 5,
+        )
         self.last_id = self.config.start_id
 
     def _read_batch(self):

@@ -80,6 +80,15 @@ class BackendMessageMapper:
     def build_narration_message(self, narration: NarrationResult) -> NarrationMessage:
         return NarrationMessage(text=narration.narration)
 
+    def build_pois_message_many(
+        self,
+        pois: list[tuple[PoiCandidate, list[str]]],
+    ) -> PoisMessage:
+        return PoisMessage(data=[
+            Poi(name=poi.name, photos=photos, desc=poi.description, lat=poi.lat, lng=poi.lon)
+            for poi, photos in pois
+        ])
+
     def build_pois_message(
         self,
         poi: PoiCandidate,

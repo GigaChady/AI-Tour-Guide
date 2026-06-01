@@ -6,6 +6,7 @@ const baseNavItems = [
   { icon: 'fa-solid fa-list-ul', label: 'PULPIT', to: '/' },
   { icon: 'fa-regular fa-user', label: 'MÓJ PROFIL', to: '/profile' },
   { icon: 'fa-regular fa-map', label: 'MAPA', to: '/map-explorer' },
+  { icon: 'fa-solid fa-route', label: 'PLANOWANIE TRASY', to: '/route-planner' },
   { icon: 'fa-solid fa-gear', label: 'USTAWIENIA', to: '/preferences' },
 ]
 

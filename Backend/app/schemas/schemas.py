@@ -50,6 +50,15 @@ class Location(BaseModel):
     ai: bool = False
 
 
+class StartPlanningRequest(BaseModel):
+    lat: float | None = None
+    lng: float | None = None
+
+class PlanningStartedMessage(BaseModel):
+    type: Literal["planning_started"] = "planning_started"
+    session_id: str
+
+
 # ----------------ONBOARDING SCHEMAS----------------
 class OnboardingOption(BaseModel):
     key: str
