@@ -114,12 +114,13 @@ export function RoutePlanner() {
       title: p.name,
       category: (selectedPoiKey === p.narration_id + p.name ? 'selected' : 'planning') as 'selected' | 'planning',
     })),
-    ...savedPois.map((p) => ({
+    ...savedPois.map((p, i) => ({
       id: `saved-${p.name}-${p.lat}-${p.lng}`,
       lat: p.lat,
       lng: p.lng,
       title: p.name,
       category: 'saved' as const,
+      index: i + 1,
     })),
   ]
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { config } from '@/config'
 import { useAuthStore } from '@/store/authStore'
 
@@ -35,23 +35,66 @@ export interface RoutePlannerSession {
   closeSession: () => void
 }
 
+interface SessionState {
+  status: SessionStatus
+  sessionId: string | null
+  pois: ReceivedPoi[]
+  isPoisLoading: boolean
+}
+
+type SessionAction =
+  | { type: 'CONNECTING' }
+  | { type: 'SESSION_STARTED'; sessionId: string }
+  | { type: 'PLANNING_READY' }
+  | { type: 'POIS_RECEIVED'; pois: ReceivedPoi[] }
+  | { type: 'POIS_LOADING' }
+  | { type: 'CLEAR_POIS' }
+  | { type: 'RESET' }
+  | { type: 'ERROR' }
+
+const initialState: SessionState = {
+  status: 'idle',
+  sessionId: null,
+  pois: [],
+  isPoisLoading: false,
+}
+
+function sessionReducer(state: SessionState, action: SessionAction): SessionState {
+  switch (action.type) {
+    case 'CONNECTING':
+      return { ...state, status: 'connecting' }
+    case 'SESSION_STARTED':
+      return { ...state, sessionId: action.sessionId }
+    case 'PLANNING_READY':
+      return { ...state, status: 'ready' }
+    case 'POIS_RECEIVED':
+      return { ...state, pois: action.pois, isPoisLoading: false }
+    case 'POIS_LOADING':
+      return { ...state, isPoisLoading: true }
+    case 'CLEAR_POIS':
+      return { ...state, pois: [] }
+    case 'ERROR':
+      return { ...state, status: 'error' }
+    case 'RESET':
+      return initialState
+  }
+}
+
 export function useRoutePlannerSession(): RoutePlannerSession {
-  const [status, setStatus] = useState<SessionStatus>('idle')
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [pois, setPois] = useState<ReceivedPoi[]>([])
-  const [isPoisLoading, setIsPoisLoading] = useState(false)
+  const [state, dispatch] = useReducer(sessionReducer, initialState)
   const wsRef = useRef<WebSocket | null>(null)
 
   const handleMessage = useCallback((event: MessageEvent) => {
     const msg = JSON.parse(event.data as string)
     if (msg.type === 'session_start') {
-      setSessionId(msg.session_id)
+      dispatch({ type: 'SESSION_STARTED', sessionId: msg.session_id })
       wsRef.current?.send(JSON.stringify({ type: 'start_planning' }))
     } else if (msg.type === 'planning_started') {
-      setStatus('ready')
+      dispatch({ type: 'PLANNING_READY' })
     } else if (msg.type === 'pois') {
-      setPois(msg.data.map((p: ReceivedPoi) => ({ ...p, narration_id: msg.narration_id })))
-      setIsPoisLoading(false)
+      dispatch({ type: 'POIS_RECEIVED', pois: msg.data.map((p: ReceivedPoi) => ({ ...p, narration_id: msg.narration_id })) })
+    } else if (msg.detail === 'timeout') {
+      wsRef.current?.close()
     }
   }, [])
 
@@ -60,23 +103,23 @@ export function useRoutePlannerSession(): RoutePlannerSession {
     const token = useAuthStore.getState().accessToken
     if (!token) return
 
-    setStatus('connecting')
+    dispatch({ type: 'CONNECTING' })
     const ws = new WebSocket(`${config.wsUrl}/route/ws`)
     wsRef.current = ws
 
     ws.onopen = () => ws.send(JSON.stringify({ token }))
     ws.onmessage = handleMessage
-    ws.onerror = () => setStatus('error')
+    ws.onerror = () => dispatch({ type: 'ERROR' })
     ws.onclose = () => {
       wsRef.current = null
-      setStatus('idle')
+      dispatch({ type: 'RESET' })
     }
   }, [handleMessage])
 
   const sendPlanningLocation = useCallback((lat: number, lng: number) => {
     const ws = wsRef.current
     if (!ws || ws.readyState !== WebSocket.OPEN) return
-    setIsPoisLoading(true)
+    dispatch({ type: 'POIS_LOADING' })
     ws.send(JSON.stringify({ type: 'start_planning', lat, lng }))
   }, [])
 
@@ -86,11 +129,11 @@ export function useRoutePlannerSession(): RoutePlannerSession {
     }
   }, [])
 
-  const clearPois = useCallback(() => setPois([]), [])
+  const clearPois = useCallback(() => dispatch({ type: 'CLEAR_POIS' }), [])
 
   const closeSession = useCallback(() => {
     wsRef.current?.close()
   }, [])
 
-  return { status, sessionId, pois, isPoisLoading, startSession, sendPlanningLocation, clearPois, closeSession }
+  return { ...state, startSession, sendPlanningLocation, clearPois, closeSession }
 }

@@ -73,7 +73,9 @@ export function PlanningWizardCard({ onStart, onPoiSelect, onNext, onFinish, poi
         </div>
       )}
 
-      {state.step === 2 && <Step3Search />}
+      {state.step === 2 && (
+        <Step3Search onConfirm={(poi) => { onNext(poi); prevStep() }} />
+      )}
 
       {state.step === 1 && (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden gap-2">

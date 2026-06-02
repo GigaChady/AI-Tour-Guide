@@ -1,4 +1,5 @@
-import { Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps'
+import { Map, AdvancedMarker, Pin, InfoWindow, useMap } from '@vis.gl/react-google-maps'
+import { useState } from 'react'
 import { useWalkingRoute } from '@/components/route-planner/useWalkingRoute'
 
 export interface POI {
@@ -7,6 +8,7 @@ export interface POI {
   lng: number
   title: string
   category: 'history' | 'architecture' | 'curiosities' | 'planning' | 'saved' | 'selected'
+  index?: number
 }
 
 interface SharedMapProps {
@@ -50,6 +52,7 @@ export function SharedMap({
   onMapClick,
 }: SharedMapProps) {
   const map = useMap()
+  const [hoveredPoi, setHoveredPoi] = useState<POI | null>(null)
   useWalkingRoute(routeWaypoints ?? [], onRouteReady)
 
   const handleMyLocation = () => {
@@ -97,18 +100,33 @@ export function SharedMap({
             key={poi.id}
             position={{ lat: poi.lat, lng: poi.lng }}
             onClick={() => onPoiClick?.(poi)}
+            onMouseEnter={() => setHoveredPoi(poi)}
+            onMouseLeave={() => setHoveredPoi(null)}
           >
-            <div className="relative flex flex-col items-center group">
-              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none z-10 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                <div className="bg-surface-container-highest/95 backdrop-blur-sm rounded-xl border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)] px-3 py-2 min-w-max max-w-52">
-                  <p className="text-on-surface text-sm font-medium leading-snug">{poi.title}</p>
-                </div>
-                <div className="w-2.5 h-2.5 bg-surface-container-highest rotate-45 -mt-[5px] border-r border-b border-outline-variant/30 shadow-[2px_2px_4px_rgba(0,0,0,0.15)]" />
-              </div>
-              <Pin {...getPinColors(poi.category)} />
-            </div>
+            <Pin {...getPinColors(poi.category)} />
           </AdvancedMarker>
         ))}
+
+        {hoveredPoi && (
+          <InfoWindow
+            position={{ lat: hoveredPoi.lat, lng: hoveredPoi.lng }}
+            disableAutoPan
+            shouldFocus={false}
+            pixelOffset={[0, -40]}
+            onCloseClick={() => setHoveredPoi(null)}
+          >
+            {hoveredPoi.index !== undefined ? (
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
+                Wybrany punkt · {hoveredPoi.index}
+              </p>
+            ) : (hoveredPoi.category === 'planning' || hoveredPoi.category === 'selected') ? (
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
+                Sugerowany punkt
+              </p>
+            ) : null}
+            <p className="text-sm font-medium text-black">{hoveredPoi.title}</p>
+          </InfoWindow>
+        )}
       </Map>
 
       {interactive && (
