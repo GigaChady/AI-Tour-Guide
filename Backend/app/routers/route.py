@@ -84,7 +84,7 @@ async def route_map(
         raise HTTPException(status_code=404, detail="Route not found.")
 
     result = await db.execute(
-        text("SELECT ST_AsGeoJSON(path) FROM routes WHERE id = :id::uuid")
+        text("SELECT ST_AsGeoJSON(path) FROM routes WHERE id = CAST(:id AS uuid)")
         .bindparams(id=route_id)
     )
     geojson_str = result.scalar()
