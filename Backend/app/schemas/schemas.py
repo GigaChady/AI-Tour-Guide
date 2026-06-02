@@ -137,7 +137,7 @@ class UserPreferencesCache(BaseModel):
 class RoutePoiResponse(BaseModel):
     id: str
     poi_id: str | None
-    name: str
+    name: str | None
     lat: float
     lng: float
     description: str | None
