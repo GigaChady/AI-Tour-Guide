@@ -1,7 +1,7 @@
-import type { ReceivedPoi } from './useRoutePlannerSession'
+import type { SavedPoi } from './useRoutePlannerSession'
 
 interface RouteSummaryCardProps {
-  pois: ReceivedPoi[]
+  pois: SavedPoi[]
   distanceM: number | null
   onRemove: (index: number) => void
 }
@@ -14,7 +14,7 @@ function formatDistance(metres: number): string {
 
 export function RouteSummaryCard({ pois, distanceM, onRemove }: RouteSummaryCardProps) {
   return (
-    <div className="w-80 bg-surface-container-highest/95 backdrop-blur-2xl rounded-2xl border border-primary/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-5 flex flex-col gap-4 pointer-events-auto">
+    <div className="bg-surface-container-highest/95 backdrop-blur-2xl rounded-2xl border border-primary/20 p-3 flex flex-col gap-3 pointer-events-auto flex-1 min-h-0 overflow-hidden">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-primary text-xl">map</span>
         <span className="text-xs font-semibold uppercase tracking-wider text-on-surface">
@@ -40,16 +40,16 @@ export function RouteSummaryCard({ pois, distanceM, onRemove }: RouteSummaryCard
           Brak wybranych miejsc
         </p>
       ) : (
-        <ol className="flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1">
+        <ol className="flex flex-col gap-1.5 overflow-y-auto pr-3 flex-1 min-h-0">
           {pois.map((poi, index) => (
-            <li key={poi.narration_id + poi.name} className="flex items-start gap-2.5">
+            <li key={`${poi.name}-${poi.lat}-${poi.lng}`} className="flex items-start gap-2.5">
               <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">
                 {index + 1}
               </span>
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="font-body-md text-on-surface truncate">{poi.name}</span>
-                {poi.desc && poi.desc !== poi.name && (
-                  <span className="font-body-sm text-on-surface-variant line-clamp-1">{poi.desc}</span>
+                {poi.description && poi.description !== poi.name && (
+                  <span className="font-body-sm text-on-surface-variant line-clamp-1">{poi.description}</span>
                 )}
               </div>
               <button

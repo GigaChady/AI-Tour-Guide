@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Map, AdvancedMarker, Pin, InfoWindow, useMap } from '@vis.gl/react-google-maps'
+import { Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps'
 import { useWalkingRoute } from '@/components/route-planner/useWalkingRoute'
 
 export interface POI {
@@ -52,7 +51,6 @@ export function SharedMap({
 }: SharedMapProps) {
   const map = useMap()
   useWalkingRoute(routeWaypoints ?? [], onRouteReady)
-  const [activeId, setActiveId] = useState<string | null>(null)
 
   const handleMyLocation = () => {
     if (navigator.geolocation && map) {
@@ -98,17 +96,15 @@ export function SharedMap({
           <AdvancedMarker
             key={poi.id}
             position={{ lat: poi.lat, lng: poi.lng }}
-            onClick={() => {
-              setActiveId((prev) => (prev === poi.id ? null : poi.id))
-              if (interactive && onPoiClick) onPoiClick(poi)
-            }}
+            onClick={() => onPoiClick?.(poi)}
           >
-            <div className="relative flex flex-col items-center">
-              {activeId === poi.id && (
-                <div className="absolute bottom-full mb-2 px-2 py-1 rounded-lg bg-surface-container-highest text-on-surface text-xs font-medium whitespace-nowrap shadow-md pointer-events-none">
-                  {poi.title}
+            <div className="relative flex flex-col items-center group">
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none z-10 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div className="bg-surface-container-highest/95 backdrop-blur-sm rounded-xl border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)] px-3 py-2 min-w-max max-w-52">
+                  <p className="text-on-surface text-sm font-medium leading-snug">{poi.title}</p>
                 </div>
-              )}
+                <div className="w-2.5 h-2.5 bg-surface-container-highest rotate-45 -mt-[5px] border-r border-b border-outline-variant/30 shadow-[2px_2px_4px_rgba(0,0,0,0.15)]" />
+              </div>
               <Pin {...getPinColors(poi.category)} />
             </div>
           </AdvancedMarker>

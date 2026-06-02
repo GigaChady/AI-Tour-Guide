@@ -5,7 +5,7 @@ export interface Step1PlanNameProps {
 
 export function Step1PlanName({ name, setName }: Step1PlanNameProps) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-2 w-full">
         <label className="font-body-md text-body-md text-on-surface-variant">Nazwa trasy</label>
         <input
           type="text"

@@ -13,6 +13,17 @@ export interface ReceivedPoi {
   narration_id: string
 }
 
+export interface SavedPoi {
+  name: string
+  lat: number
+  lng: number
+  description: string | null
+}
+
+export function toSavedPoi(poi: ReceivedPoi): SavedPoi {
+  return { name: poi.name, lat: poi.lat, lng: poi.lng, description: poi.desc }
+}
+
 export interface RoutePlannerSession {
   status: SessionStatus
   sessionId: string | null
@@ -21,6 +32,7 @@ export interface RoutePlannerSession {
   startSession: () => void
   sendPlanningLocation: (lat: number, lng: number) => void
   clearPois: () => void
+  closeSession: () => void
 }
 
 export function useRoutePlannerSession(): RoutePlannerSession {
@@ -76,5 +88,9 @@ export function useRoutePlannerSession(): RoutePlannerSession {
 
   const clearPois = useCallback(() => setPois([]), [])
 
-  return { status, sessionId, pois, isPoisLoading, startSession, sendPlanningLocation, clearPois }
+  const closeSession = useCallback(() => {
+    wsRef.current?.close()
+  }, [])
+
+  return { status, sessionId, pois, isPoisLoading, startSession, sendPlanningLocation, clearPois, closeSession }
 }

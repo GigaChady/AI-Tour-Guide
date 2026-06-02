@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Login } from '@/modules/auth/Login'
 import { KeycloakCallback } from '@/modules/auth/KeycloakCallback'
@@ -36,6 +37,7 @@ function App() {
           }
         />
       </Routes>
+      <Toaster position="top-right" richColors />
     </BrowserRouter>
   )
 }
