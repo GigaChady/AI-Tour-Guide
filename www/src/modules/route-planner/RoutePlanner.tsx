@@ -93,7 +93,7 @@ export function RoutePlanner() {
     const payload = {
       name: planName,
       pois: all.map(({ name, lat, lng, description }) =>
-        description !== null ? { name, lat, lng, description } : { lat, lng }
+        description !== null ? { name, lat, lng, description } : { name, lat, lng }
       ),
     }
     api.post('/web/planer', payload).then(() => {

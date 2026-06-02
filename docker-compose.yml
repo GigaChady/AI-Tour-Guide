@@ -87,13 +87,13 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    #deploy:
-    #  resources:
-    #    reservations:
-    #      devices:
-    #        - driver: nvidia
-    #          capabilities: [gpu]
-    #runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    runtime: nvidia
 
   celery-beat:
     build: ./Backend
