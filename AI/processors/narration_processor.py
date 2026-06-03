@@ -14,10 +14,12 @@ class NarrationProcessor:
         photo_processor: PhotoGenerator | None = None,
         message_mapper: BackendMessageMapper | None = None,
         pipeline_factory: TourNarrationPipelineFactory | None = None,
+        redis_client=None,
     ):
         self.photo_processor = photo_processor
         self.message_mapper = message_mapper or BackendMessageMapper()
         self.pipeline_factory = pipeline_factory or TourNarrationPipelineFactory()
+        self.redis_client = redis_client
 
     def validate(self, location: LocationEvent, prefs: PreferencesEvent, **kwargs) -> NarrationSettings:
         """
@@ -69,7 +71,12 @@ class NarrationProcessor:
         """
         Runs narration pipeline
         """
-        pipeline = self.pipeline_factory.create(narration_settings)
+        is_planning = not narration_settings.include_narration
+        pipeline = self.pipeline_factory.create(
+            narration_settings,
+            session_id=session_id if is_planning else None,
+            redis_client=self.redis_client if is_planning else None,
+        )
 
         try:
             result = pipeline.run()
@@ -78,6 +85,13 @@ class NarrationProcessor:
             return None, None
 
         logger.info("LLM-processing successfully generated for session %s", session_id)
+
+        if result.selected_pois:
+            poi_list = [
+                (s.poi, self._generate_photo_urls(s.poi, narration_settings.photo_count))
+                for s in result.selected_pois
+            ]
+            return None, self.message_mapper.build_pois_message_many(poi_list)
 
         if result.poi is None:
             return None, None

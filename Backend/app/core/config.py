@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
 #     #Google
     GOOGLE_CLIENT_ID: str
+    GOOGLE_PLACES_API_KEY: str = ""
 
     # Keycloak SSO
     KEYCLOAK_SERVER_URL: str = "http://localhost:8080"

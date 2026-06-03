@@ -21,6 +21,7 @@ from app.routers.user import narration_settings as user_narration_settings
 from app.routers.user import onboarding as user_onboarding
 from app.routers.user import login_settings as user_login_settings
 from app.routers.user import user_crud as user_crud_router
+from app.routers import search as search_router
 
 
 @asynccontextmanager
@@ -67,6 +68,7 @@ app.include_router(map_router.router)
 app.include_router(web_history_router)
 app.include_router(web_admin_router)
 app.include_router(web_planer_router)
+app.include_router(search_router.router)
 
 
 @app.get("/health")

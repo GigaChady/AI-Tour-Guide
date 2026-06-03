@@ -106,15 +106,13 @@ services:
         condition: service_healthy
 
   www:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - ./www:/app
-      - /app/node_modules
+    build:
+      context: ./www
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     ports:
-      - "5173:5173"
-    env_file: ./www/.env
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+      - "80:80"
     depends_on:
       - api
 
