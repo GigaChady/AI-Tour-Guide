@@ -7,7 +7,15 @@ export interface POI {
   lat: number
   lng: number
   title: string
-  category: 'history' | 'architecture' | 'curiosities' | 'planning' | 'saved' | 'selected'
+  category:
+    | 'history'
+    | 'architecture'
+    | 'curiosities'
+    | 'planning'
+    | 'saved'
+    | 'selected'
+    | 'first'
+    | 'last'
   index?: number
 }
 
@@ -36,13 +44,15 @@ function getPinColors(category: POI['category']): PinColors {
   if (category === 'planning') return { background: '#b9f6ca', borderColor: '#1b5e20', glyphColor: '#1b5e20' }
   if (category === 'saved') return { background: '#ffe082', borderColor: '#e65100', glyphColor: '#e65100' }
   if (category === 'selected') return { background: '#d0bcff', borderColor: '#4d3d76', glyphColor: '#4d3d76' }
+  if (category === 'first') return { background: '#37b124', borderColor: '#004900', glyphColor: '#ffffff' }
+  if (category === 'last') return { background: '#cb2929', borderColor: '#5d0f0f', glyphColor: '#ffffff' }
   return { background: '#d0bcff', borderColor: '#210f48', glyphColor: '#210f48' }
 }
 
 export function SharedMap({
   mapId,
   pois,
-  center = { lat: 51.11, lng: 17.061 },
+  center = { lat: 51.11, lng: 17.061 }, // TODO: Centering on last location?
   zoom = 16,
   interactive = true,
   selectedPoint,
