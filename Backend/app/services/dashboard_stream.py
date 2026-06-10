@@ -262,6 +262,9 @@ async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cf
                     await _save_pois(state["route_id"], poi_list)
             elif data.type == "narration" and state["mode"] == "tour":
                 await _stream_narration(websocket, data.text or "", narration_cfg, data.narration_id or "", session_id)
+            elif data.type == "error":
+                await websocket.send_text(
+                    ErrorResponse(detail=data.text or "Error while generating narration.").model_dump_json())
         except WebSocketDisconnect:
             raise
         except Exception:
