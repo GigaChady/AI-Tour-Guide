@@ -50,7 +50,7 @@ async def get_route_history(
                 id=str(r.id),
                 name=r.name,
                 date=r.started_at,
-                distance_km=r.distance_m if r.distance_m else 0,
+                distance_km=round(r.distance_m / 1000, 2) if r.distance_m else 0,
                 duration_minutes=(int((r.ended_at - r.started_at).total_seconds()) // 60 if r.started_at and r.ended_at else 0),
             )
             for r in routes
