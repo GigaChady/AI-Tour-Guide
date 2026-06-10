@@ -1,89 +1,89 @@
-import { useState } from 'react'
-import { APIProvider } from '@vis.gl/react-google-maps'
-import { RouteSummaryModal } from './RouteSummaryModal'
+import { useState, useEffect, useMemo } from 'react'
+import { APIProvider, useMap } from '@vis.gl/react-google-maps'
 import { SharedMap, type POI } from '@/components/map/SharedMap'
 import { NarrationPlayer } from '@/components/map/NarrationPlayer'
+import { useNarrationStream } from '@/hooks/useNarrationStream'
 
-// Mock POI data
-const MOCK_POIS: POI[] = [
-  { id: '1', lat: 51.111, lng: 17.06, title: 'Pasaż Grunwaldzki', category: 'architecture' },
-  {
-    id: '2',
-    lat: 51.1095,
-    lng: 17.0625,
-    title: 'Politechnika Wrocławska',
-    category: 'architecture',
-  },
-  { id: '3', lat: 51.1075, lng: 17.0615, title: 'Most Zwierzyniecki', category: 'history' },
-]
+function MapExplorerContent() {
+  const { status, transcript, words, poi, audioUrl, requestNarration } = useNarrationStream()
+  const map = useMap()
+  const activePoi = useMemo(() => {
+    if (!poi) return null
+    return {
+      id: poi.name + poi.lat,
+      title: poi.name,
+      lat: poi.lat,
+      lng: poi.lng,
+      category: 'history' as const,
+    }
+  }, [poi])
 
-export function MapExplorer() {
-  const [isActiveSession, setIsActiveSession] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [selectedPoi, setSelectedPoi] = useState<POI | null>(MOCK_POIS[0])
-  const [isSummaryOpen, setIsSummaryOpen] = useState(false)
+  // Center map (pan to new marker)
+  useEffect(() => {
+    if (activePoi && map) {
+      map.panTo({ lat: activePoi.lat, lng: activePoi.lng })
+    }
+  }, [activePoi, map])
 
-  const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+  const [selectedPoint, setSelectedPoint] = useState<{ lat: number; lng: number } | null>(null)
+  const isBusy = status === 'connecting' || status === 'generating'
 
-  const handleEndJourney = () => {
-    setIsActiveSession(false)
-    setIsSummaryOpen(true)
+  // Handle map click (clicking empty map area)
+  const handleMapClick = (lat: number, lng: number) => {
+    if (isBusy) return
+    setSelectedPoint({ lat, lng })
+    requestNarration(lat, lng)
+  }
+
+  // Handle marker click (clicking POI marker)
+  const handlePoiClick = (clickedPoi: POI) => {
+    if (isBusy) return
+    if (map) map.panTo({ lat: clickedPoi.lat, lng: clickedPoi.lng })
   }
 
   return (
-    <APIProvider apiKey={API_KEY}>
-      <main className="flex-1 relative flex flex-col h-screen overflow-hidden bg-surface-container-lowest">
-        {/* Tło mapy */}
-        <div className="absolute inset-0">
-          <SharedMap
-            mapId="DEMO_MAP_ID"
-            pois={isActiveSession ? MOCK_POIS : []}
-            interactive={true}
-            onPoiClick={setSelectedPoi}
-          />
-          {!isActiveSession && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-0 pointer-events-none" />
-          )}
+    <main className="flex-1 relative flex flex-col h-screen overflow-hidden bg-surface-container-lowest">
+      <div className="absolute inset-0">
+        <SharedMap
+          mapId="DEMO_MAP_ID"
+          pois={activePoi ? [activePoi] : []}
+          interactive={true}
+          selectedPoint={selectedPoint ?? undefined}
+          onPoiClick={handlePoiClick}
+          onMapClick={handleMapClick}
+        />
+      </div>
+
+      {status === 'connecting' && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 bg-surface-container-high/90 backdrop-blur-md px-6 py-2 rounded-full border border-primary/20 shadow-lg flex items-center gap-3">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-on-surface text-sm font-medium tracking-wide">
+            Łączenie z serwerem...
+          </span>
         </div>
+      )}
 
-        {/* Start trip overlay */}
-        {!isActiveSession ? (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <button
-              onClick={() => setIsActiveSession(true)}
-              className="pointer-events-auto px-8 py-4 rounded-full bg-primary text-on-primary font-headline-md shadow-[0_0_30px_rgba(208,188,255,0.4)] hover:scale-105 hover:bg-primary-fixed transition-all duration-300 flex items-center gap-3 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-3xl">play_circle</span>
-              Rozpocznij podróż
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* End trip button */}
-            <div className="absolute bottom-6 left-6 z-10 pointer-events-none">
-              <button
-                onClick={handleEndJourney}
-                className="pointer-events-auto px-6 py-3 rounded-full bg-error text-on-error hover:bg-error-container hover:text-on-error-container font-semibold tracking-wide shadow-lg transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <span className="material-symbols-outlined">flag</span>
-                Zakończ podróż
-              </button>
-            </div>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 z-10 pointer-events-none transition-transform duration-500 ease-out">
+        <NarrationPlayer
+          poiTitle={
+            activePoi?.title || (selectedPoint ? 'Wyszukiwanie...' : 'Nie wybrano miejsca')
+          }
+          transcript={transcript}
+          words={words}
+          audioUrl={audioUrl}
+          status={status}
+        />
+      </div>
+    </main>
+  )
+}
 
-            {/* Narration player */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 z-10 pointer-events-none">
-              <NarrationPlayer
-                poiTitle={selectedPoi?.title || 'Wybierz punkt'}
-                isPlaying={isPlaying}
-                onTogglePlay={() => setIsPlaying(!isPlaying)}
-              />
-            </div>
-          </>
-        )}
+export function MapExplorer() {
+  const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
-        {/* Route summary modal */}
-        <RouteSummaryModal isOpen={isSummaryOpen} onClose={() => setIsSummaryOpen(false)} />
-      </main>
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <MapExplorerContent />
     </APIProvider>
   )
 }
