@@ -260,7 +260,8 @@ async def _handle_worker(websocket: WebSocket, pubsub, state: dict, narration_cf
                 await websocket.send_text(msg.model_dump_json())
                 if state["mode"] == "tour" and state["route_id"]:
                     await _save_pois(state["route_id"], poi_list)
-            elif data.type == "narration" and state["mode"] == "tour":
+            # elif data.type == "narration" and state["mode"] == "tour":
+            elif data.type == "narration": # Allow narration to play even in preview mode
                 await _stream_narration(websocket, data.text or "", narration_cfg, data.narration_id or "", session_id)
             elif data.type == "error":
                 await websocket.send_text(

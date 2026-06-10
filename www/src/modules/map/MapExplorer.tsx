@@ -5,7 +5,9 @@ import { NarrationPlayer } from '@/components/map/NarrationPlayer'
 import { useNarrationStream } from '@/hooks/useNarrationStream'
 
 function MapExplorerContent() {
-  const { status, transcript, words, poi, audioUrl, requestNarration } = useNarrationStream()
+  const { status, transcript, words, poi, audioUrl, requestNarration } = useNarrationStream({
+    autoStartTour: false,
+  })
   const map = useMap()
   const activePoi = useMemo(() => {
     if (!poi) return null

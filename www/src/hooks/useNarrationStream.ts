@@ -26,7 +26,7 @@ function getNormalizedUuidFromBytes(buffer: ArrayBuffer) {
 
 const normalizeId = (id?: string) => (id ? id.replace(/-/g, '').toLowerCase() : '')
 
-export function useNarrationStream() {
+export function useNarrationStream(options: { autoStartTour?: boolean } = { autoStartTour: true }) {
   const [status, setStatus] = useState<StreamStatus>('connecting')
   const [transcript, setTranscript] = useState<string>('')
   const [words, setWords] = useState<NarrationWord[]>([])
@@ -109,7 +109,12 @@ export function useNarrationStream() {
 
         if (data.type === 'session_start') {
           sessionIdRef.current = data.session_id
-          ws.send(JSON.stringify({ type: 'start_tour', session_id: data.session_id }))
+
+          if (options.autoStartTour) {
+            ws.send(JSON.stringify({ type: 'start_tour', session_id: data.session_id }))
+          } else {
+            setStatus('ready')
+          }
           return
         }
         if (data.type === 'tour_start') {
