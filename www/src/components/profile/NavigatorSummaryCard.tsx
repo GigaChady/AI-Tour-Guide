@@ -37,7 +37,7 @@ export function NavigatorSummaryCard({
             {name}
           </h3>
           <span className="font-body-md text-body-md text-on-surface-variant">
-            Łącznie eksploracji: {explorationCount}
+            Odbyte podróże: {explorationCount}
           </span>
         </div>
       </div>

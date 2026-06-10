@@ -50,7 +50,7 @@ async def get_route_history(
                 id=str(r.id),
                 name=r.name,
                 date=r.started_at,
-                distance_km=r.distance_m if r.distance_m else 0,
+                distance_km=round(r.distance_m / 1000, 2) if r.distance_m else 0,
                 duration_minutes=(int((r.ended_at - r.started_at).total_seconds()) // 60 if r.started_at and r.ended_at else 0),
             )
             for r in routes
@@ -72,18 +72,21 @@ async def get_dashboard(
     )
     total_countries, total_cities, total_distance_m = stats_result.one()
     total_distance_m = total_distance_m or 0.0
+    completed_routes_result = await db.execute(
+        select(Route).where(Route.user_id == current_user.id, Route.path != None)
+    )
+    completed_routes = completed_routes_result.scalars().all()
 
+    total_duration_s = sum(
+        int((r.ended_at - r.started_at).total_seconds()) if r.started_at and r.ended_at else 0
+        for r in completed_routes
+    )
     routes_result = await db.execute(
         select(Route)
         .where(Route.user_id == current_user.id, Route.path == None)
         .order_by(Route.started_at.desc())
     )
     routes = routes_result.scalars().all()
-
-    total_duration_s = sum(
-        int((r.ended_at - r.started_at).total_seconds()) if r.started_at and r.ended_at else 0
-        for r in routes
-    )
 
     return WebDashboardResponse(
         stats=WebDashboardStats(

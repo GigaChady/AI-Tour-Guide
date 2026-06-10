@@ -18,11 +18,15 @@ interface ExpeditionItemProps {
   city: string
   date: string
   avatar: AvatarImage | AvatarIcon
+  onClick?: () => void
 }
 
-export function ExpeditionItem({ city, date, avatar }: ExpeditionItemProps) {
+export function ExpeditionItem({ city, date, avatar, onClick }: ExpeditionItemProps) {
   return (
-    <div className="bg-cardDark rounded-2xl p-4 flex items-center justify-between hover:bg-hoverHighlight transition-colors cursor-pointer border border-gray-800/30">
+    <div
+      onClick={onClick}
+      className="bg-cardDark rounded-2xl p-4 flex items-center justify-between hover:bg-hoverHighlight transition-colors cursor-pointer border border-gray-800/30"
+    >
       <div className="flex items-center space-x-4">
         <div
           className={`w-12 h-12 rounded-full ${avatar.bgClass} flex items-center justify-center shrink-0 ${avatar.borderClass} ${avatar.type === 'image' ? 'overflow-hidden' : ''}`}
