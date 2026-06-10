@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_SECRET: str = "web-secret"
     KEYCLOAK_REDIRECT_URI: str = "http://localhost:8000/auth/keycloak/callback"
     FRONTEND_URL: str = "http://localhost:3000"
+
+    # CORS (comma-separated origins)
+    CORS_ORIGINS: str = "http://localhost,http://localhost:80,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:5173"
  
 
 #    # PostgreSQL (asyncpg)

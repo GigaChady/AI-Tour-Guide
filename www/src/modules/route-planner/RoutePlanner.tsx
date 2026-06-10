@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react'
+import { useCallback, useMemo, useReducer, useState } from 'react'
 import { toast } from 'sonner'
 import { APIProvider } from '@vis.gl/react-google-maps'
 import api from '@/network/axios'
@@ -65,6 +65,8 @@ export function RoutePlanner() {
   const [state, dispatch] = useReducer(plannerReducer, initialState)
   const [wizardKey, setWizardKey] = useState(0)
   const { selectedPoint, selectedPoiKey, selectedPoi, savedPois, isRoutePending, routeDistanceM } = state
+  const routeWaypoints = useMemo(() => savedPois.map((p) => ({ lat: p.lat, lng: p.lng })), [savedPois])
+  const handleRouteReady = useCallback((distanceM: number | null) => dispatch({ type: 'ROUTE_READY', distanceM }), [])
   const handleMapClick = session.status === 'ready'
     ? (lat: number, lng: number) => {
         dispatch({ type: 'SELECT_POINT', lat, lng })
@@ -133,8 +135,8 @@ export function RoutePlanner() {
             pois={planningPois}
             interactive={true}
             selectedPoint={selectedPoint ?? undefined}
-            routeWaypoints={savedPois.map((p) => ({ lat: p.lat, lng: p.lng }))}
-            onRouteReady={(distanceM) => dispatch({ type: 'ROUTE_READY', distanceM })}
+            routeWaypoints={routeWaypoints}
+            onRouteReady={handleRouteReady}
             onPoiClick={handleMapPoiClick}
             onMapClick={handleMapClick}
           />

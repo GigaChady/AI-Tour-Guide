@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from sqlalchemy import select
+from app.core.config import settings
 from app.core.database import init_db, AsyncSessionLocal
 from app.core.redis import close_redis, init_redis
 from app.models.models import SystemConfig
@@ -41,7 +42,7 @@ app = FastAPI(lifespan=lifespan, title="AI Tour Guide API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

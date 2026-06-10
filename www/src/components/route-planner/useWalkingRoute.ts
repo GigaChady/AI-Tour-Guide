@@ -19,10 +19,6 @@ export function useWalkingRoute(
       })
       rendererRef.current.setMap(map)
     }
-  }, [routesLib, map])
-
-  useEffect(() => {
-    if (!routesLib || !rendererRef.current) return
 
     if (waypoints.length < 2) {
       rendererRef.current.setDirections({ routes: [] } as any)
@@ -38,25 +34,37 @@ export function useWalkingRoute(
       stopover: true,
     }))
 
-    service.route(
-      {
-        origin: new google.maps.LatLng(origin.lat, origin.lng),
-        destination: new google.maps.LatLng(destination.lat, destination.lng),
-        waypoints: stops,
-        travelMode: routesLib.TravelMode.WALKING,
-      },
-      (result, status) => {
-        if (status === 'OK' && result && rendererRef.current) {
-          rendererRef.current.setDirections(result)
-          const metres = result.routes[0]?.legs.reduce(
-            (sum, leg) => sum + (leg.distance?.value ?? 0), 0,
-          ) ?? null
-          setTotalDistanceM(metres)
-          onRouteReady?.(metres)
-        }
-      },
-    )
-  }, [routesLib, waypoints, onRouteReady])
+    const handleFailure = (status: string) => {
+      console.warn(`Directions request failed: ${status}`)
+      setTotalDistanceM(null)
+      onRouteReady?.(null)
+    }
+
+    try {
+      service.route(
+        {
+          origin: new google.maps.LatLng(origin.lat, origin.lng),
+          destination: new google.maps.LatLng(destination.lat, destination.lng),
+          waypoints: stops,
+          travelMode: routesLib.TravelMode.WALKING,
+        },
+        (result, status) => {
+          if (status === 'OK' && result && rendererRef.current) {
+            rendererRef.current.setDirections(result)
+            const metres = result.routes[0]?.legs.reduce(
+              (sum, leg) => sum + (leg.distance?.value ?? 0), 0,
+            ) ?? null
+            setTotalDistanceM(metres)
+            onRouteReady?.(metres)
+          } else {
+            handleFailure(status)
+          }
+        },
+      )
+    } catch (err) {
+      handleFailure(err instanceof Error ? err.message : String(err))
+    }
+  }, [routesLib, map, waypoints, onRouteReady])
 
   useEffect(() => {
     return () => rendererRef.current?.setMap(null)
