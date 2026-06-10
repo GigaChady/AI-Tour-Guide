@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import api from '@/network/axios'
-import { SharedMap, type POI } from '@/components/map/SharedMap'
+import { type POI, SharedMap } from '@/components/map/SharedMap'
 import { SummaryStatCard } from '@/components/map/SummaryStatCard'
 import { RouteTimeline, type TimelinePoint } from '@/components/map/RouteTimeline'
 import type { RouteHistoryItemData } from '@/modules/profile/Profile'
@@ -29,8 +29,14 @@ interface RouteMapResponse {
 export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
   const [mapDetails, setMapDetails] = useState<RouteMapResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [delayedWaypoints, setDelayedWaypoints] = useState<
+    { lat: number; lng: number }[] | undefined
+  >(undefined)
+  const [calculatedDistanceM, setCalculatedDistanceM] = useState<number | null>(null)
 
   useEffect(() => {
+    setCalculatedDistanceM(null)
+
     if (!route) {
       setMapDetails(null)
       return
@@ -73,24 +79,62 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
     })
   }, [mapDetails])
 
+  const isPlanned = useMemo(() => {
+    return mapDetails ? !mapDetails.geojson : false
+  }, [mapDetails])
+
+  useEffect(() => {
+    if (isPlanned && mapPois.length >= 2) {
+      const timer = setTimeout(() => {
+        setDelayedWaypoints(mapPois.map((p) => ({ lat: p.lat, lng: p.lng })))
+      }, 300)
+      return () => clearTimeout(timer)
+    } else {
+      setDelayedWaypoints(undefined)
+    }
+  }, [isPlanned, mapPois])
+
   const mapCenter =
     mapPois.length > 0
       ? { lat: mapPois[0].lat, lng: mapPois[0].lng }
       : { lat: 51.1092, lng: 17.0607 }
 
-  if (!route) return null
+  let displayDistance = '0'
+  let displayDurationText = '0:00'
 
-  const formattedDate = new Date(route.date).toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-  const formattedHours = Math.floor(route.duration_minutes / 60)
-  const formattedMinutes = route.duration_minutes % 60
-  const durationText =
-    formattedHours > 0
-      ? `${formattedHours}:${formattedMinutes.toString().padStart(2, '0')}`
-      : `0:${formattedMinutes.toString().padStart(2, '0')}`
+  if (route) {
+    if (isPlanned) {
+      if (calculatedDistanceM !== null) {
+        displayDistance = (calculatedDistanceM / 1000).toFixed(2)
+        const totalMinutes = Math.round((calculatedDistanceM / 1000) * 30) // TODO: Make better estimation algorithm (or implement it on backend server). Currently: 1km ~ 30 min of walking
+        const h = Math.floor(totalMinutes / 60)
+        const m = totalMinutes % 60
+        displayDurationText =
+          h > 0 ? `${h}:${m.toString().padStart(2, '0')}` : `0:${m.toString().padStart(2, '0')}`
+      } else {
+        displayDistance = '...'
+        displayDurationText = '...'
+      }
+    } else {
+      displayDistance = route.distance_km.toString()
+      const formattedHours = Math.floor(route.duration_minutes / 60)
+      const formattedMinutes = route.duration_minutes % 60
+      displayDurationText =
+        formattedHours > 0
+          ? `${formattedHours}:${formattedMinutes.toString().padStart(2, '0')}`
+          : `0:${formattedMinutes.toString().padStart(2, '0')}`
+    }
+  }
+
+  const formattedDate = route
+    ? new Date(route.date).toLocaleDateString('pl-PL', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : ''
+
+  if (!route) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 overflow-hidden">
@@ -122,6 +166,8 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
                 center={mapCenter}
                 zoom={15}
                 interactive={true}
+                routeWaypoints={delayedWaypoints}
+                onRouteReady={setCalculatedDistanceM}
               />
             </div>
           )}
@@ -130,8 +176,10 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
         <section className="flex-1 flex flex-col p-6 md:p-8 bg-surface-container-low overflow-y-auto z-10 relative">
           <header className="mb-6">
             <div className="flex items-center gap-2 mb-1">
-              <span className="bg-primary-container/20 text-primary px-2 py-1 rounded-md font-label-sm uppercase tracking-wider text-label-sm">
-                Zakończono
+              <span
+                className={`px-2 py-1 rounded-md font-label-sm uppercase tracking-wider text-label-sm ${isPlanned ? 'bg-blue-500/20 text-blue-400' : 'bg-primary-container/20 text-primary'}`}
+              >
+                {isPlanned ? 'Planowane' : 'Zakończone'}
               </span>
               <span className="text-on-surface-variant font-body-md text-sm">{formattedDate}</span>
             </div>
@@ -154,15 +202,15 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
             <SummaryStatCard
               icon="route"
               label="Dystans"
-              value={route.distance_km.toString()}
+              value={displayDistance}
               unit="km"
               colorClass="text-primary"
             />
             <SummaryStatCard
               icon="schedule"
               label="Czas"
-              value={durationText}
-              unit="godz"
+              value={displayDurationText}
+              unit="h"
               colorClass="text-secondary"
             />
           </div>
