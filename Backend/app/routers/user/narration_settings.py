@@ -65,7 +65,8 @@ async def test_narration(
             pitch=cfg["pitch"],
             loudness=cfg["volume"],
         )
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail="TTS synthesis failed")
 
     audio = tts_result.audio
