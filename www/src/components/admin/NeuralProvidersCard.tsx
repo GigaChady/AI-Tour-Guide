@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useAdminConfig, useAdminProviders, useUpdateAdminConfig } from '@/hooks/useAdminQueries'
 import type { ProviderOption } from '@/types/admin'
 
@@ -41,7 +40,6 @@ export function NeuralProvidersCard() {
   const { data: providers } = useAdminProviders()
   const { data: config } = useAdminConfig()
   const { mutate: updateConfig, isPending } = useUpdateAdminConfig()
-  const [streaming, setStreaming] = useState(true)
 
   const llmValue = config?.llm_provider ?? ''
   const ttsValue = config?.tts_provider ?? ''
@@ -67,23 +65,6 @@ export function NeuralProvidersCard() {
           onChange={(value) => updateConfig({ tts_provider: value })}
           disabled={isPending || !providers}
         />
-        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-          <div>
-            <div className="font-title-md text-title-md text-on-surface">Tryb strumieniowania</div>
-            <div className="font-body-md text-body-md text-on-surface-variant">
-              Włącz wyjście token po tokenie
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={streaming}
-              onChange={(e) => setStreaming(e.target.checked)}
-            />
-            <div className="w-14 h-8 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary" />
-          </label>
-        </div>
       </div>
     </div>
   )
