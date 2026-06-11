@@ -83,7 +83,7 @@ async def get_dashboard(
     )
     routes_result = await db.execute(
         select(Route)
-        .where(Route.user_id == current_user.id, Route.path == None)
+        .where(Route.user_id == current_user.id, Route.path == None, Route.name != None)
         .order_by(Route.started_at.desc())
     )
     routes = routes_result.scalars().all()
