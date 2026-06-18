@@ -40,7 +40,7 @@ export function useTestNarration() {
     },
     onError: () => {
       toast.error(
-        'Błąd odtwarzania narracji. Spróbuj ponownie później. Jeżeli błąd będzie się potwrzał, skontaktuj się z administratorem systemu.',
+        'Błąd odtwarzania narracji. Spróbuj ponownie później. Jeżeli błąd będzie się powtarzał, skontaktuj się z administratorem systemu.',
       )
     },
   })
