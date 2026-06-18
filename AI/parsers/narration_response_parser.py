@@ -20,12 +20,12 @@ class NarrationResponseParser:
         if result is None:
             logger.error("Invalid narration response. Could not recover valid JSON")
             logger.error("Raw response: %s", content)
-            return unidecode(self._decode_unicode_escapes(content))
+            return self._decode_unicode_escapes(content)
 
         if isinstance(result, dict):
             for key, value in result.items():
                 if isinstance(value, str):
-                    result[key] = unidecode(self._decode_unicode_escapes(value))
+                    result[key] = self._decode_unicode_escapes(value)
 
         logger.info("Narration with ASCII conversion: %s", result)
         return result
