@@ -114,26 +114,28 @@ export function NarrationPlayer({
         </div>
       </div>
 
-      <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30 overflow-y-auto relative h-40 mt-2 scrollbar-thin">
-        {words.length > 0 && transcript ? (
-          <p className="font-body-lg leading-relaxed whitespace-pre-wrap">
-            <span className="text-white font-medium transition-colors duration-150">
-              {readText}
-            </span>
-            <span className="text-on-surface-variant opacity-50 transition-colors duration-150">
-              {unreadText}
-            </span>
-          </p>
-        ) : transcript ? (
-          <p className="font-body-lg text-on-surface-variant opacity-50 leading-relaxed">
-            {transcript}
-          </p>
-        ) : (
-          <p className="font-body-md text-on-surface-variant leading-relaxed opacity-50 italic">
-            Kliknij dowolne miejsce na mapie, aby wygenerować narrację...
-          </p>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-surface-container-low to-transparent pointer-events-none"></div>
+      <div className="relative mt-2">
+        <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30 overflow-y-auto h-40 scrollbar-thin">
+          {words.length > 0 && transcript ? (
+            <p className="font-body-lg leading-relaxed whitespace-pre-wrap">
+              <span className="text-white font-medium transition-colors duration-150">
+                {readText}
+              </span>
+              <span className="text-on-surface-variant opacity-50 transition-colors duration-150">
+                {unreadText}
+              </span>
+            </p>
+          ) : transcript ? (
+            <p className="font-body-lg text-on-surface-variant opacity-50 leading-relaxed">
+              {transcript}
+            </p>
+          ) : (
+            <p className="font-body-md text-on-surface-variant leading-relaxed opacity-50 italic">
+              Kliknij dowolne miejsce na mapie, aby wygenerować narrację...
+            </p>
+          )}
+        </div>
+        <div className="absolute bottom-[1px] left-[1px] right-[1px] h-12 bg-linear-to-t from-surface-container-low to-transparent pointer-events-none rounded-b-xl"></div>
       </div>
     </div>
   )
