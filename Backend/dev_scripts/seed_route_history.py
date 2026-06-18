@@ -12,7 +12,7 @@ from app.models.models import User, Route, RoutePoi
 # SEEDER CONFIGURATION
 # ==========================================
 
-TARGET_EMAIL = "user3@gmail.com"
+TARGET_EMAIL = "user@user.pl"
 
 # Toggle this flag to generate a completely random route
 GENERATE_RANDOM_ROUTE = True

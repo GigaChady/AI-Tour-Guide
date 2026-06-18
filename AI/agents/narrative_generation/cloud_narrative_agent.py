@@ -1,7 +1,8 @@
 import logging
+import os
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from configs.cloud_narration_config import CloudNarrativeSettings
 from parsers.narration_response_parser import NarrationResponseParser
@@ -31,11 +32,34 @@ class CloudNarrativeAgent:
 
         selected_model_name = model_name or self.cloud_narrative_config.model_name
 
-        self.model = ChatNVIDIA(
+        model_kwargs = dict(
             model=selected_model_name,
             temperature=self.cloud_narrative_config.temperature,
             top_p=self.cloud_narrative_config.top_p,
-            max_tokens=self.cloud_narrative_config.max_tokens,
+            max_output_tokens=self.cloud_narrative_config.max_tokens,
+            google_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
+        )
+
+        thinking_level = self.cloud_narrative_config.thinking_level
+        try:
+            self.model = ChatGoogleGenerativeAI(
+                thinking_level=thinking_level, **model_kwargs
+            )
+        except TypeError:
+            # Older langchain-google-genai versions don't accept thinking_level as a
+            # constructor arg; pass it through the underlying generation config instead.
+            self.model = ChatGoogleGenerativeAI(
+                model_kwargs={"thinking_level": thinking_level}, **model_kwargs
+            )
+
+        logging.info(
+            "CloudNarrativeAgent initialized with model: %s, temperature: %s, "
+            "top_p: %s, max_output_tokens: %s, thinking_level: %s",
+            selected_model_name,
+            self.cloud_narrative_config.temperature,
+            self.cloud_narrative_config.top_p,
+            self.cloud_narrative_config.max_tokens,
+            thinking_level,
         )
 
     def generate_narration(self, location_name: str, location_info: str):

@@ -39,8 +39,13 @@ class CloudNarrativeSettings(BaseSettings):
 	)
 
 	model_name: str = Field(
-		default="meta/llama-4-maverick-17b-128e-instruct",
+		default="gemini-flash-lite-latest",
 		description="Cloud model name used for narration generation",
+	)
+
+	thinking_level: str = Field(
+		default="HIGH",
+		description="Gemini thinking level for narration generation (e.g. HIGH, LOW)",
 	)
 
 	temperature: float = Field(
@@ -58,9 +63,9 @@ class CloudNarrativeSettings(BaseSettings):
 	)
 
 	max_tokens: int = Field(
-		default=700,
+		default=1024,
 		ge=1,
-		description="Maximum number of tokens generated for narration",
+		description="Maximum number of output tokens for narration (also covers thinking budget)",
 	)
 
 	request_timeout_seconds: int = Field(
