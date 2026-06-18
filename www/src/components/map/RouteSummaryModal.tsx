@@ -84,7 +84,7 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
   }, [mapDetails])
 
   useEffect(() => {
-    if (isPlanned && mapPois.length >= 2) {
+    if (mapPois.length >= 2) {
       const timer = setTimeout(() => {
         setDelayedWaypoints(mapPois.map((p) => ({ lat: p.lat, lng: p.lng })))
       }, 300)
@@ -92,7 +92,7 @@ export function RouteSummaryModal({ route, onClose }: RouteSummaryModalProps) {
     } else {
       setDelayedWaypoints(undefined)
     }
-  }, [isPlanned, mapPois])
+  }, [mapPois])
 
   const mapCenter =
     mapPois.length > 0
