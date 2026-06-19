@@ -166,7 +166,7 @@ export function ActiveDeploymentsTable() {
     <>
       <div className="xl:col-span-2 bg-surface-container rounded-[2rem] border border-white/5 shadow-lg flex flex-col">
         <div className="p-lg border-b border-white/5 flex items-center justify-between bg-surface-container-low rounded-t-[2rem]">
-          <h3 className="font-title-lg text-title-lg text-on-surface">Aktywne wdrożenia</h3>
+          <h3 className="font-title-lg text-title-lg text-on-surface">Użytkownicy aplikacji</h3>
           <button
             className="bg-primary hover:bg-primary-fixed-dim text-on-primary font-label-lg text-label-lg py-2 px-6 rounded-full transition-all duration-300 flex items-center gap-2 active:scale-95"
             onClick={() => setAddingUser(true)}
@@ -190,7 +190,7 @@ export function ActiveDeploymentsTable() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container/50 border-b border-white/5 font-label-lg text-label-lg text-on-surface-variant">
-                  <th className="p-4 font-medium pl-lg">Użytkownik / Instancja</th>
+                  <th className="p-4 font-medium pl-lg">Użytkownik</th>
                   <th className="p-4 font-medium">Status</th>
                   <th className="p-4 font-medium">Aktualna trasa</th>
                   <th className="p-4 font-medium text-right pr-lg">Akcje</th>

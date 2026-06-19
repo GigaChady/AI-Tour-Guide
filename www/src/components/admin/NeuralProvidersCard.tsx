@@ -48,7 +48,7 @@ export function NeuralProvidersCard() {
     <div className="bg-surface-container rounded-[2rem] p-lg border border-white/5 shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <span className="material-symbols-outlined text-primary text-3xl">neurology</span>
-        <h3 className="font-title-lg text-title-lg text-on-surface">Dostawcy neuronowi</h3>
+        <h3 className="font-title-lg text-title-lg text-on-surface">Narracja AI</h3>
       </div>
       <div className="space-y-6">
         <SelectField
