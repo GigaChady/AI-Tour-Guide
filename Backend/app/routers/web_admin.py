@@ -49,7 +49,8 @@ async def get_deployments(
 
 @router.get("/stats", response_model=AdminStatsResponse, dependencies=[Depends(get_current_admin)])
 async def get_admin_stats(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(func.count(Route.id)).where(Route.ended_at.is_(None)))
+    # result = await db.execute(select(func.count(Route.id)).where(Route.ended_at.is_(None)))
+    result = await db.execute(select(func.count(User.id))) #TODO: Fix later
     active_users = result.scalar() or 0
     return AdminStatsResponse(active_users=active_users, token_spent=15000)
 
